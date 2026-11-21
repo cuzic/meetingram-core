@@ -236,8 +236,7 @@ pub fn run_capture_loop(
 
     // Registering IAudioSessionEvents is best-effort; capture continues even if this
     // fails (not treated as fatal).
-    let _session_events_guard = match unsafe { audio_client.GetService::<IAudioSessionControl>() }
-    {
+    let _session_events_guard = match unsafe { audio_client.GetService::<IAudioSessionControl>() } {
         Ok(session_control) => {
             let handler = SessionEventsHandler {
                 tx: tx.clone(),

@@ -62,7 +62,11 @@ mod tests {
         assert!(r1.actions.is_empty(), "on_event must not fire immediately");
 
         let r2 = fsm.on_event(());
-        assert_eq!(r2.timers.len(), 1, "a second event should (re)set the same single timer, not add a second one");
+        assert_eq!(
+            r2.timers.len(),
+            1,
+            "a second event should (re)set the same single timer, not add a second one"
+        );
     }
 
     #[test]

@@ -30,7 +30,8 @@ use crate::{build_cli_prompt, SummarizeOptions, TranscriptTurn};
 /// Tool names `claude --print` is not allowed to invoke while summarizing — this is
 /// a text-in/text-out call, so every tool that could read/write files or the
 /// network is denied.
-const CLAUDE_DISALLOWED_TOOLS: &str = "Bash,Edit,Write,Read,WebFetch,WebSearch,Task,Glob,Grep,NotebookEdit";
+const CLAUDE_DISALLOWED_TOOLS: &str =
+    "Bash,Edit,Write,Read,WebFetch,WebSearch,Task,Glob,Grep,NotebookEdit";
 
 /// Which CLI-based summarization backend to use. Distinct from `genai`'s
 /// provider/model string dispatch — these two go through a subprocess, not HTTP.
@@ -115,7 +116,11 @@ pub async fn summarize_via_cli(
     }
 }
 
-async fn run_claude(work_dir: &Path, prompt: &str, model: Option<&str>) -> Result<String, CliSummarizeError> {
+async fn run_claude(
+    work_dir: &Path,
+    prompt: &str,
+    model: Option<&str>,
+) -> Result<String, CliSummarizeError> {
     let mut command = Command::new(CliBackend::ClaudeCode.binary());
     // Without this, dropping the `.output()` future (e.g. the caller's `spawn`ed
     // task getting cancelled) leaves the `claude` subprocess running in the
@@ -155,7 +160,12 @@ async fn run_claude(work_dir: &Path, prompt: &str, model: Option<&str>) -> Resul
     let text = value
         .get("result")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| CliSummarizeError::ParseOutput(CliBackend::ClaudeCode, "missing \"result\" field".to_string()))?;
+        .ok_or_else(|| {
+            CliSummarizeError::ParseOutput(
+                CliBackend::ClaudeCode,
+                "missing \"result\" field".to_string(),
+            )
+        })?;
 
     if text.trim().is_empty() {
         return Err(CliSummarizeError::EmptyResponse(CliBackend::ClaudeCode));
@@ -163,7 +173,11 @@ async fn run_claude(work_dir: &Path, prompt: &str, model: Option<&str>) -> Resul
     Ok(text.to_string())
 }
 
-async fn run_codex(work_dir: &Path, prompt: &str, model: Option<&str>) -> Result<String, CliSummarizeError> {
+async fn run_codex(
+    work_dir: &Path,
+    prompt: &str,
+    model: Option<&str>,
+) -> Result<String, CliSummarizeError> {
     let output_path = work_dir.join("codex-output.txt");
 
     let mut command = Command::new(CliBackend::Codex.binary());
@@ -171,7 +185,14 @@ async fn run_codex(work_dir: &Path, prompt: &str, model: Option<&str>) -> Result
     command.kill_on_drop(true);
     command
         .current_dir(work_dir)
-        .args(["exec", "-s", "read-only", "--skip-git-repo-check", "--ephemeral", "-C"])
+        .args([
+            "exec",
+            "-s",
+            "read-only",
+            "--skip-git-repo-check",
+            "--ephemeral",
+            "-C",
+        ])
         .arg(work_dir)
         .arg("-o")
         .arg(&output_path);

@@ -64,7 +64,9 @@ impl EncryptedFileStore {
 /// Fills `buf` from the OS random source. A failure here means the OS has no
 /// usable entropy source, which is surfaced as a crypto error rather than a panic.
 fn fill_from_os(buf: &mut [u8]) -> Result<(), StoreError> {
-    rand::rngs::SysRng.try_fill_bytes(buf).map_err(|e| StoreError::Crypto(format!("OS random source failed: {e}")))
+    rand::rngs::SysRng
+        .try_fill_bytes(buf)
+        .map_err(|e| StoreError::Crypto(format!("OS random source failed: {e}")))
 }
 
 fn write_private_file(path: &Path, data: &[u8]) -> Result<(), StoreError> {
@@ -85,7 +87,9 @@ fn encrypt(key: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, StoreError> {
     let mut nonce_bytes = [0u8; 12];
     fill_from_os(&mut nonce_bytes)?;
     let nonce = Nonce::from(nonce_bytes);
-    let ciphertext = cipher.encrypt(&nonce, plaintext).map_err(|e| StoreError::Crypto(e.to_string()))?;
+    let ciphertext = cipher
+        .encrypt(&nonce, plaintext)
+        .map_err(|e| StoreError::Crypto(e.to_string()))?;
     let mut out = nonce_bytes.to_vec();
     out.extend_from_slice(&ciphertext);
     Ok(out)
@@ -97,8 +101,11 @@ fn decrypt(key: &[u8; 32], data: &[u8]) -> Result<Vec<u8>, StoreError> {
     }
     let (nonce_bytes, ciphertext) = data.split_at(12);
     let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
-    let nonce = Nonce::try_from(nonce_bytes).map_err(|_| StoreError::Crypto("nonce is not 12 bytes".to_string()))?;
-    cipher.decrypt(&nonce, ciphertext).map_err(|e| StoreError::Crypto(e.to_string()))
+    let nonce = Nonce::try_from(nonce_bytes)
+        .map_err(|_| StoreError::Crypto("nonce is not 12 bytes".to_string()))?;
+    cipher
+        .decrypt(&nonce, ciphertext)
+        .map_err(|e| StoreError::Crypto(e.to_string()))
 }
 
 impl CredentialStore for EncryptedFileStore {
@@ -110,7 +117,10 @@ impl CredentialStore for EncryptedFileStore {
 
     fn load(&self, service: &str, account: &str) -> Result<String, StoreError> {
         let path = self.entry_path(service, account);
-        let data = std::fs::read(&path).map_err(|_| StoreError::NotFound { service: service.to_string(), account: account.to_string() })?;
+        let data = std::fs::read(&path).map_err(|_| StoreError::NotFound {
+            service: service.to_string(),
+            account: account.to_string(),
+        })?;
         let key = self.load_or_create_master_key()?;
         let plaintext = decrypt(&key, &data)?;
         String::from_utf8(plaintext).map_err(|e| StoreError::Crypto(e.to_string()))

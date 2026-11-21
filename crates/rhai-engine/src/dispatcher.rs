@@ -66,24 +66,30 @@ async fn handle_ai_summarize(
     let system_prompt = get_string(args, "system_prompt")?;
     let turns_raw = args.get("turns").ok_or("missing argument: turns")?;
 
-    let turns: Vec<TranscriptTurn> = if let Some(arr) = turns_raw.clone().try_cast::<rhai::Array>() {
+    let turns: Vec<TranscriptTurn> = if let Some(arr) = turns_raw.clone().try_cast::<rhai::Array>()
+    {
         arr.iter()
             .filter_map(|v| {
                 let m = v.clone().try_cast::<rhai::Map>()?;
                 let speaker = m.get("speaker")?.to_string();
                 let text = m.get("text")?.to_string();
-                Some(TranscriptTurn { speaker: Some(speaker), text })
+                Some(TranscriptTurn {
+                    speaker: Some(speaker),
+                    text,
+                })
             })
             .collect()
     } else {
         return Err("turns must be an array".into());
     };
 
-    let options = summarize::SummarizeOptions::new(&model)
-        .with_system_prompt(system_prompt);
+    let options = summarize::SummarizeOptions::new(&model).with_system_prompt(system_prompt);
 
     let summarizer = build_summarizer(&model, credential_store, settings)?;
-    let text = summarizer.summarize(&turns, &options).await.map_err(|e| e.to_string())?;
+    let text = summarizer
+        .summarize(&turns, &options)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(rhai::Dynamic::from(text))
 }
 
@@ -92,7 +98,9 @@ fn build_summarizer(
     credential_store: &Arc<credential_store::FallbackCredentialStore>,
     settings: &dyn SettingsProvider,
 ) -> Result<Box<dyn Summarizer>, String> {
-    let provider_key = settings.get("summary_provider_key").unwrap_or_else(|| "claude".to_string());
+    let provider_key = settings
+        .get("summary_provider_key")
+        .unwrap_or_else(|| "claude".to_string());
     let provider = ProviderInfo::from_key(&provider_key);
 
     if let Some(backend) = provider.cli_backend() {
@@ -106,12 +114,16 @@ fn build_summarizer(
             .unwrap_or_default();
         let credentials = serde_json::from_str::<summarize::VertexCredentials>(&raw)
             .map_err(|e| format!("Vertex認証情報の読み込みに失敗: {e}"))?;
-        return Ok(Box::new(summarize::GenaiSummarizer(summarize::build_vertex_client(credentials).map_err(client_build_error)?)));
+        return Ok(Box::new(summarize::GenaiSummarizer(
+            summarize::build_vertex_client(credentials).map_err(client_build_error)?,
+        )));
     }
 
     if provider_key == "ollama" {
         let base_url = settings.get("ollama_base_url");
-        return Ok(Box::new(summarize::GenaiSummarizer(summarize::build_ollama_client(base_url).map_err(client_build_error)?)));
+        return Ok(Box::new(summarize::GenaiSummarizer(
+            summarize::build_ollama_client(base_url).map_err(client_build_error)?,
+        )));
     }
 
     if let Some(account) = provider.api_key_account() {
@@ -119,11 +131,16 @@ fn build_summarizer(
             Arc::clone(credential_store),
             account.to_string(),
         );
-        let client = genai::Client::builder().with_auth_resolver(resolver).build().map_err(client_build_error)?;
+        let client = genai::Client::builder()
+            .with_auth_resolver(resolver)
+            .build()
+            .map_err(client_build_error)?;
         return Ok(Box::new(summarize::GenaiSummarizer(client)));
     }
 
-    let client = genai::Client::builder().build().map_err(client_build_error)?;
+    let client = genai::Client::builder()
+        .build()
+        .map_err(client_build_error)?;
     Ok(Box::new(summarize::GenaiSummarizer(client)))
 }
 
@@ -131,36 +148,51 @@ fn client_build_error(e: genai::Error) -> String {
     format!("AIクライアントの作成に失敗: {e}")
 }
 
-fn handle_list_segments(
-    args: &rhai::Map,
-    store: &SessionStore,
-) -> Result<rhai::Dynamic, String> {
+fn handle_list_segments(args: &rhai::Map, store: &SessionStore) -> Result<rhai::Dynamic, String> {
     let session_id_str = get_string(args, "session_id")?;
-    let session_id: SessionId = session_id_str.parse().map_err(|e| format!("invalid session_id: {e}"))?;
-    let segments = store.list_transcript_segments(session_id).map_err(|e| e.to_string())?;
+    let session_id: SessionId = session_id_str
+        .parse()
+        .map_err(|e| format!("invalid session_id: {e}"))?;
+    let segments = store
+        .list_transcript_segments(session_id)
+        .map_err(|e| e.to_string())?;
 
     let mut arr = rhai::Array::new();
     for seg in &segments {
         let mut m = rhai::Map::new();
-        m.insert("segment_id".into(), rhai::Dynamic::from(
-            transcript_event::segment_id_for_segment(seg.session_id, seg.track, seg.start_ms, seg.end_ms)
-        ));
+        m.insert(
+            "segment_id".into(),
+            rhai::Dynamic::from(transcript_event::segment_id_for_segment(
+                seg.session_id,
+                seg.track,
+                seg.start_ms,
+                seg.end_ms,
+            )),
+        );
         m.insert("text".into(), rhai::Dynamic::from(seg.text.clone()));
-        m.insert("speaker_label".into(), rhai::Dynamic::from(speaker_label(seg.track, seg.speaker)));
+        m.insert(
+            "speaker_label".into(),
+            rhai::Dynamic::from(speaker_label(seg.track, seg.speaker)),
+        );
         m.insert("is_final".into(), rhai::Dynamic::from(seg.is_final));
-        m.insert("start_ms".into(), rhai::Dynamic::from(seg.start_ms.unwrap_or(0) as i64));
-        m.insert("end_ms".into(), rhai::Dynamic::from(seg.end_ms.unwrap_or(0) as i64));
+        m.insert(
+            "start_ms".into(),
+            rhai::Dynamic::from(seg.start_ms.unwrap_or(0) as i64),
+        );
+        m.insert(
+            "end_ms".into(),
+            rhai::Dynamic::from(seg.end_ms.unwrap_or(0) as i64),
+        );
         arr.push(rhai::Dynamic::from_map(m));
     }
     Ok(rhai::Dynamic::from_array(arr))
 }
 
-fn handle_save_summary(
-    args: &rhai::Map,
-    store: &SessionStore,
-) -> Result<rhai::Dynamic, String> {
+fn handle_save_summary(args: &rhai::Map, store: &SessionStore) -> Result<rhai::Dynamic, String> {
     let session_id_str = get_string(args, "session_id")?;
-    let session_id: SessionId = session_id_str.parse().map_err(|e| format!("invalid session_id: {e}"))?;
+    let session_id: SessionId = session_id_str
+        .parse()
+        .map_err(|e| format!("invalid session_id: {e}"))?;
     let text = get_string(args, "text")?;
     let provider_model = get_string(args, "provider_model")?;
 
@@ -174,15 +206,14 @@ fn handle_save_summary(
     Ok(rhai::Dynamic::UNIT)
 }
 
-fn handle_publish_event(
-    args: &rhai::Map,
-    broker: &LocalBroker,
-) -> Result<rhai::Dynamic, String> {
+fn handle_publish_event(args: &rhai::Map, broker: &LocalBroker) -> Result<rhai::Dynamic, String> {
     let subject = get_string(args, "subject")?;
     // Pass through as raw map — the event is already structured
     let data = args.get("data").cloned().unwrap_or(rhai::Dynamic::UNIT);
     let json = serde_json::to_vec(&rhai_dynamic_to_value(&data)).map_err(|e| e.to_string())?;
-    broker.publish_bytes(&subject, json).map_err(|e| e.to_string())?;
+    broker
+        .publish_bytes(&subject, json)
+        .map_err(|e| e.to_string())?;
     Ok(rhai::Dynamic::UNIT)
 }
 
@@ -191,12 +222,13 @@ fn handle_get_setting(
     settings: &dyn SettingsProvider,
 ) -> Result<rhai::Dynamic, String> {
     let key = get_string(args, "key")?;
-    Ok(settings.get(&key).map(rhai::Dynamic::from).unwrap_or(rhai::Dynamic::UNIT))
+    Ok(settings
+        .get(&key)
+        .map(rhai::Dynamic::from)
+        .unwrap_or(rhai::Dynamic::UNIT))
 }
 
-fn handle_get_selected_model(
-    settings: &dyn SettingsProvider,
-) -> Result<rhai::Dynamic, String> {
+fn handle_get_selected_model(settings: &dyn SettingsProvider) -> Result<rhai::Dynamic, String> {
     Ok(rhai::Dynamic::from(settings.selected_model()))
 }
 
@@ -205,23 +237,32 @@ fn handle_get_session_metadata(
     settings: &dyn SettingsProvider,
 ) -> Result<rhai::Dynamic, String> {
     let session_id_str = get_string(args, "session_id")?;
-    let session_id: SessionId = session_id_str.parse().map_err(|e| format!("invalid session_id: {e}"))?;
-    Ok(rhai::Dynamic::from_map(settings.session_metadata(session_id)))
+    let session_id: SessionId = session_id_str
+        .parse()
+        .map_err(|e| format!("invalid session_id: {e}"))?;
+    Ok(rhai::Dynamic::from_map(
+        settings.session_metadata(session_id),
+    ))
 }
 
-fn handle_format_turns(
-    args: &rhai::Map,
-) -> Result<rhai::Dynamic, String> {
+fn handle_format_turns(args: &rhai::Map) -> Result<rhai::Dynamic, String> {
     let turns_raw = args.get("turns").ok_or("missing argument: turns")?;
-    let format = args.get("format")
+    let format = args
+        .get("format")
         .and_then(|v| v.clone().try_cast::<String>())
         .unwrap_or_else(|| "text".to_string());
 
-    let arr = turns_raw.clone().try_cast::<rhai::Array>().ok_or("turns must be an array")?;
+    let arr = turns_raw
+        .clone()
+        .try_cast::<rhai::Array>()
+        .ok_or("turns must be an array")?;
     let mut output = String::new();
     for turn in arr.iter() {
         if let Some(m) = turn.clone().try_cast::<rhai::Map>() {
-            let speaker = m.get("speaker").map(|s| s.to_string()).unwrap_or_else(|| "不明".into());
+            let speaker = m
+                .get("speaker")
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "不明".into());
             let text = m.get("text").map(|s| s.to_string()).unwrap_or_default();
             match format.as_str() {
                 "markdown" => output.push_str(&format!("**{speaker}**: {text}\n\n")),
@@ -265,7 +306,9 @@ fn rhai_dynamic_to_value(d: &rhai::Dynamic) -> serde_json::Value {
     } else if d.is::<i64>() {
         serde_json::Value::Number(d.clone().try_cast::<i64>().unwrap().into())
     } else if d.is::<f64>() {
-        serde_json::Number::from_f64(d.clone().try_cast::<f64>().unwrap()).map(serde_json::Value::Number).unwrap_or(serde_json::Value::Null)
+        serde_json::Number::from_f64(d.clone().try_cast::<f64>().unwrap())
+            .map(serde_json::Value::Number)
+            .unwrap_or(serde_json::Value::Null)
     } else if d.is::<bool>() {
         serde_json::Value::Bool(d.clone().try_cast::<bool>().unwrap())
     } else if d.is::<String>() {
@@ -301,9 +344,18 @@ impl ProviderInfo {
 }
 
 enum ProviderVariant {
-    Claude, OpenAi, Gemini, Groq, DeepSeek, Xai,
-    ClaudeVertex, GeminiVertex, ClaudeBedrock,
-    ClaudeCli, CodexCli, Ollama,
+    Claude,
+    OpenAi,
+    Gemini,
+    Groq,
+    DeepSeek,
+    Xai,
+    ClaudeVertex,
+    GeminiVertex,
+    ClaudeBedrock,
+    ClaudeCli,
+    CodexCli,
+    Ollama,
 }
 
 impl ProviderVariant {

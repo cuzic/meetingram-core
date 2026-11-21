@@ -603,10 +603,8 @@ mod tests {
 
     #[test]
     fn parses_begin_speech_started_and_termination_messages() {
-        let begin: AssemblyAIMessage = serde_json::from_str(
-            r#"{"type":"Begin","id":"abc","expires_at":1772570132}"#,
-        )
-        .unwrap();
+        let begin: AssemblyAIMessage =
+            serde_json::from_str(r#"{"type":"Begin","id":"abc","expires_at":1772570132}"#).unwrap();
         assert!(matches!(begin, AssemblyAIMessage::Begin));
 
         let started: AssemblyAIMessage =

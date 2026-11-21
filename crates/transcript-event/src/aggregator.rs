@@ -36,14 +36,18 @@ impl SegmentSnapshot {
 
     /// Upserts `data` under `data.segment_id`, replacing whatever was there before.
     pub fn apply(&mut self, data: SegmentData, finality: Finality) {
-        self.segments.insert(data.segment_id.clone(), (data, finality));
+        self.segments
+            .insert(data.segment_id.clone(), (data, finality));
     }
 
     /// The current segments, ordered by `start_ms` ascending (`None` sorts as `0`,
     /// matching the pre-extraction behavior every caller of this already relied on).
     pub fn ordered_by_start(&self) -> Vec<(&SegmentData, Finality)> {
-        let mut ordered: Vec<(&SegmentData, Finality)> =
-            self.segments.values().map(|(data, finality)| (data, *finality)).collect();
+        let mut ordered: Vec<(&SegmentData, Finality)> = self
+            .segments
+            .values()
+            .map(|(data, finality)| (data, *finality))
+            .collect();
         ordered.sort_by_key(|(data, _)| data.start_ms.unwrap_or(0));
         ordered
     }
@@ -69,7 +73,10 @@ pub struct FinalizedTurns<T> {
 
 impl<T> FinalizedTurns<T> {
     pub fn new() -> Self {
-        Self { seen: HashSet::new(), turns: Vec::new() }
+        Self {
+            seen: HashSet::new(),
+            turns: Vec::new(),
+        }
     }
 
     /// Appends `value` and returns `true` if `segment_id` is new; otherwise leaves
@@ -128,8 +135,11 @@ mod tests {
         snapshot.apply(segment("unset", None, "c"), Finality::Final);
         snapshot.apply(segment("early", Some(100), "a"), Finality::Final);
 
-        let ids: Vec<&str> =
-            snapshot.ordered_by_start().into_iter().map(|(d, _)| d.segment_id.as_str()).collect();
+        let ids: Vec<&str> = snapshot
+            .ordered_by_start()
+            .into_iter()
+            .map(|(d, _)| d.segment_id.as_str())
+            .collect();
         assert_eq!(ids, vec!["unset", "early", "late"]);
     }
 

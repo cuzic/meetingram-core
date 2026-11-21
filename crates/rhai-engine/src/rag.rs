@@ -22,7 +22,10 @@ use crate::SettingsProvider;
 // `apps/desktop/src/settings.rs` can write credentials under the exact same
 // `(service, account)` pair `cloudflare::search` reads — without depending on
 // `crates/rhai-engine` internals any deeper than these two constants.
-pub use cloudflare::{CloudflareCredentials, CLOUDFLARE_AI_SEARCH_ACCOUNT, CREDENTIAL_SERVICE as CLOUDFLARE_CREDENTIAL_SERVICE};
+pub use cloudflare::{
+    CloudflareCredentials, CLOUDFLARE_AI_SEARCH_ACCOUNT,
+    CREDENTIAL_SERVICE as CLOUDFLARE_CREDENTIAL_SERVICE,
+};
 
 /// Dispatches a RAG search to the appropriate provider.
 pub async fn rag_search(
@@ -32,7 +35,10 @@ pub async fn rag_search(
 ) -> Result<rhai::Dynamic, String> {
     let provider = get_string(args, "provider")?;
     let query = get_string(args, "query")?;
-    let options = args.get("options").and_then(|v| v.clone().try_cast::<rhai::Map>()).unwrap_or_default();
+    let options = args
+        .get("options")
+        .and_then(|v| v.clone().try_cast::<rhai::Map>())
+        .unwrap_or_default();
 
     match provider.as_str() {
         "vertex" => vertex::search(&query, &options, credential_store, settings).await,
@@ -50,7 +56,10 @@ pub async fn rag_index(
 ) -> Result<rhai::Dynamic, String> {
     let provider = get_string(args, "provider")?;
     let documents = args.get("documents").ok_or("missing argument: documents")?;
-    let options = args.get("options").and_then(|v| v.clone().try_cast::<rhai::Map>()).unwrap_or_default();
+    let options = args
+        .get("options")
+        .and_then(|v| v.clone().try_cast::<rhai::Map>())
+        .unwrap_or_default();
 
     match provider.as_str() {
         "vertex" => vertex::index(documents, &options, credential_store, settings).await,

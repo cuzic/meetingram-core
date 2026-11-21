@@ -66,9 +66,15 @@ impl DeviceChangeWatcher {
             })
             .expect("failed to spawn device-change-watch thread");
 
-        ready_rx.recv().expect("device-change-watch thread died before signaling readiness")?;
+        ready_rx
+            .recv()
+            .expect("device-change-watch thread died before signaling readiness")?;
 
-        Ok(Self { shutdown_tx, join_handle: Some(join_handle), generation })
+        Ok(Self {
+            shutdown_tx,
+            join_handle: Some(join_handle),
+            generation,
+        })
     }
 
     /// Monotonically increasing count of device-change notifications observed so

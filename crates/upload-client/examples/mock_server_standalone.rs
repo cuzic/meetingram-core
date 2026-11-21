@@ -16,7 +16,10 @@
 async fn main() {
     tracing_subscriber_fallback_init();
 
-    let port: u16 = std::env::var("MOCK_SERVER_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8787);
+    let port: u16 = std::env::var("MOCK_SERVER_PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(8787);
     let fault_config = upload_client::mock_server::FaultConfig {
         pre_process_fault_probability: 0.0,
         post_process_fault_probability: 0.0,
@@ -26,7 +29,9 @@ async fn main() {
     let state = upload_client::mock_server::AppState::new(fault_config);
     let app = upload_client::mock_server::router(state);
 
-    let listener = tokio::net::TcpListener::bind(("127.0.0.1", port)).await.expect("failed to bind — is the port already in use?");
+    let listener = tokio::net::TcpListener::bind(("127.0.0.1", port))
+        .await
+        .expect("failed to bind — is the port already in use?");
     println!("mock upload API listening on http://127.0.0.1:{port} (Ctrl+C to stop)");
     axum::serve(listener, app).await.expect("server error");
 }
@@ -37,5 +42,8 @@ async fn main() {
 fn tracing_subscriber_fallback_init() {
     use tracing_subscriber::layer::SubscriberExt;
     use tracing_subscriber::util::SubscriberInitExt;
-    let _ = tracing_subscriber::registry().with(tracing_subscriber::fmt::layer()).with(tracing_subscriber::EnvFilter::from_default_env()).try_init();
+    let _ = tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .try_init();
 }

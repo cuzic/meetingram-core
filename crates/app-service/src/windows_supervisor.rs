@@ -17,17 +17,21 @@ use std::time::Duration;
 use crate::capture_health::CaptureHealth;
 
 use capture_api::rebinding::{
-    decide, BindingKind, CaptureBinding, BindingSelection, DataFlow, DecisionInput, DecisionState,
+    decide, BindingKind, BindingSelection, CaptureBinding, DataFlow, DecisionInput, DecisionState,
     DeviceRole, Effect, EndpointId, EndpointSelection, Observation, OperationId, ResolvedTarget,
     StreamEpoch, UserIntent,
 };
 use capture_windows::device_watch::DeviceWatchEvent;
 use capture_windows::loopback_stream::EndpointLoopbackStream;
 use capture_windows::mic_stream::MicCaptureStream;
-use capture_windows::{spawn_capture_thread, CaptureError, CaptureEvent, CaptureExit, CaptureStream, CaptureThreadOutcome, StopSignal};
+use capture_windows::{
+    spawn_capture_thread, CaptureError, CaptureEvent, CaptureExit, CaptureStream,
+    CaptureThreadOutcome, StopSignal,
+};
 use crossbeam_channel::{Receiver, Select, Sender};
 use windows::Win32::Media::Audio::{
-    eCapture, eCommunications, eConsole, eMultimedia, eRender, MMDeviceEnumerator, DEVICE_STATE_ACTIVE,
+    eCapture, eCommunications, eConsole, eMultimedia, eRender, MMDeviceEnumerator,
+    DEVICE_STATE_ACTIVE,
 };
 use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_ALL};
 
@@ -65,8 +69,16 @@ struct JoinResult {
 /// silently dropping frames whenever the supervisor's own (frame-discarding) loop
 /// won that race.
 pub enum FrameSinkEvent {
-    StreamStarted { binding: BindingKind, sample_rate: u32, channels: u16, nominal_frame_interval_ns: u64 },
-    Frame { record: capture_windows::CapturedFrameRecord, samples: Vec<f32> },
+    StreamStarted {
+        binding: BindingKind,
+        sample_rate: u32,
+        channels: u16,
+        nominal_frame_interval_ns: u64,
+    },
+    Frame {
+        record: capture_windows::CapturedFrameRecord,
+        samples: Vec<f32>,
+    },
 }
 
 pub struct WindowsSupervisor {
@@ -146,9 +158,22 @@ impl WindowsSupervisor {
     /// no longer present reads as `Ok` rather than an unhealthy state: "no binding"
     /// isn't itself an unhealthy condition here, it's a session that hasn't started.
     pub fn capture_health(&self) -> CaptureHealth {
-        let self_health = self.state.bindings.get(&BindingKind::Microphone).map(|b| b.lifecycle.health().into()).unwrap_or_default();
-        let remote_health = self.state.bindings.get(&BindingKind::EndpointLoopback).map(|b| b.lifecycle.health().into()).unwrap_or_default();
-        CaptureHealth { self_health, remote_health }
+        let self_health = self
+            .state
+            .bindings
+            .get(&BindingKind::Microphone)
+            .map(|b| b.lifecycle.health().into())
+            .unwrap_or_default();
+        let remote_health = self
+            .state
+            .bindings
+            .get(&BindingKind::EndpointLoopback)
+            .map(|b| b.lifecycle.health().into())
+            .unwrap_or_default();
+        CaptureHealth {
+            self_health,
+            remote_health,
+        }
     }
 
     fn publish_health(&self) {
@@ -183,20 +208,37 @@ impl WindowsSupervisor {
     /// `start_all`, and only while both bindings are absent/`Stopped` (i.e. before
     /// the first `start_all`, or after a full `ShutdownRequested` drain) — this
     /// does not itself stop an already-running binding to switch it.
-    pub fn pin_devices(&mut self, microphone_endpoint_id: EndpointId, render_endpoint_id: EndpointId) {
+    pub fn pin_devices(
+        &mut self,
+        microphone_endpoint_id: EndpointId,
+        render_endpoint_id: EndpointId,
+    ) {
         self.state.bindings.insert(
             BindingKind::Microphone,
-            CaptureBinding::new(BindingKind::Microphone, BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: microphone_endpoint_id })),
+            CaptureBinding::new(
+                BindingKind::Microphone,
+                BindingSelection::Endpoint(EndpointSelection::Pinned {
+                    endpoint_id: microphone_endpoint_id,
+                }),
+            ),
         );
         self.state.bindings.insert(
             BindingKind::EndpointLoopback,
-            CaptureBinding::new(BindingKind::EndpointLoopback, BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: render_endpoint_id })),
+            CaptureBinding::new(
+                BindingKind::EndpointLoopback,
+                BindingSelection::Endpoint(EndpointSelection::Pinned {
+                    endpoint_id: render_endpoint_id,
+                }),
+            ),
         );
     }
 
     pub fn start_all(&mut self) -> Result<(), CaptureError> {
         for binding in [BindingKind::Microphone, BindingKind::EndpointLoopback] {
-            let effects = decide(&mut self.state, DecisionInput::UserIntent(UserIntent::Start { binding }));
+            let effects = decide(
+                &mut self.state,
+                DecisionInput::UserIntent(UserIntent::Start { binding }),
+            );
             self.execute(effects)?;
         }
         Ok(())
@@ -212,7 +254,11 @@ impl WindowsSupervisor {
     /// bindings currently `Running` (see capture-api's rebinding module) — a binding
     /// still `Starting`/`Waiting` when shutdown arrives gets no `StopCapture` effect
     /// and this call will not wait for it.
-    pub fn run_until_shutdown(&mut self, device_watch_rx: &Receiver<DeviceWatchEvent>, shutdown_rx: &Receiver<()>) -> Result<(), CaptureError> {
+    pub fn run_until_shutdown(
+        &mut self,
+        device_watch_rx: &Receiver<DeviceWatchEvent>,
+        shutdown_rx: &Receiver<()>,
+    ) -> Result<(), CaptureError> {
         loop {
             let mut sel = Select::new();
             let capture_idx = sel.recv(&self.capture_rx);
@@ -237,7 +283,10 @@ impl WindowsSupervisor {
                 }
             } else if index == retry_idx {
                 if let Ok((binding, retry_id)) = oper.recv(&self.retry_rx) {
-                    let effects = decide(&mut self.state, DecisionInput::RetryTimerFired { binding, retry_id });
+                    let effects = decide(
+                        &mut self.state,
+                        DecisionInput::RetryTimerFired { binding, retry_id },
+                    );
                     self.execute(effects)?;
                 }
             } else if index == shutdown_idx {
@@ -254,11 +303,33 @@ impl WindowsSupervisor {
     fn execute(&mut self, effects: Vec<Effect>) -> Result<(), CaptureError> {
         for effect in effects {
             match effect {
-                Effect::StartCapture { binding, operation_id, proposed_epoch, target, .. } => {
-                    let stream = build_stream(binding, &target, proposed_epoch, self.pipeline_drop_counter.clone(), self.callback_timeout_ms);
+                Effect::StartCapture {
+                    binding,
+                    operation_id,
+                    proposed_epoch,
+                    target,
+                    ..
+                } => {
+                    let stream = build_stream(
+                        binding,
+                        &target,
+                        proposed_epoch,
+                        self.pipeline_drop_counter.clone(),
+                        self.callback_timeout_ms,
+                    );
                     let stop = Arc::new(StopSignal::new()?);
-                    let join_handle = spawn_capture_thread(stream, self.capture_tx.clone(), stop.clone());
-                    let previous = self.workers.insert(binding, WorkerHandle { operation_id, epoch: proposed_epoch, target, stop, join_handle });
+                    let join_handle =
+                        spawn_capture_thread(stream, self.capture_tx.clone(), stop.clone());
+                    let previous = self.workers.insert(
+                        binding,
+                        WorkerHandle {
+                            operation_id,
+                            epoch: proposed_epoch,
+                            target,
+                            stop,
+                            join_handle,
+                        },
+                    );
                     // Every path that removes a binding from `self.workers`
                     // (`Effect::StopCapture` below, `reap_dead_worker`) does so before
                     // `decide()` can produce a fresh `Effect::StartCapture` for that
@@ -278,13 +349,23 @@ impl WindowsSupervisor {
                         );
                     }
                 }
-                Effect::StopCapture { binding, operation_id, epoch, .. } => {
+                Effect::StopCapture {
+                    binding,
+                    operation_id,
+                    epoch,
+                    ..
+                } => {
                     if let Some(worker) = self.workers.remove(&binding) {
                         worker.stop.signal()?;
                         self.spawn_joiner(binding, operation_id, epoch, worker.join_handle);
                     }
                 }
-                Effect::ScheduleRetry { binding, retry_id, attempt, .. } => {
+                Effect::ScheduleRetry {
+                    binding,
+                    retry_id,
+                    attempt,
+                    ..
+                } => {
                     let retry_tx = self.retry_tx.clone();
                     let delay = backoff_for_attempt(attempt);
                     std::thread::spawn(move || {
@@ -297,12 +378,23 @@ impl WindowsSupervisor {
         Ok(())
     }
 
-    fn spawn_joiner(&mut self, binding: BindingKind, operation_id: OperationId, epoch: StreamEpoch, join_handle: std::thread::JoinHandle<CaptureThreadOutcome>) {
+    fn spawn_joiner(
+        &mut self,
+        binding: BindingKind,
+        operation_id: OperationId,
+        epoch: StreamEpoch,
+        join_handle: std::thread::JoinHandle<CaptureThreadOutcome>,
+    ) {
         self.pending_joins += 1;
         let join_result_tx = self.join_result_tx.clone();
         std::thread::spawn(move || {
             let outcome = join_handle.join().expect("capture worker thread panicked");
-            let _ = join_result_tx.send(JoinResult { binding, operation_id, epoch, outcome });
+            let _ = join_result_tx.send(JoinResult {
+                binding,
+                operation_id,
+                epoch,
+                outcome,
+            });
         });
     }
 
@@ -314,13 +406,21 @@ impl WindowsSupervisor {
                 // still have frames in flight. Without this check they'd be
                 // forwarded and mixed into the timeline as if they belonged to the
                 // binding's *current* generation.
-                if self.state.accepts_epoch(record.stream, StreamEpoch(record.capture_epoch)) {
+                if self
+                    .state
+                    .accepts_epoch(record.stream, StreamEpoch(record.capture_epoch))
+                {
                     if let Some(tx) = &self.frame_tx {
                         let _ = tx.send(FrameSinkEvent::Frame { record, samples });
                     }
                 }
             }
-            CaptureEvent::StreamStarted { stream, ref format, nominal_frame_interval_ns, .. } => {
+            CaptureEvent::StreamStarted {
+                stream,
+                ref format,
+                nominal_frame_interval_ns,
+                ..
+            } => {
                 if let Some(tx) = &self.frame_tx {
                     let _ = tx.send(FrameSinkEvent::StreamStarted {
                         binding: stream,
@@ -335,14 +435,30 @@ impl WindowsSupervisor {
                 // decide()'s own admission check still applies: a stale arrival (the
                 // binding already moved past `Starting`) is a safe no-op there.
                 if let Some(worker) = self.workers.get(&stream) {
-                    let (operation_id, epoch, target) = (worker.operation_id, worker.epoch, worker.target.clone());
-                    let effects = decide(&mut self.state, DecisionInput::Observation(Observation::WorkerStarted { binding: stream, operation_id, epoch, target }));
+                    let (operation_id, epoch, target) =
+                        (worker.operation_id, worker.epoch, worker.target.clone());
+                    let effects = decide(
+                        &mut self.state,
+                        DecisionInput::Observation(Observation::WorkerStarted {
+                            binding: stream,
+                            operation_id,
+                            epoch,
+                            target,
+                        }),
+                    );
                     self.execute(effects)?;
                 }
             }
             CaptureEvent::StreamError { stream, error } => {
                 if let Some(operation_id) = self.workers.get(&stream).map(|w| w.operation_id) {
-                    let effects = decide(&mut self.state, DecisionInput::Observation(Observation::WorkerFailed { binding: stream, operation_id, error }));
+                    let effects = decide(
+                        &mut self.state,
+                        DecisionInput::Observation(Observation::WorkerFailed {
+                            binding: stream,
+                            operation_id,
+                            error,
+                        }),
+                    );
                     self.execute(effects)?;
                     self.reap_dead_worker(stream, operation_id);
                 }
@@ -440,22 +556,46 @@ impl WindowsSupervisor {
             return;
         }
         if let Some(worker) = self.workers.remove(&binding) {
-            self.spawn_joiner(binding, worker.operation_id, worker.epoch, worker.join_handle);
+            self.spawn_joiner(
+                binding,
+                worker.operation_id,
+                worker.epoch,
+                worker.join_handle,
+            );
         }
     }
 
     fn handle_device_watch_event(&mut self, event: DeviceWatchEvent) -> Result<(), CaptureError> {
         let observation = match event {
-            DeviceWatchEvent::DeviceRemoved { endpoint_id, .. } => Some(Observation::EndpointRemoved { endpoint_id: EndpointId(endpoint_id) }),
-            DeviceWatchEvent::DeviceAdded { endpoint_id, .. } => Some(Observation::EndpointAdded { endpoint_id: EndpointId(endpoint_id) }),
-            DeviceWatchEvent::DeviceStateChanged { endpoint_id, new_state_raw, .. } => {
+            DeviceWatchEvent::DeviceRemoved { endpoint_id, .. } => {
+                Some(Observation::EndpointRemoved {
+                    endpoint_id: EndpointId(endpoint_id),
+                })
+            }
+            DeviceWatchEvent::DeviceAdded { endpoint_id, .. } => Some(Observation::EndpointAdded {
+                endpoint_id: EndpointId(endpoint_id),
+            }),
+            DeviceWatchEvent::DeviceStateChanged {
+                endpoint_id,
+                new_state_raw,
+                ..
+            } => {
                 if new_state_raw == DEVICE_STATE_ACTIVE.0 {
-                    Some(Observation::EndpointAdded { endpoint_id: EndpointId(endpoint_id) })
+                    Some(Observation::EndpointAdded {
+                        endpoint_id: EndpointId(endpoint_id),
+                    })
                 } else {
-                    Some(Observation::EndpointRemoved { endpoint_id: EndpointId(endpoint_id) })
+                    Some(Observation::EndpointRemoved {
+                        endpoint_id: EndpointId(endpoint_id),
+                    })
                 }
             }
-            DeviceWatchEvent::DefaultDeviceChanged { flow_raw, role_raw, endpoint_id, .. } => {
+            DeviceWatchEvent::DefaultDeviceChanged {
+                flow_raw,
+                role_raw,
+                endpoint_id,
+                ..
+            } => {
                 let flow = if flow_raw == eCapture.0 {
                     Some(DataFlow::Capture)
                 } else if flow_raw == eRender.0 {
@@ -473,7 +613,11 @@ impl WindowsSupervisor {
                     None
                 };
                 match (flow, role) {
-                    (Some(flow), Some(role)) => Some(Observation::DefaultEndpointChanged { flow, role, endpoint_id: endpoint_id.map(EndpointId) }),
+                    (Some(flow), Some(role)) => Some(Observation::DefaultEndpointChanged {
+                        flow,
+                        role,
+                        endpoint_id: endpoint_id.map(EndpointId),
+                    }),
                     _ => None,
                 }
             }
@@ -492,14 +636,27 @@ impl WindowsSupervisor {
         // Fed through decide() unconditionally rather than tracked/filtered here —
         // its own operation_id/epoch staleness guard is what makes a late or
         // already-superseded join result a safe no-op (see `reap_dead_worker`).
-        let effects = decide(&mut self.state, DecisionInput::Observation(Observation::WorkerStopped { binding: result.binding, operation_id: result.operation_id, epoch: result.epoch }));
+        let effects = decide(
+            &mut self.state,
+            DecisionInput::Observation(Observation::WorkerStopped {
+                binding: result.binding,
+                operation_id: result.operation_id,
+                epoch: result.epoch,
+            }),
+        );
         self.execute(effects)?;
 
         match result.outcome {
-            CaptureThreadOutcome::Stopped { exit, mmcss_applied } => {
+            CaptureThreadOutcome::Stopped {
+                exit,
+                mmcss_applied,
+            } => {
                 tracing::info!(binding = ?result.binding, ?exit, mmcss_applied, "capture worker stopped");
             }
-            CaptureThreadOutcome::Errored { error, mmcss_applied } => {
+            CaptureThreadOutcome::Errored {
+                error,
+                mmcss_applied,
+            } => {
                 tracing::warn!(binding = ?result.binding, %error, mmcss_applied, "capture worker exited with error");
             }
         }
@@ -518,10 +675,18 @@ impl WindowsSupervisor {
     }
 }
 
-fn build_stream(binding: BindingKind, target: &ResolvedTarget, epoch: StreamEpoch, pipeline_drop_counter: Arc<AtomicU64>, callback_timeout_ms: u32) -> Box<dyn CaptureStream> {
+fn build_stream(
+    binding: BindingKind,
+    target: &ResolvedTarget,
+    epoch: StreamEpoch,
+    pipeline_drop_counter: Arc<AtomicU64>,
+    callback_timeout_ms: u32,
+) -> Box<dyn CaptureStream> {
     let device_id_or_default = match target {
         ResolvedTarget::Endpoint(id) => id.0.clone(),
-        ResolvedTarget::Process { .. } => unreachable!("process loopback is not part of Phase 1A's bindings"),
+        ResolvedTarget::Process { .. } => {
+            unreachable!("process loopback is not part of Phase 1A's bindings")
+        }
     };
     match binding {
         BindingKind::Microphone => Box::new(MicCaptureStream {
@@ -538,7 +703,9 @@ fn build_stream(binding: BindingKind, target: &ResolvedTarget, epoch: StreamEpoc
             callback_timeout_ms,
             capture_epoch: epoch.0,
         }),
-        BindingKind::ProcessLoopback => unreachable!("process loopback is not part of Phase 1A's bindings"),
+        BindingKind::ProcessLoopback => {
+            unreachable!("process loopback is not part of Phase 1A's bindings")
+        }
     }
 }
 

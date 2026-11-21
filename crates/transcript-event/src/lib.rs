@@ -80,9 +80,7 @@ pub enum UtteranceEndReason {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SummaryEvent {
     /// Summary generation has started.
-    Started {
-        session_id: SessionId,
-    },
+    Started { session_id: SessionId },
     /// Summary generation completed successfully.
     Completed {
         session_id: SessionId,

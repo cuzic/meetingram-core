@@ -4,8 +4,8 @@ use std::sync::Mutex;
 
 use chrono::{DateTime, Utc};
 use recorder_domain::{
-    AudioCodec, AudioManifest, AudioSegment, CaptureManifest, CaptureState, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest, TrackKind,
-    UploadState,
+    AudioCodec, AudioManifest, AudioSegment, CaptureManifest, CaptureState, ConsentManifest,
+    RemoteSourceKind, SessionId, SessionManifest, TrackKind, UploadState,
 };
 use rusqlite::{named_params, params, Connection, OptionalExtension};
 
@@ -16,7 +16,8 @@ use crate::state_codec;
 /// Non-terminal `CaptureState` tags — a session found in one of these at `open()` time
 /// was left mid-flight by a process that never reached `Finalized`/`Failed` (crash,
 /// force-quit, OS shutdown). See `reconcile_on_startup`.
-const NON_TERMINAL_CAPTURE_STATE_TAGS: [&str; 4] = ["preparing", "recording", "stopping", "finalizing"];
+const NON_TERMINAL_CAPTURE_STATE_TAGS: [&str; 4] =
+    ["preparing", "recording", "stopping", "finalizing"];
 
 /// One row of diarized transcript output — corresponds to a single `stt-api`
 /// `SttEvent::PartialTranscript`/`FinalTranscript`. `track` is `None` when the
@@ -90,14 +91,18 @@ pub struct SessionStore {
 impl SessionStore {
     pub fn open(path: &Path) -> Result<Self, StoreError> {
         let conn = schema::open_with_pragmas(path)?;
-        Ok(Self { conn: Mutex::new(conn) })
+        Ok(Self {
+            conn: Mutex::new(conn),
+        })
     }
 
     /// An in-memory store — useful for tests, and for any future dry-run mode that
     /// shouldn't touch disk.
     pub fn open_in_memory() -> Result<Self, StoreError> {
         let conn = schema::open_with_pragmas_on(Connection::open_in_memory()?)?;
-        Ok(Self { conn: Mutex::new(conn) })
+        Ok(Self {
+            conn: Mutex::new(conn),
+        })
     }
 
     /// Registers a new session and its declared tracks. The session starts in
@@ -161,7 +166,11 @@ impl SessionStore {
 
     /// Records the API's own session identifier, once `UploadAdapter::create_session`
     /// (design.md §13) succeeds.
-    pub fn set_remote_session_id(&self, session_id: SessionId, remote_session_id: &str) -> Result<(), StoreError> {
+    pub fn set_remote_session_id(
+        &self,
+        session_id: SessionId,
+        remote_session_id: &str,
+    ) -> Result<(), StoreError> {
         let now = Utc::now().to_rfc3339();
         let conn = self.conn.lock().unwrap();
         let rows = conn.execute(
@@ -200,7 +209,10 @@ impl SessionStore {
     /// still retry `UploadAdapter::create_session` on a later restart without the
     /// original in-memory manifest ever having survived. Returns `None` only if
     /// `session_id` doesn't exist at all.
-    pub fn session_manifest(&self, session_id: SessionId) -> Result<Option<SessionManifest>, StoreError> {
+    pub fn session_manifest(
+        &self,
+        session_id: SessionId,
+    ) -> Result<Option<SessionManifest>, StoreError> {
         let session_id_str = session_id.to_string();
         let conn = self.conn.lock().unwrap();
         let row = conn.query_row(
@@ -227,7 +239,20 @@ impl SessionStore {
                 ))
             },
         );
-        let (schema_version, started_at, ended_at, platform, app_version, microphone_device_id, remote_source_id, remote_source_kind, sample_rate, segment_duration_ms, consent_confirmed_by_user, consent_confirmed_at) = match row {
+        let (
+            schema_version,
+            started_at,
+            ended_at,
+            platform,
+            app_version,
+            microphone_device_id,
+            remote_source_id,
+            remote_source_kind,
+            sample_rate,
+            segment_duration_ms,
+            consent_confirmed_by_user,
+            consent_confirmed_at,
+        ) = match row {
             Ok(row) => row,
             Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(None),
             Err(other) => return Err(StoreError::Sqlite(other)),
@@ -245,12 +270,26 @@ impl SessionStore {
             schema_version,
             session_id,
             started_at: DateTime::parse_from_rfc3339(&started_at)?.with_timezone(&Utc),
-            ended_at: ended_at.map(|s| DateTime::parse_from_rfc3339(&s).map(|d| d.with_timezone(&Utc))).transpose()?,
+            ended_at: ended_at
+                .map(|s| DateTime::parse_from_rfc3339(&s).map(|d| d.with_timezone(&Utc)))
+                .transpose()?,
             platform,
             app_version,
-            capture: CaptureManifest { microphone_device_id, remote_source_id, remote_source_kind: remote_source_kind.parse::<RemoteSourceKind>()? },
-            audio: AudioManifest { sample_rate, segment_duration_ms, tracks },
-            consent: ConsentManifest { confirmed_by_user: consent_confirmed_by_user, confirmed_at: DateTime::parse_from_rfc3339(&consent_confirmed_at)?.with_timezone(&Utc) },
+            capture: CaptureManifest {
+                microphone_device_id,
+                remote_source_id,
+                remote_source_kind: remote_source_kind.parse::<RemoteSourceKind>()?,
+            },
+            audio: AudioManifest {
+                sample_rate,
+                segment_duration_ms,
+                tracks,
+            },
+            consent: ConsentManifest {
+                confirmed_by_user: consent_confirmed_by_user,
+                confirmed_at: DateTime::parse_from_rfc3339(&consent_confirmed_at)?
+                    .with_timezone(&Utc),
+            },
         }))
     }
 
@@ -261,11 +300,20 @@ impl SessionStore {
     /// from `pending_uploads` (which is per-segment and needs a `RemoteSession`
     /// already) — this is the set `recover_incomplete_sessions` retries
     /// `create_session` for via `session_manifest` above.
-    pub fn failed_sessions_missing_remote_registration(&self) -> Result<Vec<SessionId>, StoreError> {
+    pub fn failed_sessions_missing_remote_registration(
+        &self,
+    ) -> Result<Vec<SessionId>, StoreError> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT session_id FROM sessions WHERE capture_state_tag = 'failed' AND remote_session_id IS NULL")?;
-        let ids = stmt.query_map([], |row| row.get::<_, String>(0))?.collect::<rusqlite::Result<Vec<_>>>()?;
-        ids.into_iter().map(|s| s.parse::<SessionId>().map_err(|_| StoreError::SessionNotFound(s))).collect()
+        let ids = stmt
+            .query_map([], |row| row.get::<_, String>(0))?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        ids.into_iter()
+            .map(|s| {
+                s.parse::<SessionId>()
+                    .map_err(|_| StoreError::SessionNotFound(s))
+            })
+            .collect()
     }
 
     pub fn capture_state(&self, session_id: SessionId) -> Result<CaptureState, StoreError> {
@@ -275,16 +323,31 @@ impl SessionStore {
             "SELECT capture_state_tag, capture_state_recoverable, capture_state_reason
              FROM sessions WHERE session_id = ?1",
             params![session_id_str],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<bool>>(1)?, row.get::<_, Option<String>>(2)?)),
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, Option<bool>>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                ))
+            },
         )
         .map_err(|e| match e {
-            rusqlite::Error::QueryReturnedNoRows => StoreError::SessionNotFound(session_id_str.clone()),
+            rusqlite::Error::QueryReturnedNoRows => {
+                StoreError::SessionNotFound(session_id_str.clone())
+            }
             other => StoreError::Sqlite(other),
         })
-        .and_then(|(tag, recoverable, reason)| state_codec::decode_capture_state(&tag, recoverable, reason))
+        .and_then(|(tag, recoverable, reason)| {
+            state_codec::decode_capture_state(&tag, recoverable, reason)
+        })
     }
 
-    pub fn upload_state(&self, session_id: SessionId, track: TrackKind, sequence: u64) -> Result<UploadState, StoreError> {
+    pub fn upload_state(
+        &self,
+        session_id: SessionId,
+        track: TrackKind,
+        sequence: u64,
+    ) -> Result<UploadState, StoreError> {
         let session_id_str = session_id.to_string();
         let track_str = track.as_manifest_str();
         let conn = self.conn.lock().unwrap();
@@ -292,7 +355,13 @@ impl SessionStore {
             "SELECT state_tag, retryable, reason FROM upload_status
              WHERE session_id = ?1 AND track = ?2 AND sequence = ?3",
             params![session_id_str, track_str, sequence],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<bool>>(1)?, row.get::<_, Option<String>>(2)?)),
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, Option<bool>>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                ))
+            },
         )
         .map_err(|e| match e {
             rusqlite::Error::QueryReturnedNoRows => StoreError::SegmentNotFound {
@@ -302,13 +371,20 @@ impl SessionStore {
             },
             other => StoreError::Sqlite(other),
         })
-        .and_then(|(tag, retryable, reason)| state_codec::decode_upload_state(&tag, retryable, reason))
+        .and_then(|(tag, retryable, reason)| {
+            state_codec::decode_upload_state(&tag, retryable, reason)
+        })
     }
 
     /// How many times a segment has entered `UploadState::Uploading` — see
     /// `update_upload_state`'s doc comment for exactly what counts as an attempt.
     /// `upload-client`'s backoff pacing is expected to read this.
-    pub fn upload_attempt_count(&self, session_id: SessionId, track: TrackKind, sequence: u64) -> Result<u32, StoreError> {
+    pub fn upload_attempt_count(
+        &self,
+        session_id: SessionId,
+        track: TrackKind,
+        sequence: u64,
+    ) -> Result<u32, StoreError> {
         let session_id_str = session_id.to_string();
         let track_str = track.as_manifest_str();
         let conn = self.conn.lock().unwrap();
@@ -323,7 +399,11 @@ impl SessionStore {
         })
     }
 
-    pub fn update_capture_state(&self, session_id: SessionId, state: &CaptureState) -> Result<(), StoreError> {
+    pub fn update_capture_state(
+        &self,
+        session_id: SessionId,
+        state: &CaptureState,
+    ) -> Result<(), StoreError> {
         let now = Utc::now().to_rfc3339();
         let tag = state_codec::capture_state_tag(state);
         let (recoverable, reason) = state_codec::capture_state_detail(state);
@@ -356,7 +436,12 @@ impl SessionStore {
     /// Whether a segment is already registered — `segment-store`'s restart-time
     /// directory scan uses this to tell "rename completed but DB registration didn't"
     /// (needs registering) apart from "already fully committed" (leave alone).
-    pub fn segment_exists(&self, session_id: SessionId, track: TrackKind, sequence: u64) -> Result<bool, StoreError> {
+    pub fn segment_exists(
+        &self,
+        session_id: SessionId,
+        track: TrackKind,
+        sequence: u64,
+    ) -> Result<bool, StoreError> {
         let conn = self.conn.lock().unwrap();
         let count: i64 = conn.query_row(
             "SELECT COUNT(*) FROM segments WHERE session_id = ?1 AND track = ?2 AND sequence = ?3",
@@ -483,12 +568,34 @@ impl SessionStore {
             let track_str: String = row.get(0)?;
             let codec_str: String = row.get(4)?;
             let local_path: String = row.get(8)?;
-            Ok((track_str, codec_str, local_path, row.get::<_, u64>(1)?, row.get::<_, u64>(2)?, row.get::<_, u32>(3)?, row.get::<_, u32>(5)?, row.get::<_, u16>(6)?, row.get::<_, String>(7)?, row.get::<_, u64>(9)?))
+            Ok((
+                track_str,
+                codec_str,
+                local_path,
+                row.get::<_, u64>(1)?,
+                row.get::<_, u64>(2)?,
+                row.get::<_, u32>(3)?,
+                row.get::<_, u32>(5)?,
+                row.get::<_, u16>(6)?,
+                row.get::<_, String>(7)?,
+                row.get::<_, u64>(9)?,
+            ))
         })?;
 
         let mut segments = Vec::new();
         for row in rows {
-            let (track_str, codec_str, local_path, sequence, timeline_start_ms, duration_ms, sample_rate, channels, sha256, byte_len) = row?;
+            let (
+                track_str,
+                codec_str,
+                local_path,
+                sequence,
+                timeline_start_ms,
+                duration_ms,
+                sample_rate,
+                channels,
+                sha256,
+                byte_len,
+            ) = row?;
             segments.push(AudioSegment {
                 session_id,
                 track: track_str.parse::<TrackKind>()?,
@@ -510,7 +617,11 @@ impl SessionStore {
     /// status — for verifying/inspecting what's on disk (e.g. a future desktop UI's
     /// "recorded so far" view), unlike `pending_uploads` which only returns segments
     /// still needing an upload attempt.
-    pub fn segments_for_track(&self, session_id: SessionId, track: TrackKind) -> Result<Vec<AudioSegment>, StoreError> {
+    pub fn segments_for_track(
+        &self,
+        session_id: SessionId,
+        track: TrackKind,
+    ) -> Result<Vec<AudioSegment>, StoreError> {
         let session_id_str = session_id.to_string();
         let track_str = track.as_manifest_str();
         let conn = self.conn.lock().unwrap();
@@ -525,12 +636,34 @@ impl SessionStore {
             let track_str: String = row.get(0)?;
             let codec_str: String = row.get(4)?;
             let local_path: String = row.get(8)?;
-            Ok((track_str, codec_str, local_path, row.get::<_, u64>(1)?, row.get::<_, u64>(2)?, row.get::<_, u32>(3)?, row.get::<_, u32>(5)?, row.get::<_, u16>(6)?, row.get::<_, String>(7)?, row.get::<_, u64>(9)?))
+            Ok((
+                track_str,
+                codec_str,
+                local_path,
+                row.get::<_, u64>(1)?,
+                row.get::<_, u64>(2)?,
+                row.get::<_, u32>(3)?,
+                row.get::<_, u32>(5)?,
+                row.get::<_, u16>(6)?,
+                row.get::<_, String>(7)?,
+                row.get::<_, u64>(9)?,
+            ))
         })?;
 
         let mut segments = Vec::new();
         for row in rows {
-            let (track_str, codec_str, local_path, sequence, timeline_start_ms, duration_ms, sample_rate, channels, sha256, byte_len) = row?;
+            let (
+                track_str,
+                codec_str,
+                local_path,
+                sequence,
+                timeline_start_ms,
+                duration_ms,
+                sample_rate,
+                channels,
+                sha256,
+                byte_len,
+            ) = row?;
             segments.push(AudioSegment {
                 session_id,
                 track: track_str.parse::<TrackKind>()?,
@@ -549,12 +682,14 @@ impl SessionStore {
     }
 
     /// For `SessionSummary::segment_counts_by_track`, sent to `finalize_session`.
-    pub fn segment_counts_by_track(&self, session_id: SessionId) -> Result<BTreeMap<TrackKind, u64>, StoreError> {
+    pub fn segment_counts_by_track(
+        &self,
+        session_id: SessionId,
+    ) -> Result<BTreeMap<TrackKind, u64>, StoreError> {
         let session_id_str = session_id.to_string();
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT track, COUNT(*) FROM segments WHERE session_id = ?1 GROUP BY track",
-        )?;
+        let mut stmt = conn
+            .prepare("SELECT track, COUNT(*) FROM segments WHERE session_id = ?1 GROUP BY track")?;
         let rows = stmt.query_map(params![session_id_str], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?))
         })?;
@@ -591,7 +726,10 @@ impl SessionStore {
     }
 
     /// Every transcript segment recorded for a session, oldest first.
-    pub fn list_transcript_segments(&self, session_id: SessionId) -> Result<Vec<TranscriptSegment>, StoreError> {
+    pub fn list_transcript_segments(
+        &self,
+        session_id: SessionId,
+    ) -> Result<Vec<TranscriptSegment>, StoreError> {
         let session_id_str = session_id.to_string();
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
@@ -637,13 +775,23 @@ impl SessionStore {
     /// eagerly, rather than only once the outage's full extent is known,
     /// means a long gap still shows up (with `end_ms = NULL`) even if the
     /// process crashes mid-outage instead of only existing in memory.
-    pub fn record_gap_start(&self, session_id: SessionId, track: TrackKind, start_ms: u64) -> Result<i64, StoreError> {
+    pub fn record_gap_start(
+        &self,
+        session_id: SessionId,
+        track: TrackKind,
+        start_ms: u64,
+    ) -> Result<i64, StoreError> {
         let now = Utc::now().to_rfc3339();
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "INSERT INTO transcription_gaps (session_id, track, start_ms, end_ms, created_at)
              VALUES (?1, ?2, ?3, NULL, ?4)",
-            params![session_id.to_string(), track.as_manifest_str(), start_ms, now],
+            params![
+                session_id.to_string(),
+                track.as_manifest_str(),
+                start_ms,
+                now
+            ],
         )?;
         Ok(conn.last_insert_rowid())
     }
@@ -666,7 +814,10 @@ impl SessionStore {
     /// has a bug rather than something this API's caller needs to react to.
     pub fn record_gap_end(&self, gap_id: i64, end_ms: u64) -> Result<(), StoreError> {
         let conn = self.conn.lock().unwrap();
-        conn.execute("UPDATE transcription_gaps SET end_ms = ?1 WHERE id = ?2", params![end_ms, gap_id])?;
+        conn.execute(
+            "UPDATE transcription_gaps SET end_ms = ?1 WHERE id = ?2",
+            params![end_ms, gap_id],
+        )?;
         Ok(())
     }
 
@@ -680,7 +831,10 @@ impl SessionStore {
     /// row behind for `gaps_for_session` callers to filter out themselves.
     pub fn discard_gap(&self, gap_id: i64) -> Result<(), StoreError> {
         let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM transcription_gaps WHERE id = ?1", params![gap_id])?;
+        conn.execute(
+            "DELETE FROM transcription_gaps WHERE id = ?1",
+            params![gap_id],
+        )?;
         Ok(())
     }
 
@@ -688,7 +842,10 @@ impl SessionStore {
     /// task #91's manual re-transcription pass reads this to know which
     /// `[start_ms, end_ms)` stretches (per track) to re-run rather than the
     /// whole recording.
-    pub fn gaps_for_session(&self, session_id: SessionId) -> Result<Vec<TranscriptionGap>, StoreError> {
+    pub fn gaps_for_session(
+        &self,
+        session_id: SessionId,
+    ) -> Result<Vec<TranscriptionGap>, StoreError> {
         let session_id_str = session_id.to_string();
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
@@ -697,13 +854,24 @@ impl SessionStore {
              ORDER BY id",
         )?;
         let rows = stmt.query_map(params![session_id_str], |row| {
-            Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?, row.get::<_, u64>(2)?, row.get::<_, Option<u64>>(3)?))
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, u64>(2)?,
+                row.get::<_, Option<u64>>(3)?,
+            ))
         })?;
 
         let mut gaps = Vec::new();
         for row in rows {
             let (id, track_str, start_ms, end_ms) = row?;
-            gaps.push(TranscriptionGap { id, session_id, track: track_str.parse::<TrackKind>()?, start_ms, end_ms });
+            gaps.push(TranscriptionGap {
+                id,
+                session_id,
+                track: track_str.parse::<TrackKind>()?,
+                start_ms,
+                end_ms,
+            });
         }
         Ok(gaps)
     }
@@ -731,7 +899,13 @@ impl SessionStore {
                  ORDER BY generated_at DESC, id DESC
                  LIMIT 1",
                 params![session_id_str],
-                |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)),
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
+                },
             )
             .optional()?;
 
@@ -778,7 +952,9 @@ impl SessionStore {
             items.push(SessionListItem {
                 session_id,
                 started_at: DateTime::parse_from_rfc3339(&started_at)?.with_timezone(&Utc),
-                ended_at: ended_at.map(|s| DateTime::parse_from_rfc3339(&s).map(|d| d.with_timezone(&Utc))).transpose()?,
+                ended_at: ended_at
+                    .map(|s| DateTime::parse_from_rfc3339(&s).map(|d| d.with_timezone(&Utc)))
+                    .transpose()?,
                 capture_state: state_codec::decode_capture_state(&tag, recoverable, reason)?,
             });
         }
@@ -824,12 +1000,20 @@ impl SessionStore {
 
         session_ids
             .into_iter()
-            .map(|s| s.parse::<SessionId>().map_err(|_| StoreError::SessionNotFound(s)))
+            .map(|s| {
+                s.parse::<SessionId>()
+                    .map_err(|_| StoreError::SessionNotFound(s))
+            })
             .collect()
     }
 }
 
-fn insert_event(conn: &Connection, session_id: &str, kind: &str, detail: Option<&str>) -> Result<(), StoreError> {
+fn insert_event(
+    conn: &Connection,
+    session_id: &str,
+    kind: &str,
+    detail: Option<&str>,
+) -> Result<(), StoreError> {
     let now = Utc::now().to_rfc3339();
     let detail_json = serde_json::to_string(&detail.unwrap_or_default())?;
     conn.execute(

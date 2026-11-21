@@ -8,7 +8,10 @@ fn endpoint(id: &str) -> EndpointId {
 #[test]
 fn first_diff_from_empty_reports_only_added() {
     let mut snapshot = DeviceSnapshot::default();
-    let delta = snapshot.diff_and_update(DeviceSnapshot::from_ids([endpoint("MicA"), endpoint("SpeakerA")]));
+    let delta = snapshot.diff_and_update(DeviceSnapshot::from_ids([
+        endpoint("MicA"),
+        endpoint("SpeakerA"),
+    ]));
     assert_eq!(delta.added, vec![endpoint("MicA"), endpoint("SpeakerA")]);
     assert!(delta.removed.is_empty());
 }
@@ -28,7 +31,10 @@ fn device_unplugged_then_replugged_round_trips() {
     assert_eq!(delta.removed, vec![endpoint("MicA")]);
     assert!(delta.added.is_empty());
 
-    let delta = snapshot.diff_and_update(DeviceSnapshot::from_ids([endpoint("MicA"), endpoint("SpeakerA")]));
+    let delta = snapshot.diff_and_update(DeviceSnapshot::from_ids([
+        endpoint("MicA"),
+        endpoint("SpeakerA"),
+    ]));
     assert_eq!(delta.added, vec![endpoint("MicA")]);
     assert!(delta.removed.is_empty());
 }

@@ -2,7 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use recorder_domain::{AudioSegment, RemoteSession, SessionManifest, SessionSummary, UploadAdapter, UploadError, UploadReceipt};
+use recorder_domain::{
+    AudioSegment, RemoteSession, SessionManifest, SessionSummary, UploadAdapter, UploadError,
+    UploadReceipt,
+};
 use reqwest::{RequestBuilder, Response, StatusCode};
 
 use crate::token_provider::TokenProvider;
@@ -11,7 +14,11 @@ fn sha256_hex(data: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(data);
-    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect()
+    hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
 }
 
 /// HTTP implementation of `UploadAdapter` (design.md §13.1's recommended contract).
@@ -24,12 +31,21 @@ pub struct HttpUploadClient {
 }
 
 impl HttpUploadClient {
-    pub fn new(base_url: String, request_timeout: Duration, token_provider: Arc<dyn TokenProvider>) -> Self {
+    pub fn new(
+        base_url: String,
+        request_timeout: Duration,
+        token_provider: Arc<dyn TokenProvider>,
+    ) -> Self {
         let http = reqwest::Client::builder()
             .timeout(request_timeout)
             .build()
             .expect("failed to build reqwest client");
-        Self { http, base_url, token_provider, max_attempts: 8 }
+        Self {
+            http,
+            base_url,
+            token_provider,
+            max_attempts: 8,
+        }
     }
 
     pub fn with_max_attempts(mut self, max_attempts: u32) -> Self {
@@ -97,38 +113,64 @@ fn classify_status(status: StatusCode, body: String) -> UploadError {
     } else if status == StatusCode::TOO_MANY_REQUESTS {
         UploadError::RateLimited
     } else if status.is_server_error() {
-        UploadError::ServerError { status: status.as_u16() }
+        UploadError::ServerError {
+            status: status.as_u16(),
+        }
     } else {
-        UploadError::PermanentClientError { status: status.as_u16(), reason: body }
+        UploadError::PermanentClientError {
+            status: status.as_u16(),
+            reason: body,
+        }
     }
 }
 
 #[async_trait]
 impl UploadAdapter for HttpUploadClient {
-    async fn create_session(&self, manifest: &SessionManifest) -> Result<RemoteSession, UploadError> {
-        let body = serde_json::to_value(manifest).map_err(|e| UploadError::Transport(e.to_string()))?;
+    async fn create_session(
+        &self,
+        manifest: &SessionManifest,
+    ) -> Result<RemoteSession, UploadError> {
+        let body =
+            serde_json::to_value(manifest).map_err(|e| UploadError::Transport(e.to_string()))?;
         let url = format!("{}/v1/recording-sessions", self.base_url);
         let response = self
             .send_with_retry(|token| self.http.post(&url).bearer_auth(token).json(&body))
             .await?;
 
-        let parsed: serde_json::Value = response.json().await.map_err(|e| UploadError::Transport(e.to_string()))?;
+        let parsed: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| UploadError::Transport(e.to_string()))?;
         let remote_session_id = parsed
             .get("session_id")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| UploadError::Transport("create_session response missing session_id".to_string()))?
+            .ok_or_else(|| {
+                UploadError::Transport("create_session response missing session_id".to_string())
+            })?
             .to_string();
 
-        Ok(RemoteSession { session_id: manifest.session_id, remote_session_id })
+        Ok(RemoteSession {
+            session_id: manifest.session_id,
+            remote_session_id,
+        })
     }
 
-    async fn upload_segment(&self, remote: &RemoteSession, segment: &AudioSegment) -> Result<UploadReceipt, UploadError> {
-        let data = tokio::fs::read(&segment.local_path).await.map_err(|e| UploadError::Transport(e.to_string()))?;
+    async fn upload_segment(
+        &self,
+        remote: &RemoteSession,
+        segment: &AudioSegment,
+    ) -> Result<UploadReceipt, UploadError> {
+        let data = tokio::fs::read(&segment.local_path)
+            .await
+            .map_err(|e| UploadError::Transport(e.to_string()))?;
         let sha256 = sha256_hex(&data);
         // design.md §13.2: derived deterministically from (session_id, track,
         // sequence) so retries and process restarts always produce the same key —
         // the server's dedup only works if this never changes across resends.
-        let idempotency_key = format!("{}:{}:{}", remote.session_id, segment.track, segment.sequence);
+        let idempotency_key = format!(
+            "{}:{}:{}",
+            remote.session_id, segment.track, segment.sequence
+        );
         let url = format!(
             "{}/v1/recording-sessions/{}/tracks/{}/segments/{}",
             self.base_url,
@@ -148,14 +190,27 @@ impl UploadAdapter for HttpUploadClient {
         })
         .await?;
 
-        Ok(UploadReceipt { track: segment.track, sequence: segment.sequence, accepted_at: chrono::Utc::now() })
+        Ok(UploadReceipt {
+            track: segment.track,
+            sequence: segment.sequence,
+            accepted_at: chrono::Utc::now(),
+        })
     }
 
-    async fn finalize_session(&self, remote: &RemoteSession, summary: &SessionSummary) -> Result<(), UploadError> {
-        let body = serde_json::to_value(summary).map_err(|e| UploadError::Transport(e.to_string()))?;
-        let url = format!("{}/v1/recording-sessions/{}/finalize", self.base_url, remote.remote_session_id);
+    async fn finalize_session(
+        &self,
+        remote: &RemoteSession,
+        summary: &SessionSummary,
+    ) -> Result<(), UploadError> {
+        let body =
+            serde_json::to_value(summary).map_err(|e| UploadError::Transport(e.to_string()))?;
+        let url = format!(
+            "{}/v1/recording-sessions/{}/finalize",
+            self.base_url, remote.remote_session_id
+        );
 
-        self.send_with_retry(|token| self.http.post(&url).bearer_auth(token).json(&body)).await?;
+        self.send_with_retry(|token| self.http.post(&url).bearer_auth(token).json(&body))
+            .await?;
         Ok(())
     }
 }

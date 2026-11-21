@@ -7,7 +7,10 @@
 use app_service::pseudo_source::{generate_frames, nominal_frame_interval_ns, PseudoSourceConfig};
 use app_service::run_pipeline;
 use chrono::Utc;
-use recorder_domain::{AudioManifest, CaptureManifest, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest, TrackKind};
+use recorder_domain::{
+    AudioManifest, CaptureManifest, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest,
+    TrackKind,
+};
 use session_store::SessionStore;
 use std::sync::Arc;
 use std::time::Duration;
@@ -23,8 +26,18 @@ async fn pseudo_source_pipeline_produces_synchronized_self_and_remote_segments_e
     // No faults injected: stage 1 is about proving the wiring works, not re-proving
     // upload-client's own retry/idempotency guarantees (already covered by that
     // crate's fault-injection tests).
-    let (base_url, server_state) = spawn_test_server(FaultConfig { pre_process_fault_probability: 0.0, post_process_fault_probability: 0.0, timeout_simulation_probability: 0.0, timeout_sleep: Duration::from_millis(0) }).await;
-    let adapter = HttpUploadClient::new(base_url, Duration::from_secs(5), Arc::new(StaticTokenProvider("test-token".to_string())));
+    let (base_url, server_state) = spawn_test_server(FaultConfig {
+        pre_process_fault_probability: 0.0,
+        post_process_fault_probability: 0.0,
+        timeout_simulation_probability: 0.0,
+        timeout_sleep: Duration::from_millis(0),
+    })
+    .await;
+    let adapter = HttpUploadClient::new(
+        base_url,
+        Duration::from_secs(5),
+        Arc::new(StaticTokenProvider("test-token".to_string())),
+    );
 
     let store = SessionStore::open_in_memory().unwrap();
     let session_dir = tempfile::tempdir().unwrap();
@@ -42,14 +55,33 @@ async fn pseudo_source_pipeline_produces_synchronized_self_and_remote_segments_e
             remote_source_id: "pseudo-speaker".to_string(),
             remote_source_kind: RemoteSourceKind::EndpointLoopback,
         },
-        audio: AudioManifest { sample_rate: SAMPLE_RATE, segment_duration_ms: SEGMENT_DURATION_MS, tracks: vec![TrackKind::SelfMic, TrackKind::RemoteAudio] },
-        consent: ConsentManifest { confirmed_by_user: true, confirmed_at: Utc::now() },
+        audio: AudioManifest {
+            sample_rate: SAMPLE_RATE,
+            segment_duration_ms: SEGMENT_DURATION_MS,
+            tracks: vec![TrackKind::SelfMic, TrackKind::RemoteAudio],
+        },
+        consent: ConsentManifest {
+            confirmed_by_user: true,
+            confirmed_at: Utc::now(),
+        },
     };
 
     // Self: captured natively at 48kHz mono (the normalization layer is a no-op here).
-    let self_config = PseudoSourceConfig { duration_secs: DURATION_SECS, frame_interval_ms: 20, sample_rate: SAMPLE_RATE, channels: 1, tone_freq_hz: 440.0 };
+    let self_config = PseudoSourceConfig {
+        duration_secs: DURATION_SECS,
+        frame_interval_ms: 20,
+        sample_rate: SAMPLE_RATE,
+        channels: 1,
+        tone_freq_hz: 440.0,
+    };
     // Remote: captured at 44.1kHz stereo, exercising the downmix + resample path.
-    let remote_config = PseudoSourceConfig { duration_secs: DURATION_SECS, frame_interval_ms: 20, sample_rate: 44_100, channels: 2, tone_freq_hz: 220.0 };
+    let remote_config = PseudoSourceConfig {
+        duration_secs: DURATION_SECS,
+        frame_interval_ms: 20,
+        sample_rate: 44_100,
+        channels: 2,
+        tone_freq_hz: 220.0,
+    };
 
     let self_frames = generate_frames(TrackKind::SelfMic, &self_config);
     let remote_frames = generate_frames(TrackKind::RemoteAudio, &remote_config);
@@ -70,8 +102,14 @@ async fn pseudo_source_pipeline_produces_synchronized_self_and_remote_segments_e
     .await
     .expect("pipeline should complete without error");
 
-    assert_eq!(summary.segment_counts_by_track.get(&TrackKind::SelfMic), Some(&3));
-    assert_eq!(summary.segment_counts_by_track.get(&TrackKind::RemoteAudio), Some(&3));
+    assert_eq!(
+        summary.segment_counts_by_track.get(&TrackKind::SelfMic),
+        Some(&3)
+    );
+    assert_eq!(
+        summary.segment_counts_by_track.get(&TrackKind::RemoteAudio),
+        Some(&3)
+    );
     assert_eq!(summary.total_duration_ms, DURATION_SECS as u64 * 1000);
 
     // Everything the local ledger knows about is fully uploaded.
@@ -84,11 +122,18 @@ async fn pseudo_source_pipeline_produces_synchronized_self_and_remote_segments_e
         assert_eq!(segments.len(), 3);
         for (i, segment) in segments.iter().enumerate() {
             assert_eq!(segment.sequence, i as u64);
-            assert_eq!(segment.timeline_start_ms, i as u64 * SEGMENT_DURATION_MS as u64);
+            assert_eq!(
+                segment.timeline_start_ms,
+                i as u64 * SEGMENT_DURATION_MS as u64
+            );
             assert_eq!(segment.duration_ms, SEGMENT_DURATION_MS);
             assert_eq!(segment.sample_rate, SAMPLE_RATE);
             assert_eq!(segment.channels, 1);
-            assert!(segment.local_path.exists(), "segment file should exist on disk: {:?}", segment.local_path);
+            assert!(
+                segment.local_path.exists(),
+                "segment file should exist on disk: {:?}",
+                segment.local_path
+            );
         }
     }
 

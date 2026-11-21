@@ -18,10 +18,12 @@ fn main() {
         std::process::exit(1);
     });
 
-    OsKeyringStore.save(SERVICE, ACCOUNT, &token).unwrap_or_else(|e| {
-        eprintln!("failed to save token to the OS keyring: {e}");
-        std::process::exit(1);
-    });
+    OsKeyringStore
+        .save(SERVICE, ACCOUNT, &token)
+        .unwrap_or_else(|e| {
+            eprintln!("failed to save token to the OS keyring: {e}");
+            std::process::exit(1);
+        });
 
     println!("saved a token for service={SERVICE:?} account={ACCOUNT:?}");
 }

@@ -14,13 +14,18 @@ pub fn normalize_to_mono(frame: &CapturedFrame, target_rate_hz: u32) -> Vec<f32>
     let mono: Vec<f32> = if channels <= 1 {
         frame.samples.clone()
     } else {
-        frame.samples.chunks_exact(channels).map(|c| c.iter().sum::<f32>() / channels as f32).collect()
+        frame
+            .samples
+            .chunks_exact(channels)
+            .map(|c| c.iter().sum::<f32>() / channels as f32)
+            .collect()
     };
 
     if frame.sample_rate == target_rate_hz || mono.is_empty() {
         mono
     } else {
-        let target_len = ((mono.len() as f64) * target_rate_hz as f64 / frame.sample_rate as f64).round() as usize;
+        let target_len = ((mono.len() as f64) * target_rate_hz as f64 / frame.sample_rate as f64)
+            .round() as usize;
         linear_resample(&mono, target_len)
     }
 }
@@ -31,7 +36,15 @@ mod tests {
     use recorder_domain::TrackKind;
 
     fn frame(sample_rate: u32, channels: u16, samples: Vec<f32>) -> CapturedFrame {
-        CapturedFrame { track: TrackKind::SelfMic, host_time_ns: 0, source_time_ns: None, sample_rate, channels, samples, discontinuity: false }
+        CapturedFrame {
+            track: TrackKind::SelfMic,
+            host_time_ns: 0,
+            source_time_ns: None,
+            sample_rate,
+            channels,
+            samples,
+            discontinuity: false,
+        }
     }
 
     #[test]

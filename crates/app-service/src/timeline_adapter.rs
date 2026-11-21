@@ -10,7 +10,12 @@ use crate::normalize::normalize_to_mono;
 /// Feeds every frame through `normalize_to_mono` and `TimelineAligner::ingest`, then
 /// pads to `total_duration_ns` so two independently-aligned tracks (Self/Remote) end
 /// up the same length even if one lost its final frames.
-pub fn align_track(frames: &[CapturedFrame], nominal_rate_hz: u32, nominal_frame_interval_ns: u64, total_duration_ns: u64) -> Vec<f32> {
+pub fn align_track(
+    frames: &[CapturedFrame],
+    nominal_rate_hz: u32,
+    nominal_frame_interval_ns: u64,
+    total_duration_ns: u64,
+) -> Vec<f32> {
     let mut aligner = TimelineAligner::new(nominal_rate_hz);
     for frame in frames {
         let mono = normalize_to_mono(frame, nominal_rate_hz);

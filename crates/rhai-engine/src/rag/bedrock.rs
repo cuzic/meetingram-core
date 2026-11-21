@@ -20,7 +20,10 @@ pub async fn search(
         .or_else(|| settings.get("bedrock_knowledge_base_id"))
         .ok_or("knowledge_base_id is required for Bedrock RAG")?;
     let region = get_opt_string(options, "region").unwrap_or_else(|| "us-east-1".to_string());
-    let max_results = options.get("max_results").and_then(|v| v.as_int().ok()).unwrap_or(5) as usize;
+    let max_results = options
+        .get("max_results")
+        .and_then(|v| v.as_int().ok())
+        .unwrap_or(5) as usize;
 
     let creds = load_bedrock_credentials(credential_store)?;
 
@@ -38,17 +41,20 @@ pub async fn search(
     let method = "POST";
     let content_type = "application/json";
 
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     let amz_date = format_amz_date(now);
     let date_stamp = &amz_date[..8];
 
-    let canonical_headers = format!("content-type:{content_type}\nhost:{host}\nx-amz-date:{amz_date}\n");
+    let canonical_headers =
+        format!("content-type:{content_type}\nhost:{host}\nx-amz-date:{amz_date}\n");
     let signed_headers = "content-type;host;x-amz-date";
 
     let payload_hash = sha256_hex(&body_str);
-    let canonical_request = format!(
-        "{method}\n/retrieve\n\n{canonical_headers}\n{signed_headers}\n{payload_hash}"
-    );
+    let canonical_request =
+        format!("{method}\n/retrieve\n\n{canonical_headers}\n{signed_headers}\n{payload_hash}");
     let canonical_request_hash = sha256_hex(&canonical_request);
 
     let string_to_sign = format!(
@@ -75,22 +81,33 @@ pub async fn search(
         .await
         .map_err(|e| format!("Bedrock RAG search failed: {e}"))?;
 
-    let json: serde_json::Value = resp.json().await.map_err(|e| format!("failed to parse response: {e}"))?;
+    let json: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("failed to parse response: {e}"))?;
 
     let mut results = rhai::Array::new();
     if let Some(retrieval_results) = json["retrievalResults"].as_array() {
         for r in retrieval_results {
             let mut m = rhai::Map::new();
-            m.insert("text".into(), rhai::Dynamic::from(
-                r["content"]["text"].as_str().unwrap_or("").to_string()
-            ));
-            m.insert("score".into(), rhai::Dynamic::from(
-                r["score"].as_f64().unwrap_or(0.0)
-            ));
+            m.insert(
+                "text".into(),
+                rhai::Dynamic::from(r["content"]["text"].as_str().unwrap_or("").to_string()),
+            );
+            m.insert(
+                "score".into(),
+                rhai::Dynamic::from(r["score"].as_f64().unwrap_or(0.0)),
+            );
             if let Some(loc) = r["location"].as_object() {
-                m.insert("source".into(), rhai::Dynamic::from(
-                    loc.get("s3Location").and_then(|s| s["uri"].as_str()).unwrap_or("").to_string()
-                ));
+                m.insert(
+                    "source".into(),
+                    rhai::Dynamic::from(
+                        loc.get("s3Location")
+                            .and_then(|s| s["uri"].as_str())
+                            .unwrap_or("")
+                            .to_string(),
+                    ),
+                );
             }
             results.push(rhai::Dynamic::from_map(m));
         }
@@ -107,9 +124,12 @@ pub async fn index(
 ) -> Result<rhai::Dynamic, String> {
     let mut m = rhai::Map::new();
     m.insert("indexed".into(), rhai::Dynamic::from(0_i64));
-    m.insert("message".into(), rhai::Dynamic::from(
-        "Bedrock KB auto-indexes from S3. Use S3 sync for document ingestion.".to_string()
-    ));
+    m.insert(
+        "message".into(),
+        rhai::Dynamic::from(
+            "Bedrock KB auto-indexes from S3. Use S3 sync for document ingestion.".to_string(),
+        ),
+    );
     Ok(rhai::Dynamic::from_map(m))
 }
 
@@ -124,8 +144,8 @@ fn load_bedrock_credentials(
     let raw = credential_store
         .load("meetingram", "bedrock-api-key")
         .map_err(|_| "Bedrock credentials not configured".to_string())?;
-    let json: serde_json::Value = serde_json::from_str(&raw)
-        .map_err(|e| format!("invalid credentials JSON: {e}"))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&raw).map_err(|e| format!("invalid credentials JSON: {e}"))?;
     Ok(AwsCredentials {
         access_key_id: json["access_key_id"].as_str().unwrap_or("").to_string(),
         secret_access_key: json["secret_access_key"].as_str().unwrap_or("").to_string(),
@@ -162,9 +182,6 @@ fn hmac_sha256_hex(key: &[u8], msg: &str) -> String {
 }
 
 fn derive_signing_key(secret_key: &str, date: &str, region: &str, service: &str) -> Vec<u8> {
-    
-    
-
     let k_date = hmac_sha256(format!("AWS4{secret_key}").as_bytes(), date);
     let k_region = hmac_sha256(&k_date, region);
     let k_service = hmac_sha256(&k_region, service);

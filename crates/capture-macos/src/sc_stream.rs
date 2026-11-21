@@ -123,9 +123,13 @@ impl CaptureStream for ScreenCaptureKitStream {
         // screencapturekit reports that as an error rather than silently
         // ignoring it, so only touch it when this stream actually needs the mic.
         if self.outputs.microphone {
-            config.set_captures_microphone(true).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
+            config
+                .set_captures_microphone(true)
+                .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             if let Some(device_id) = &self.microphone_device_id {
-                config.set_microphone_capture_device_id(device_id).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
+                config
+                    .set_microphone_capture_device_id(device_id)
+                    .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             }
         }
 
@@ -133,8 +137,12 @@ impl CaptureStream for ScreenCaptureKitStream {
         // owned signal rather than reusing `stop`.
         let stream_dead = Arc::new(StopSignal::new());
         let delegate_error: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
-        let delegate = StreamErrorDelegate { error: delegate_error.clone(), stream_dead: stream_dead.clone() };
-        let mut stream = SCStream::new_with_delegate(&self.filter, &config, delegate).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
+        let delegate = StreamErrorDelegate {
+            error: delegate_error.clone(),
+            stream_dead: stream_dead.clone(),
+        };
+        let mut stream = SCStream::new_with_delegate(&self.filter, &config, delegate)
+            .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
 
         if self.outputs.microphone {
             let handler = FrameForwarder::new(
@@ -146,7 +154,9 @@ impl CaptureStream for ScreenCaptureKitStream {
                     "outputs.microphone is true but ScreenCaptureKitStream::new wasn't given a microphone_epoch",
                 ),
             );
-            stream.add_output_handler(handler, SCStreamOutputType::Microphone).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
+            stream
+                .add_output_handler(handler, SCStreamOutputType::Microphone)
+                .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             tx.send(CaptureEvent::StreamStarted {
                 stream: BindingKind::Microphone,
                 sample_rate: self.sample_rate,
@@ -165,7 +175,9 @@ impl CaptureStream for ScreenCaptureKitStream {
                     "outputs.system_audio is true but ScreenCaptureKitStream::new wasn't given a system_audio_epoch",
                 ),
             );
-            stream.add_output_handler(handler, SCStreamOutputType::Audio).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
+            stream
+                .add_output_handler(handler, SCStreamOutputType::Audio)
+                .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             tx.send(CaptureEvent::StreamStarted {
                 stream: self.system_audio_binding,
                 sample_rate: self.sample_rate,
@@ -209,7 +221,11 @@ impl CaptureStream for ScreenCaptureKitStream {
         // `CaptureEvent::StreamStopped`, which `MacosSupervisor::handle_capture_event`
         // treats as informational-only.
         if !stop.is_signaled() && stream_dead.is_signaled() {
-            let message = delegate_error.lock().unwrap().take().unwrap_or_else(|| "stream stopped unexpectedly".to_string());
+            let message = delegate_error
+                .lock()
+                .unwrap()
+                .take()
+                .unwrap_or_else(|| "stream stopped unexpectedly".to_string());
             return Err(CaptureError::ScreenCaptureKit(message));
         }
 

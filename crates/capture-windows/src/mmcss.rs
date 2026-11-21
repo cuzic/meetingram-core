@@ -7,7 +7,8 @@ struct MmcssGuard(windows::Win32::Foundation::HANDLE);
 
 impl Drop for MmcssGuard {
     fn drop(&mut self) {
-        let _ = unsafe { windows::Win32::System::Threading::AvRevertMmThreadCharacteristics(self.0) };
+        let _ =
+            unsafe { windows::Win32::System::Threading::AvRevertMmThreadCharacteristics(self.0) };
     }
 }
 
@@ -17,7 +18,10 @@ pub fn with_pro_audio_priority<F: FnOnce() -> R, R>(f: F) -> (bool, R) {
     let mut task_index: u32 = 0;
     let task_name = windows::core::HSTRING::from("Pro Audio");
     match unsafe {
-        windows::Win32::System::Threading::AvSetMmThreadCharacteristicsW(&task_name, &mut task_index)
+        windows::Win32::System::Threading::AvSetMmThreadCharacteristicsW(
+            &task_name,
+            &mut task_index,
+        )
     } {
         Ok(handle) => {
             let _guard = MmcssGuard(handle);

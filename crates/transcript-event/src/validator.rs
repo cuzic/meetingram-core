@@ -42,10 +42,7 @@ pub enum ValidationError {
         got: u32,
     },
     /// The event's `session_id` does not match the validator's.
-    SessionIdMismatch {
-        expected: SessionId,
-        got: SessionId,
-    },
+    SessionIdMismatch { expected: SessionId, got: SessionId },
     /// `SegmentFinalized` data differs from the last `SegmentUpdated` for the
     /// same segment_id. This indicates a data integrity issue in the producer.
     FinalizedDataMismatch {
@@ -63,15 +60,27 @@ impl fmt::Display for ValidationError {
                 write!(f, "duplicate SegmentFinalized for segment '{segment_id}'")
             }
             Self::UpdateAfterFinalized { segment_id } => {
-                write!(f, "SegmentUpdated after SegmentFinalized for segment '{segment_id}'")
+                write!(
+                    f,
+                    "SegmentUpdated after SegmentFinalized for segment '{segment_id}'"
+                )
             }
-            Self::RevisionNotMonotonic { segment_id, last_seen, got } => {
+            Self::RevisionNotMonotonic {
+                segment_id,
+                last_seen,
+                got,
+            } => {
                 write!(f, "revision not monotonic for segment '{segment_id}': last={last_seen}, got={got}")
             }
             Self::SessionIdMismatch { expected, got } => {
                 write!(f, "session_id mismatch: expected {expected}, got {got}")
             }
-            Self::FinalizedDataMismatch { segment_id, field, updated_value, finalized_value } => {
+            Self::FinalizedDataMismatch {
+                segment_id,
+                field,
+                updated_value,
+                finalized_value,
+            } => {
                 write!(f, "SegmentFinalized data mismatch for segment '{segment_id}' field '{field}': updated='{updated_value}', finalized='{finalized_value}'")
             }
         }
@@ -127,7 +136,10 @@ impl ProtocolValidator {
 
     /// Validates a single event. Returns `Ok(())` if the event is canonical,
     /// along with any non-fatal warnings.
-    pub fn validate(&mut self, event: &TranscriptEvent) -> Result<Vec<ValidationWarning>, ValidationError> {
+    pub fn validate(
+        &mut self,
+        event: &TranscriptEvent,
+    ) -> Result<Vec<ValidationWarning>, ValidationError> {
         let mut warnings = Vec::new();
 
         // --- SessionId check (applies to all events) ---
@@ -168,7 +180,9 @@ impl ProtocolValidator {
 
         // Update-after-finalized is a protocol violation
         if self.finalized.contains(sid) {
-            return Err(ValidationError::UpdateAfterFinalized { segment_id: sid.clone() });
+            return Err(ValidationError::UpdateAfterFinalized {
+                segment_id: sid.clone(),
+            });
         }
 
         // Revision monotonicity
@@ -207,7 +221,9 @@ impl ProtocolValidator {
 
         // Duplicate finalize check
         if !self.finalized.insert(sid.clone()) {
-            return Err(ValidationError::DuplicateFinalized { segment_id: sid.clone() });
+            return Err(ValidationError::DuplicateFinalized {
+                segment_id: sid.clone(),
+            });
         }
 
         // Data mismatch: compare against the last SegmentUpdated data
@@ -323,7 +339,10 @@ mod tests {
             })
             .is_ok());
         assert!(v
-            .validate(&TranscriptEvent::SegmentFinalized { session_id: sid, data })
+            .validate(&TranscriptEvent::SegmentFinalized {
+                session_id: sid,
+                data
+            })
             .is_ok());
     }
 
@@ -339,15 +358,23 @@ mod tests {
             finality: Finality::Final,
         })
         .unwrap();
-        v.validate(&TranscriptEvent::SegmentFinalized { session_id: sid, data: data.clone() })
-            .unwrap();
+        v.validate(&TranscriptEvent::SegmentFinalized {
+            session_id: sid,
+            data: data.clone(),
+        })
+        .unwrap();
 
         let err = v
-            .validate(&TranscriptEvent::SegmentFinalized { session_id: sid, data })
+            .validate(&TranscriptEvent::SegmentFinalized {
+                session_id: sid,
+                data,
+            })
             .unwrap_err();
         assert_eq!(
             err,
-            ValidationError::DuplicateFinalized { segment_id: "seg1".to_string() }
+            ValidationError::DuplicateFinalized {
+                segment_id: "seg1".to_string()
+            }
         );
     }
 
@@ -363,8 +390,11 @@ mod tests {
             finality: Finality::Final,
         })
         .unwrap();
-        v.validate(&TranscriptEvent::SegmentFinalized { session_id: sid, data })
-            .unwrap();
+        v.validate(&TranscriptEvent::SegmentFinalized {
+            session_id: sid,
+            data,
+        })
+        .unwrap();
 
         let data2 = make_segment(sid, "seg1", 1, "hello updated");
         let err = v
@@ -376,7 +406,9 @@ mod tests {
             .unwrap_err();
         assert_eq!(
             err,
-            ValidationError::UpdateAfterFinalized { segment_id: "seg1".to_string() }
+            ValidationError::UpdateAfterFinalized {
+                segment_id: "seg1".to_string()
+            }
         );
     }
 
@@ -436,7 +468,10 @@ mod tests {
 
         let d2 = make_segment(sid, "seg1", 0, "different text");
         let err = v
-            .validate(&TranscriptEvent::SegmentFinalized { session_id: sid, data: d2 })
+            .validate(&TranscriptEvent::SegmentFinalized {
+                session_id: sid,
+                data: d2,
+            })
             .unwrap_err();
         assert!(matches!(err, ValidationError::FinalizedDataMismatch { .. }));
     }

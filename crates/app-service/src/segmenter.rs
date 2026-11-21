@@ -12,7 +12,11 @@ pub struct PendingSegment<'a> {
     pub pcm: &'a [f32],
 }
 
-pub fn segment_pcm(pcm: &[f32], sample_rate: u32, segment_duration_ms: u32) -> Vec<PendingSegment<'_>> {
+pub fn segment_pcm(
+    pcm: &[f32],
+    sample_rate: u32,
+    segment_duration_ms: u32,
+) -> Vec<PendingSegment<'_>> {
     let samples_per_segment = (sample_rate as u64 * segment_duration_ms as u64 / 1000) as usize;
     if samples_per_segment == 0 || pcm.is_empty() {
         return Vec::new();
@@ -20,7 +24,11 @@ pub fn segment_pcm(pcm: &[f32], sample_rate: u32, segment_duration_ms: u32) -> V
 
     pcm.chunks(samples_per_segment)
         .enumerate()
-        .map(|(i, chunk)| PendingSegment { sequence: i as u64, timeline_start_ms: i as u64 * segment_duration_ms as u64, pcm: chunk })
+        .map(|(i, chunk)| PendingSegment {
+            sequence: i as u64,
+            timeline_start_ms: i as u64 * segment_duration_ms as u64,
+            pcm: chunk,
+        })
         .collect()
 }
 

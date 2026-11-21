@@ -34,8 +34,12 @@ impl From<capture_api::rebinding::BindingHealth> for TrackHealth {
         match health {
             capture_api::rebinding::BindingHealth::Ok => TrackHealth::Ok,
             capture_api::rebinding::BindingHealth::Unavailable => TrackHealth::Unavailable,
-            capture_api::rebinding::BindingHealth::Retrying { attempt } => TrackHealth::Retrying { attempt },
-            capture_api::rebinding::BindingHealth::Failed { reason } => TrackHealth::Failed { reason },
+            capture_api::rebinding::BindingHealth::Retrying { attempt } => {
+                TrackHealth::Retrying { attempt }
+            }
+            capture_api::rebinding::BindingHealth::Failed { reason } => {
+                TrackHealth::Failed { reason }
+            }
         }
     }
 }

@@ -14,13 +14,17 @@ pub fn dispatch(
     event: &TranscriptEvent,
 ) {
     let (hook_name, session_id, data) = match event {
-        TranscriptEvent::SegmentUpdated { session_id, data, .. } => {
-            ("on_segment_update", *session_id, segment_data_to_map(data))
-        }
-        TranscriptEvent::SegmentFinalized { session_id, data } => {
-            ("on_segment_finalized", *session_id, segment_data_to_map(data))
-        }
-        TranscriptEvent::UtteranceEnded { session_id, reason, .. } => {
+        TranscriptEvent::SegmentUpdated {
+            session_id, data, ..
+        } => ("on_segment_update", *session_id, segment_data_to_map(data)),
+        TranscriptEvent::SegmentFinalized { session_id, data } => (
+            "on_segment_finalized",
+            *session_id,
+            segment_data_to_map(data),
+        ),
+        TranscriptEvent::UtteranceEnded {
+            session_id, reason, ..
+        } => {
             let reason_str = match reason {
                 transcript_event::UtteranceEndReason::EndOfTurn => "EndOfTurn",
                 transcript_event::UtteranceEndReason::SpeechPause => "SpeechPause",
@@ -58,8 +62,18 @@ pub fn trigger_manual_summary(
     session_id: recorder_domain::SessionId,
 ) {
     let mut data = rhai::Map::new();
-    data.insert("session_id".into(), rhai::Dynamic::from(session_id.to_string()));
-    call_hook(engine, scripts, scopes, session_id, "on_manual_summary", Some(data));
+    data.insert(
+        "session_id".into(),
+        rhai::Dynamic::from(session_id.to_string()),
+    );
+    call_hook(
+        engine,
+        scripts,
+        scopes,
+        session_id,
+        "on_manual_summary",
+        Some(data),
+    );
 }
 
 /// Fires `on_session_end()` outside the normal broker event loop — the same
@@ -138,12 +152,27 @@ fn call_hook(
 
 fn segment_data_to_map(data: &transcript_event::SegmentData) -> rhai::Map {
     let mut m = rhai::Map::new();
-    m.insert("segment_id".into(), rhai::Dynamic::from(data.segment_id.clone()));
+    m.insert(
+        "segment_id".into(),
+        rhai::Dynamic::from(data.segment_id.clone()),
+    );
     m.insert("text".into(), rhai::Dynamic::from(data.text.clone()));
-    m.insert("speaker_label".into(), rhai::Dynamic::from(data.speaker_label.clone()));
-    m.insert("track".into(), rhai::Dynamic::from(format!("{:?}", data.track)));
-    m.insert("start_ms".into(), rhai::Dynamic::from(data.start_ms.unwrap_or(0) as i64));
-    m.insert("end_ms".into(), rhai::Dynamic::from(data.end_ms.unwrap_or(0) as i64));
+    m.insert(
+        "speaker_label".into(),
+        rhai::Dynamic::from(data.speaker_label.clone()),
+    );
+    m.insert(
+        "track".into(),
+        rhai::Dynamic::from(format!("{:?}", data.track)),
+    );
+    m.insert(
+        "start_ms".into(),
+        rhai::Dynamic::from(data.start_ms.unwrap_or(0) as i64),
+    );
+    m.insert(
+        "end_ms".into(),
+        rhai::Dynamic::from(data.end_ms.unwrap_or(0) as i64),
+    );
     m
 }
 
@@ -186,32 +215,51 @@ mod tests {
         engine.register_fn("now_ms", || -> i64 { 1_000_000 });
         engine.register_fn("log_info", |_msg: &str| {});
         engine.register_fn("log_warn", |_msg: &str| {});
-        engine.register_fn("log_error", |msg: &str| eprintln!("[rhai test] log_error: {msg}"));
+        engine.register_fn("log_error", |msg: &str| {
+            eprintln!("[rhai test] log_error: {msg}")
+        });
 
         let published_for_mock = published.clone();
-        engine.register_fn("call_async", move |name: &str, args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
-            match name {
-                "get_setting" => Ok(rhai::Dynamic::UNIT), // hint_provider unset -> defaults to "cloudflare"
-                "format_turns" => Ok(rhai::Dynamic::from("self: hello".to_string())),
-                "rag_search" => {
-                    let mut chunk = rhai::Map::new();
-                    chunk.insert("text".into(), rhai::Dynamic::from("previous 1on1: discussed career goals".to_string()));
-                    chunk.insert("score".into(), rhai::Dynamic::from(0.9_f64));
-                    chunk.insert("source".into(), rhai::Dynamic::from("doc1".to_string()));
-                    let arr: rhai::Array = vec![rhai::Dynamic::from_map(chunk)];
-                    Ok(rhai::Dynamic::from_array(arr))
+        engine.register_fn(
+            "call_async",
+            move |name: &str, args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
+                match name {
+                    "get_setting" => Ok(rhai::Dynamic::UNIT), // hint_provider unset -> defaults to "cloudflare"
+                    "format_turns" => Ok(rhai::Dynamic::from("self: hello".to_string())),
+                    "rag_search" => {
+                        let mut chunk = rhai::Map::new();
+                        chunk.insert(
+                            "text".into(),
+                            rhai::Dynamic::from(
+                                "previous 1on1: discussed career goals".to_string(),
+                            ),
+                        );
+                        chunk.insert("score".into(), rhai::Dynamic::from(0.9_f64));
+                        chunk.insert("source".into(), rhai::Dynamic::from("doc1".to_string()));
+                        let arr: rhai::Array = vec![rhai::Dynamic::from_map(chunk)];
+                        Ok(rhai::Dynamic::from_array(arr))
+                    }
+                    "ai_summarize" => Ok(rhai::Dynamic::from(
+                        "キャリア目標の進捗を聞いてみましょう。".to_string(),
+                    )),
+                    "get_selected_model" => {
+                        Ok(rhai::Dynamic::from("claude-sonnet-4-5".to_string()))
+                    }
+                    "publish_event" => {
+                        let subject = args.get("subject").unwrap().to_string();
+                        let data = args
+                            .get("data")
+                            .cloned()
+                            .unwrap_or(rhai::Dynamic::UNIT)
+                            .try_cast::<rhai::Map>()
+                            .unwrap_or_default();
+                        published_for_mock.lock().unwrap().push((subject, data));
+                        Ok(rhai::Dynamic::UNIT)
+                    }
+                    other => panic!("unexpected call_async command in test mock: {other}"),
                 }
-                "ai_summarize" => Ok(rhai::Dynamic::from("キャリア目標の進捗を聞いてみましょう。".to_string())),
-                "get_selected_model" => Ok(rhai::Dynamic::from("claude-sonnet-4-5".to_string())),
-                "publish_event" => {
-                    let subject = args.get("subject").unwrap().to_string();
-                    let data = args.get("data").cloned().unwrap_or(rhai::Dynamic::UNIT).try_cast::<rhai::Map>().unwrap_or_default();
-                    published_for_mock.lock().unwrap().push((subject, data));
-                    Ok(rhai::Dynamic::UNIT)
-                }
-                other => panic!("unexpected call_async command in test mock: {other}"),
-            }
-        });
+            },
+        );
 
         let plugin_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../plugins");
         let compiled = load_plugins(&mut engine, &plugin_dir).expect("plugins should load");
@@ -240,11 +288,21 @@ mod tests {
         trigger_hint_timeout(&engine, &scripts, &scopes, session_id);
 
         let published = published.lock().unwrap();
-        let hint_events: Vec<_> = published.iter().filter(|(subject, _)| subject.contains(".updated") && subject.starts_with("hints.")).collect();
-        assert_eq!(hint_events.len(), 1, "expected exactly one hints.*.updated publish, got: {published:?}");
+        let hint_events: Vec<_> = published
+            .iter()
+            .filter(|(subject, _)| subject.contains(".updated") && subject.starts_with("hints."))
+            .collect();
+        assert_eq!(
+            hint_events.len(),
+            1,
+            "expected exactly one hints.*.updated publish, got: {published:?}"
+        );
         let (subject, data) = hint_events[0];
         assert_eq!(*subject, format!("hints.{session_id}.updated"));
-        assert_eq!(data.get("text").unwrap().to_string(), "キャリア目標の進捗を聞いてみましょう。");
+        assert_eq!(
+            data.get("text").unwrap().to_string(),
+            "キャリア目標の進捗を聞いてみましょう。"
+        );
         assert_eq!(data.get("provider").unwrap().to_string(), "cloudflare");
     }
 
@@ -268,26 +326,38 @@ mod tests {
         engine.register_fn("now_ms", || -> i64 { 1_000_000 });
         engine.register_fn("log_info", |_msg: &str| {});
         engine.register_fn("log_warn", |_msg: &str| {});
-        engine.register_fn("log_error", |msg: &str| eprintln!("[rhai test] log_error: {msg}"));
+        engine.register_fn("log_error", |msg: &str| {
+            eprintln!("[rhai test] log_error: {msg}")
+        });
 
         let published_for_mock = published.clone();
-        engine.register_fn("call_async", move |name: &str, args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
-            match name {
-                "get_setting" => Ok(rhai::Dynamic::UNIT),
-                "format_turns" => Ok(rhai::Dynamic::from("self: hello".to_string())),
-                "rag_search" => Ok(rhai::Dynamic::from_array(rhai::Array::new())),
-                "get_selected_model" => Ok(rhai::Dynamic::from("claude-sonnet-4-5".to_string())),
-                "ai_summarize" => Ok(rhai::Dynamic::from("要約テキスト".to_string())),
-                "save_summary" => Ok(rhai::Dynamic::UNIT),
-                "publish_event" => {
-                    let subject = args.get("subject").unwrap().to_string();
-                    let data = args.get("data").cloned().unwrap_or(rhai::Dynamic::UNIT).try_cast::<rhai::Map>().unwrap_or_default();
-                    published_for_mock.lock().unwrap().push((subject, data));
-                    Ok(rhai::Dynamic::UNIT)
+        engine.register_fn(
+            "call_async",
+            move |name: &str, args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
+                match name {
+                    "get_setting" => Ok(rhai::Dynamic::UNIT),
+                    "format_turns" => Ok(rhai::Dynamic::from("self: hello".to_string())),
+                    "rag_search" => Ok(rhai::Dynamic::from_array(rhai::Array::new())),
+                    "get_selected_model" => {
+                        Ok(rhai::Dynamic::from("claude-sonnet-4-5".to_string()))
+                    }
+                    "ai_summarize" => Ok(rhai::Dynamic::from("要約テキスト".to_string())),
+                    "save_summary" => Ok(rhai::Dynamic::UNIT),
+                    "publish_event" => {
+                        let subject = args.get("subject").unwrap().to_string();
+                        let data = args
+                            .get("data")
+                            .cloned()
+                            .unwrap_or(rhai::Dynamic::UNIT)
+                            .try_cast::<rhai::Map>()
+                            .unwrap_or_default();
+                        published_for_mock.lock().unwrap().push((subject, data));
+                        Ok(rhai::Dynamic::UNIT)
+                    }
+                    other => panic!("unexpected call_async command in test mock: {other}"),
                 }
-                other => panic!("unexpected call_async command in test mock: {other}"),
-            }
-        });
+            },
+        );
 
         let plugin_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../plugins");
         let compiled = load_plugins(&mut engine, &plugin_dir).expect("plugins should load");
@@ -300,29 +370,49 @@ mod tests {
         // Populate summary.rhai's `turns` first, exactly like a real session,
         // so `on_session_end` takes its main path rather than the
         // `list_segments` fallback (which this test's mock doesn't stub).
-        dispatch(&engine, &scripts, &scopes, &TranscriptEvent::SegmentFinalized {
-            session_id,
-            data: SegmentData {
-                segment_id: "seg1".to_string(),
-                revision: 1,
-                text: "hello".to_string(),
-                speaker_label: "self".to_string(),
-                track: TrackKind::SelfMic,
-                start_ms: Some(0),
-                end_ms: Some(1000),
+        dispatch(
+            &engine,
+            &scripts,
+            &scopes,
+            &TranscriptEvent::SegmentFinalized {
+                session_id,
+                data: SegmentData {
+                    segment_id: "seg1".to_string(),
+                    revision: 1,
+                    text: "hello".to_string(),
+                    speaker_label: "self".to_string(),
+                    track: TrackKind::SelfMic,
+                    start_ms: Some(0),
+                    end_ms: Some(1000),
+                },
             },
-        });
+        );
 
-        dispatch(&engine, &scripts, &scopes, &TranscriptEvent::UtteranceEnded {
-            session_id,
-            segment_id: None,
-            reason: transcript_event::UtteranceEndReason::SessionEnd,
-        });
+        dispatch(
+            &engine,
+            &scripts,
+            &scopes,
+            &TranscriptEvent::UtteranceEnded {
+                session_id,
+                segment_id: None,
+                reason: transcript_event::UtteranceEndReason::SessionEnd,
+            },
+        );
 
         let published = published.lock().unwrap();
-        let started = published.iter().any(|(subject, _)| *subject == format!("summary.{session_id}.started"));
-        let completed = published.iter().any(|(subject, _)| *subject == format!("summary.{session_id}.completed"));
-        assert!(started, "on_session_end should have published summary.*.started, got: {published:?}");
-        assert!(completed, "on_session_end should have published summary.*.completed, got: {published:?}");
+        let started = published
+            .iter()
+            .any(|(subject, _)| *subject == format!("summary.{session_id}.started"));
+        let completed = published
+            .iter()
+            .any(|(subject, _)| *subject == format!("summary.{session_id}.completed"));
+        assert!(
+            started,
+            "on_session_end should have published summary.*.started, got: {published:?}"
+        );
+        assert!(
+            completed,
+            "on_session_end should have published summary.*.completed, got: {published:?}"
+        );
     }
 }

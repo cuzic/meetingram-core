@@ -82,7 +82,10 @@ impl UploadError {
 /// that.
 #[async_trait]
 pub trait UploadAdapter: Send + Sync {
-    async fn create_session(&self, manifest: &SessionManifest) -> Result<RemoteSession, UploadError>;
+    async fn create_session(
+        &self,
+        manifest: &SessionManifest,
+    ) -> Result<RemoteSession, UploadError>;
 
     async fn upload_segment(
         &self,

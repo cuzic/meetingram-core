@@ -156,7 +156,11 @@ pub enum SummarizerError {
 /// `stt-api`'s `SttProvider`/`SttSession` for the same `async_trait` pattern.
 #[async_trait::async_trait]
 pub trait Summarizer: Send + Sync {
-    async fn summarize(&self, turns: &[TranscriptTurn], options: &SummarizeOptions) -> Result<String, SummarizerError>;
+    async fn summarize(
+        &self,
+        turns: &[TranscriptTurn],
+        options: &SummarizeOptions,
+    ) -> Result<String, SummarizerError>;
 }
 
 /// [`Summarizer`] backed by a `genai::Client` — covers both plain API-key providers
@@ -166,7 +170,11 @@ pub struct GenaiSummarizer(pub Client);
 
 #[async_trait::async_trait]
 impl Summarizer for GenaiSummarizer {
-    async fn summarize(&self, turns: &[TranscriptTurn], options: &SummarizeOptions) -> Result<String, SummarizerError> {
+    async fn summarize(
+        &self,
+        turns: &[TranscriptTurn],
+        options: &SummarizeOptions,
+    ) -> Result<String, SummarizerError> {
         Ok(summarize(&self.0, turns, options).await?)
     }
 }
@@ -176,7 +184,11 @@ pub struct CliSummarizer(pub cli_backend::CliBackend);
 
 #[async_trait::async_trait]
 impl Summarizer for CliSummarizer {
-    async fn summarize(&self, turns: &[TranscriptTurn], options: &SummarizeOptions) -> Result<String, SummarizerError> {
+    async fn summarize(
+        &self,
+        turns: &[TranscriptTurn],
+        options: &SummarizeOptions,
+    ) -> Result<String, SummarizerError> {
         Ok(cli_backend::summarize_via_cli(self.0, turns, options).await?)
     }
 }
@@ -309,7 +321,9 @@ fn vertex_base_url(project_id: &str, location: &str) -> String {
     }
 }
 
-async fn resolve_vertex_token(credentials: &VertexCredentials) -> Result<String, genai::resolver::Error> {
+async fn resolve_vertex_token(
+    credentials: &VertexCredentials,
+) -> Result<String, genai::resolver::Error> {
     use gcp_auth::TokenProvider;
 
     let scopes = &[VERTEX_OAUTH_SCOPE];
@@ -369,7 +383,10 @@ pub fn build_vertex_client(credentials: VertexCredentials) -> Result<Client, gen
         Box::pin(async move {
             let token = resolve_vertex_token(&credentials).await?;
             Ok(Some(AuthData::from_single(token)))
-        }) as Pin<Box<dyn Future<Output = Result<Option<AuthData>, genai::resolver::Error>> + Send>>
+        })
+            as Pin<
+                Box<dyn Future<Output = Result<Option<AuthData>, genai::resolver::Error>> + Send>,
+            >
     });
 
     let target_credentials = credentials.clone();
@@ -381,7 +398,11 @@ pub fn build_vertex_client(credentials: VertexCredentials) -> Result<Client, gen
                 &target_credentials.location,
             ));
             let model = ModelIden::new(AdapterKind::Vertex, model.model_name);
-            Ok(ServiceTarget { endpoint, auth, model })
+            Ok(ServiceTarget {
+                endpoint,
+                auth,
+                model,
+            })
         },
     );
 
@@ -440,7 +461,11 @@ pub fn build_ollama_client(base_url: Option<String>) -> Result<Client, genai::Er
             move |service_target: ServiceTarget| -> Result<ServiceTarget, genai::resolver::Error> {
                 let ServiceTarget { auth, model, .. } = service_target;
                 let endpoint = Endpoint::from_owned(normalized.clone());
-                Ok(ServiceTarget { endpoint, auth, model })
+                Ok(ServiceTarget {
+                    endpoint,
+                    auth,
+                    model,
+                })
             },
         );
         builder = builder.with_service_target_resolver(target_resolver);
@@ -493,7 +518,9 @@ async fn resolve_ant_oauth_token() -> Result<String, genai::resolver::Error> {
         .stdin(Stdio::null())
         .output()
         .await
-        .map_err(|e| genai::resolver::Error::Custom(format!("failed to launch {ANT_CLI_BINARY} CLI: {e}")))?;
+        .map_err(|e| {
+            genai::resolver::Error::Custom(format!("failed to launch {ANT_CLI_BINARY} CLI: {e}"))
+        })?;
 
     if !output.status.success() {
         return Err(genai::resolver::Error::Custom(format!(
@@ -540,11 +567,20 @@ pub fn build_claude_oauth_client() -> Result<Client, genai::Error> {
                 url: ANTHROPIC_MESSAGES_URL.to_string(),
                 headers: Headers::from(vec![
                     ("authorization".to_string(), format!("Bearer {token}")),
-                    ("anthropic-version".to_string(), ANTHROPIC_VERSION.to_string()),
-                    ("anthropic-beta".to_string(), ANTHROPIC_OAUTH_BETA.to_string()),
+                    (
+                        "anthropic-version".to_string(),
+                        ANTHROPIC_VERSION.to_string(),
+                    ),
+                    (
+                        "anthropic-beta".to_string(),
+                        ANTHROPIC_OAUTH_BETA.to_string(),
+                    ),
                 ]),
             }))
-        }) as Pin<Box<dyn Future<Output = Result<Option<AuthData>, genai::resolver::Error>> + Send>>
+        })
+            as Pin<
+                Box<dyn Future<Output = Result<Option<AuthData>, genai::resolver::Error>> + Send>,
+            >
     });
 
     Client::builder()
@@ -623,10 +659,11 @@ mod tests {
 
     #[test]
     fn vertex_credentials_with_service_account_json_round_trips_through_serde() {
-        let credentials =
-            VertexCredentials::new("my-project", "global").with_service_account_json("{\"type\":\"service_account\"}");
+        let credentials = VertexCredentials::new("my-project", "global")
+            .with_service_account_json("{\"type\":\"service_account\"}");
         let serialized = serde_json::to_string(&credentials).expect("serialize");
-        let deserialized: VertexCredentials = serde_json::from_str(&serialized).expect("deserialize");
+        let deserialized: VertexCredentials =
+            serde_json::from_str(&serialized).expect("deserialize");
         assert_eq!(deserialized.project_id, "my-project");
         assert!(matches!(
             deserialized.service_account,
@@ -644,17 +681,26 @@ mod tests {
 
     #[test]
     fn normalize_ollama_base_url_appends_missing_trailing_slash() {
-        assert_eq!(normalize_ollama_base_url("http://localhost:11434"), "http://localhost:11434/");
+        assert_eq!(
+            normalize_ollama_base_url("http://localhost:11434"),
+            "http://localhost:11434/"
+        );
     }
 
     #[test]
     fn normalize_ollama_base_url_leaves_trailing_slash_untouched() {
-        assert_eq!(normalize_ollama_base_url("http://localhost:11434/"), "http://localhost:11434/");
+        assert_eq!(
+            normalize_ollama_base_url("http://localhost:11434/"),
+            "http://localhost:11434/"
+        );
     }
 
     #[test]
     fn normalize_ollama_base_url_appends_slash_for_custom_host_and_port() {
-        assert_eq!(normalize_ollama_base_url("http://192.168.1.10:11434"), "http://192.168.1.10:11434/");
+        assert_eq!(
+            normalize_ollama_base_url("http://192.168.1.10:11434"),
+            "http://192.168.1.10:11434/"
+        );
     }
 
     #[test]
@@ -666,7 +712,8 @@ mod tests {
 
     #[test]
     fn build_ollama_client_constructs_with_base_url_override() {
-        let _client = build_ollama_client(Some("http://localhost:12345".to_string())).expect("client should build");
+        let _client = build_ollama_client(Some("http://localhost:12345".to_string()))
+            .expect("client should build");
     }
 
     #[test]

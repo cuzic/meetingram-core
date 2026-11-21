@@ -19,7 +19,7 @@ use rhai::Engine;
 use session_store::SessionStore;
 use timed_fsm::{TimedStateMachine, TimerCommand, TimerRuntime};
 
-use crate::dispatcher::{AsyncCommand, async_worker};
+use crate::dispatcher::{async_worker, AsyncCommand};
 use crate::scope::ScopeStore;
 
 // See `rag.rs`'s own re-export comment — `apps/desktop/src/settings.rs` needs
@@ -101,12 +101,22 @@ impl RhaiEngine {
         engine.set_max_expr_depths(128, 128);
 
         let tx = command_tx.clone();
-        engine.register_fn("call_async", move |name: &str, args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
-            let (tx_reply, rx_reply) = std::sync::mpsc::channel();
-            tx.send(AsyncCommand { name: name.to_string(), args, reply: tx_reply })
+        engine.register_fn(
+            "call_async",
+            move |name: &str, args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
+                let (tx_reply, rx_reply) = std::sync::mpsc::channel();
+                tx.send(AsyncCommand {
+                    name: name.to_string(),
+                    args,
+                    reply: tx_reply,
+                })
                 .map_err(|e| e.to_string())?;
-            rx_reply.recv().map_err(|e| e.to_string())?.map_err(|e| -> Box<rhai::EvalAltResult> { e.into() })
-        });
+                rx_reply
+                    .recv()
+                    .map_err(|e| e.to_string())?
+                    .map_err(|e| -> Box<rhai::EvalAltResult> { e.into() })
+            },
+        );
         engine.register_fn("log_info", |msg: &str| tracing::info!("[rhai] {msg}"));
         engine.register_fn("log_warn", |msg: &str| tracing::warn!("[rhai] {msg}"));
         engine.register_fn("log_error", |msg: &str| tracing::error!("[rhai] {msg}"));
@@ -114,7 +124,10 @@ impl RhaiEngine {
         // non-I/O, so (unlike `call_async`'s commands) this never blocks on the
         // async worker's mpsc round trip.
         engine.register_fn("now_ms", || -> i64 {
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as i64)
+                .unwrap_or(0)
         });
 
         Self {
@@ -154,7 +167,11 @@ impl RhaiEngine {
     /// `session.{id}.stopped` handling in `run_session`), but callers that
     /// want to know when the session's Rhai-side work has fully wound down
     /// can await it.
-    pub fn spawn_session(&self, broker: &LocalBroker, session_id: SessionId) -> tokio::task::JoinHandle<()> {
+    pub fn spawn_session(
+        &self,
+        broker: &LocalBroker,
+        session_id: SessionId,
+    ) -> tokio::task::JoinHandle<()> {
         let this = self.clone();
         let broker = broker.clone();
         let scopes = Arc::new(ScopeStore::new());
@@ -162,12 +179,20 @@ impl RhaiEngine {
         this.inner.session_scopes.insert(session_id, scopes.clone());
 
         tokio::spawn(async move {
-            let _guard = SessionScopeGuard { inner: this.inner.clone(), session_id };
+            let _guard = SessionScopeGuard {
+                inner: this.inner.clone(),
+                session_id,
+            };
             this.run_session(broker, session_id, scopes).await;
         })
     }
 
-    async fn run_session(&self, broker: LocalBroker, session_id: SessionId, scopes: Arc<ScopeStore>) {
+    async fn run_session(
+        &self,
+        broker: LocalBroker,
+        session_id: SessionId,
+        scopes: Arc<ScopeStore>,
+    ) {
         let seg_subject = format!("transcription.{session_id}.segment.updated");
         let fin_subject = format!("transcription.{session_id}.segment.finalized");
         let utt_subject = format!("transcription.{session_id}.utterance.ended");
@@ -232,7 +257,11 @@ impl RhaiEngine {
     /// synchronously on a `std::sync::mpsc::Receiver::recv()` for however
     /// long the hook's own RAG/LLM call takes, which would otherwise pin a
     /// tokio async worker thread for that whole duration.
-    async fn dispatch_blocking(&self, scopes: &Arc<ScopeStore>, event: transcript_event::TranscriptEvent) {
+    async fn dispatch_blocking(
+        &self,
+        scopes: &Arc<ScopeStore>,
+        event: transcript_event::TranscriptEvent,
+    ) {
         let this = self.clone();
         let scopes = scopes.clone();
         let _ = tokio::task::spawn_blocking(move || {
@@ -247,7 +276,12 @@ impl RhaiEngine {
         let this = self.clone();
         let scopes = scopes.clone();
         let _ = tokio::task::spawn_blocking(move || {
-            hooks::trigger_session_end(&this.inner.engine, &this.inner.scripts, &scopes, session_id);
+            hooks::trigger_session_end(
+                &this.inner.engine,
+                &this.inner.scripts,
+                &scopes,
+                session_id,
+            );
         })
         .await;
     }
@@ -261,7 +295,12 @@ impl RhaiEngine {
 
         tokio::spawn(async move {
             // Give the scope a moment, then trigger
-            hooks::trigger_manual_summary(&this.inner.engine, &this.inner.scripts, &scopes, session_id);
+            hooks::trigger_manual_summary(
+                &this.inner.engine,
+                &this.inner.scripts,
+                &scopes,
+                session_id,
+            );
         });
     }
 
@@ -278,7 +317,12 @@ impl RhaiEngine {
     /// caller (`apps/desktop`'s `actions::start_recording`) only calls it
     /// when hints are enabled, so an unconfigured/disabled install never
     /// even subscribes to these subjects.
-    pub fn spawn_hint_debounce_driver(&self, broker: &LocalBroker, session_id: SessionId, debounce: Duration) -> tokio::task::JoinHandle<()> {
+    pub fn spawn_hint_debounce_driver(
+        &self,
+        broker: &LocalBroker,
+        session_id: SessionId,
+        debounce: Duration,
+    ) -> tokio::task::JoinHandle<()> {
         let this = self.clone();
         let broker = broker.clone();
 
@@ -323,10 +367,20 @@ impl RhaiEngine {
                     // "nothing to do," not an error, since the Arc clone
                     // this driver would have held is otherwise no different
                     // from one fetched right before use.
-                    if let Some(scopes) = this.inner.session_scopes.get(&session_id).map(|entry| entry.clone()) {
+                    if let Some(scopes) = this
+                        .inner
+                        .session_scopes
+                        .get(&session_id)
+                        .map(|entry| entry.clone())
+                    {
                         let this = this.clone();
                         tokio::task::spawn_blocking(move || {
-                            hooks::trigger_hint_timeout(&this.inner.engine, &this.inner.scripts, &scopes, session_id);
+                            hooks::trigger_hint_timeout(
+                                &this.inner.engine,
+                                &this.inner.scripts,
+                                &scopes,
+                                session_id,
+                            );
                         });
                     }
                 }
@@ -351,13 +405,22 @@ mod tests {
     fn now_ms_is_registered_and_advances() {
         let mut engine = rhai::Engine::new();
         engine.register_fn("now_ms", || -> i64 {
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as i64)
+                .unwrap_or(0)
         });
         let first: i64 = engine.eval("now_ms()").expect("call now_ms");
         std::thread::sleep(std::time::Duration::from_millis(5));
         let second: i64 = engine.eval("now_ms()").expect("call now_ms again");
-        assert!(second >= first, "now_ms() should be non-decreasing across calls");
-        assert!(first > 0, "now_ms() should return a real epoch-millis timestamp, not 0");
+        assert!(
+            second >= first,
+            "now_ms() should be non-decreasing across calls"
+        );
+        assert!(
+            first > 0,
+            "now_ms() should return a real epoch-millis timestamp, not 0"
+        );
     }
 
     struct TestSettings;
@@ -429,10 +492,18 @@ mod tests {
         // needed to subscribe to the `probe.*` subjects below.
         let tmp = tempfile::tempdir().unwrap();
         let store = Arc::new(SessionStore::open(&tmp.path().join("sessions.db")).unwrap());
-        let credential_store = Arc::new(FallbackCredentialStore::new(tmp.path().join("credentials")).unwrap());
+        let credential_store =
+            Arc::new(FallbackCredentialStore::new(tmp.path().join("credentials")).unwrap());
         let broker = LocalBroker::new();
-        let mut engine = RhaiEngine::new(broker.clone(), store, credential_store, Arc::new(TestSettings));
-        engine.load_plugins(plugin_dir.path()).expect("plugins should load");
+        let mut engine = RhaiEngine::new(
+            broker.clone(),
+            store,
+            credential_store,
+            Arc::new(TestSettings),
+        );
+        engine
+            .load_plugins(plugin_dir.path())
+            .expect("plugins should load");
 
         let session_id = SessionId::new();
         let debounce = Duration::from_millis(60);
@@ -449,21 +520,23 @@ mod tests {
         // `BrokerError::NoSubscribers`.
         tokio::time::sleep(Duration::from_millis(20)).await;
 
-        let finalized_event = |seg: &str| transcript_event::EventEnvelope::new(
-            session_id,
-            transcript_event::TranscriptEvent::SegmentFinalized {
+        let finalized_event = |seg: &str| {
+            transcript_event::EventEnvelope::new(
                 session_id,
-                data: transcript_event::SegmentData {
-                    segment_id: seg.to_string(),
-                    revision: 1,
-                    text: "hello".to_string(),
-                    speaker_label: "self".to_string(),
-                    track: recorder_domain::TrackKind::SelfMic,
-                    start_ms: Some(0),
-                    end_ms: Some(1000),
+                transcript_event::TranscriptEvent::SegmentFinalized {
+                    session_id,
+                    data: transcript_event::SegmentData {
+                        segment_id: seg.to_string(),
+                        revision: 1,
+                        text: "hello".to_string(),
+                        speaker_label: "self".to_string(),
+                        track: recorder_domain::TrackKind::SelfMic,
+                        start_ms: Some(0),
+                        end_ms: Some(1000),
+                    },
                 },
-            },
-        );
+            )
+        };
         let fin_subject = format!("transcription.{session_id}.segment.finalized");
 
         // Rapid-fire three events, each well inside the debounce window —
@@ -475,15 +548,22 @@ mod tests {
             tokio::time::sleep(debounce / 3).await;
         }
         for seg in ["seg1", "seg2", "seg3"] {
-            segment_seen_rx.recv().await.expect("on_segment_finalized should have fired for each");
+            segment_seen_rx
+                .recv()
+                .await
+                .expect("on_segment_finalized should have fired for each");
             let _ = seg;
         }
         assert!(hint_timeout_rx.try_recv().is_err(), "rapid events must not trigger a hint timeout — that would be a throttle, not a debounce");
 
         // Now go quiet — only after the full debounce window elapses with no
         // further activity should the timeout fire, exactly once.
-        let payload = tokio::time::timeout(debounce * 3, hint_timeout_rx.recv()).await.expect("hint_timeout should fire after the quiet period").unwrap();
-        let data: serde_json::Value = serde_json::from_slice(&payload).expect("hint_timeout payload should be valid JSON");
+        let payload = tokio::time::timeout(debounce * 3, hint_timeout_rx.recv())
+            .await
+            .expect("hint_timeout should fire after the quiet period")
+            .unwrap();
+        let data: serde_json::Value =
+            serde_json::from_slice(&payload).expect("hint_timeout payload should be valid JSON");
         assert_eq!(data["count"].as_i64(), Some(1));
         // The real assertion for `session_scopes` sharing: `on_hint_timeout`
         // runs in `spawn_hint_debounce_driver`'s own task, entirely separate
@@ -492,15 +572,29 @@ mod tests {
         // fresh/wrong `Scope` instead of the shared one via
         // `RhaiEngineInner::session_scopes`, `turns` would be `[]` here.
         assert_eq!(data["turns"], serde_json::json!(["seg1", "seg2", "seg3"]), "on_hint_timeout must see the same `turns` on_segment_finalized accumulated — proves session_scopes sharing, not just that a hint fired");
-        assert!(hint_timeout_rx.try_recv().is_err(), "should have fired exactly once, not repeatedly");
+        assert!(
+            hint_timeout_rx.try_recv().is_err(),
+            "should have fired exactly once, not repeatedly"
+        );
 
         // Now signal the session actually stopped — proves `run_session`
         // finalizes (`on_session_end`) and exits on this signal alone,
         // without ever needing the Windows-only real `SessionEnd` broadcast.
-        broker.publish_bytes(&format!("session.{session_id}.stopped"), Vec::new()).unwrap();
-        session_ended_rx.recv().await.expect("on_session_end should fire on the explicit stop signal");
+        broker
+            .publish_bytes(&format!("session.{session_id}.stopped"), Vec::new())
+            .unwrap();
+        session_ended_rx
+            .recv()
+            .await
+            .expect("on_session_end should fire on the explicit stop signal");
 
-        tokio::time::timeout(Duration::from_secs(2), session_handle).await.expect("run_session should exit promptly after the stop signal").unwrap();
-        tokio::time::timeout(Duration::from_secs(2), debounce_handle).await.expect("the debounce driver should exit promptly after the stop signal").unwrap();
+        tokio::time::timeout(Duration::from_secs(2), session_handle)
+            .await
+            .expect("run_session should exit promptly after the stop signal")
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(2), debounce_handle)
+            .await
+            .expect("the debounce driver should exit promptly after the stop signal")
+            .unwrap();
     }
 }

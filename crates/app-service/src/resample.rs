@@ -29,7 +29,10 @@ mod tests {
 
     #[test]
     fn same_rate_is_returned_unchanged() {
-        assert_eq!(resample(&[0.1, 0.2, 0.3], 48_000, 48_000), vec![0.1, 0.2, 0.3]);
+        assert_eq!(
+            resample(&[0.1, 0.2, 0.3], 48_000, 48_000),
+            vec![0.1, 0.2, 0.3]
+        );
     }
 
     #[test]

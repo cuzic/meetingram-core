@@ -88,7 +88,10 @@ fn main() {
                 // visible in this test's output even though it no longer aborts.
                 eprintln!("WARN: stream stalled (worker still running): {error}");
             }
-            Ok(CaptureEvent::StreamStarted { device_friendly_name, .. }) => {
+            Ok(CaptureEvent::StreamStarted {
+                device_friendly_name,
+                ..
+            }) => {
                 println!("stream started on device: {device_friendly_name}");
             }
             Ok(_) => {}
@@ -108,5 +111,8 @@ fn main() {
 }
 
 fn parse_arg(args: &[String], name: &str) -> Option<u64> {
-    args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).and_then(|v| v.parse().ok())
+    args.iter()
+        .position(|a| a == name)
+        .and_then(|i| args.get(i + 1))
+        .and_then(|v| v.parse().ok())
 }

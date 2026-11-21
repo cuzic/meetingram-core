@@ -20,7 +20,10 @@ pub fn capture_state_tag(state: &CaptureState) -> &'static str {
 
 pub fn capture_state_detail(state: &CaptureState) -> (Option<bool>, Option<String>) {
     match state {
-        CaptureState::Failed { recoverable, reason } => (Some(*recoverable), Some(reason.clone())),
+        CaptureState::Failed {
+            recoverable,
+            reason,
+        } => (Some(*recoverable), Some(reason.clone())),
         _ => (None, None),
     }
 }

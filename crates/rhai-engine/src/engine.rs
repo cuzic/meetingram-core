@@ -24,7 +24,9 @@ pub fn load_plugins(
     // (confirmed: reproduces even from `default_dir` itself unless this is
     // set explicitly). `std.rhai` always lives under `default/`, never
     // `user/`, so that's the fixed base path for every script's imports.
-    engine.set_module_resolver(rhai::module_resolvers::FileModuleResolver::new_with_path(&default_dir));
+    engine.set_module_resolver(rhai::module_resolvers::FileModuleResolver::new_with_path(
+        &default_dir,
+    ));
 
     if default_dir.is_dir() {
         load_dir(engine, &default_dir, &mut scripts)?;
@@ -67,12 +69,10 @@ fn load_dir(
     for entry in entries {
         let path = entry.path();
         let source = std::fs::read_to_string(&path)?;
-        let ast = engine
-            .compile(&source)
-            .map_err(|e| RhaiError::Compile {
-                path: path.display().to_string(),
-                error: e.to_string(),
-            })?;
+        let ast = engine.compile(&source).map_err(|e| RhaiError::Compile {
+            path: path.display().to_string(),
+            error: e.to_string(),
+        })?;
         scripts.push(CompiledScript { ast });
     }
 
@@ -107,7 +107,9 @@ mod tests {
     #[test]
     fn detects_zero_arg_hooks() {
         let engine = Engine::new();
-        let ast = engine.compile("fn on_load() {} fn on_session_end() {}").unwrap();
+        let ast = engine
+            .compile("fn on_load() {} fn on_session_end() {}")
+            .unwrap();
         assert!(has_fn(&engine, &ast, "on_load"));
         assert!(has_fn(&engine, &ast, "on_session_end"));
     }
@@ -141,15 +143,22 @@ mod tests {
         let plugin_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../plugins");
         let mut engine = Engine::new();
         engine.set_max_expr_depths(128, 128);
-        engine.register_fn("call_async", |_name: &str, _args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
-            Ok(rhai::Dynamic::UNIT)
-        });
+        engine.register_fn(
+            "call_async",
+            |_name: &str, _args: rhai::Map| -> Result<rhai::Dynamic, Box<rhai::EvalAltResult>> {
+                Ok(rhai::Dynamic::UNIT)
+            },
+        );
         engine.register_fn("log_info", |_msg: &str| {});
         engine.register_fn("log_warn", |_msg: &str| {});
         engine.register_fn("log_error", |_msg: &str| {});
         engine.register_fn("now_ms", || -> i64 { 0 });
 
-        let scripts = load_plugins(&mut engine, &plugin_dir).expect("default plugins should compile");
-        assert!(!scripts.is_empty(), "expected at least one plugin under plugins/default/");
+        let scripts =
+            load_plugins(&mut engine, &plugin_dir).expect("default plugins should compile");
+        assert!(
+            !scripts.is_empty(),
+            "expected at least one plugin under plugins/default/"
+        );
     }
 }

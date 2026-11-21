@@ -152,9 +152,10 @@ fn pinned_mic_waits_for_recovery_without_falling_back_to_default() {
     ));
     // The default device is B (distinct from A), specifically to prove that A
     // disappearing never falls back to B.
-    state
-        .default_routes
-        .insert((DataFlow::Capture, DeviceRole::Console), Some(endpoint("MicB")));
+    state.default_routes.insert(
+        (DataFlow::Capture, DeviceRole::Console),
+        Some(endpoint("MicB")),
+    );
 
     let effects = decide(
         &mut state,
@@ -209,7 +210,10 @@ fn pinned_mic_waits_for_recovery_without_falling_back_to_default() {
             reason: WaitReason::DeviceUnavailable,
         }
     );
-    assert_eq!(state.bindings[&BindingKind::Microphone].lifecycle.health(), BindingHealth::Unavailable);
+    assert_eq!(
+        state.bindings[&BindingKind::Microphone].lifecycle.health(),
+        BindingHealth::Unavailable
+    );
 
     // A is reconnected.
     let effects = decide(
@@ -248,7 +252,10 @@ fn pinned_mic_waits_for_recovery_without_falling_back_to_default() {
         },
         "must recover to MicA (not fall back to MicB)"
     );
-    assert_eq!(state.bindings[&BindingKind::Microphone].lifecycle.health(), BindingHealth::Ok);
+    assert_eq!(
+        state.bindings[&BindingKind::Microphone].lifecycle.health(),
+        BindingHealth::Ok
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -453,7 +460,10 @@ fn process_loopback_ignores_endpoint_events_but_rebinds_on_process_restart() {
         other => panic!("unexpected effects: {other:?}"),
     };
     assert_ne!(op0, op1);
-    assert_ne!(epoch0, epoch1, "stream_epoch must update on PID re-resolution");
+    assert_ne!(
+        epoch0, epoch1,
+        "stream_epoch must update on PID re-resolution"
+    );
 
     decide(
         &mut state,
@@ -567,9 +577,14 @@ fn worker_failed_gives_up_after_max_retry_attempts() {
             }),
         );
         match effects.as_slice() {
-            [Effect::ScheduleRetry { retry_id, attempt, .. }] => {
+            [Effect::ScheduleRetry {
+                retry_id, attempt, ..
+            }] => {
                 retries_seen += 1;
-                assert_eq!(*attempt, retries_seen, "attempt must increase by exactly one per retry");
+                assert_eq!(
+                    *attempt, retries_seen,
+                    "attempt must increase by exactly one per retry"
+                );
                 assert_eq!(
                     state.bindings[&BindingKind::Microphone].lifecycle.health(),
                     BindingHealth::Retrying { attempt: *attempt }
@@ -633,16 +648,33 @@ fn accepts_epoch_only_matches_a_running_binding_with_the_same_epoch() {
 fn decision_state_accepts_epoch_matches_a_running_bindings_current_epoch() {
     let mut state = DecisionState::new().with_binding(CaptureBinding::new(
         BindingKind::Microphone,
-        BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+        BindingSelection::Endpoint(EndpointSelection::Pinned {
+            endpoint_id: endpoint("MicA"),
+        }),
     ));
-    let effects = decide(&mut state, DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }));
+    let effects = decide(
+        &mut state,
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
+    );
     let (operation_id, epoch, target) = match effects.as_slice() {
-        [Effect::StartCapture { operation_id, proposed_epoch, target, .. }] => (*operation_id, *proposed_epoch, target.clone()),
+        [Effect::StartCapture {
+            operation_id,
+            proposed_epoch,
+            target,
+            ..
+        }] => (*operation_id, *proposed_epoch, target.clone()),
         other => panic!("unexpected effects: {other:?}"),
     };
     decide(
         &mut state,
-        DecisionInput::Observation(Observation::WorkerStarted { binding: BindingKind::Microphone, operation_id, epoch, target }),
+        DecisionInput::Observation(Observation::WorkerStarted {
+            binding: BindingKind::Microphone,
+            operation_id,
+            epoch,
+            target,
+        }),
     );
 
     assert!(state.accepts_epoch(BindingKind::Microphone, epoch));
@@ -660,14 +692,28 @@ fn effect_ids_are_allocated_uniquely() {
     let mut state = DecisionState::new()
         .with_binding(CaptureBinding::new(
             BindingKind::Microphone,
-            BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+            BindingSelection::Endpoint(EndpointSelection::Pinned {
+                endpoint_id: endpoint("MicA"),
+            }),
         ))
         .with_binding(CaptureBinding::new(
             BindingKind::EndpointLoopback,
-            BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("SpeakerA") }),
+            BindingSelection::Endpoint(EndpointSelection::Pinned {
+                endpoint_id: endpoint("SpeakerA"),
+            }),
         ));
-    let e1 = decide(&mut state, DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }));
-    let e2 = decide(&mut state, DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::EndpointLoopback }));
+    let e1 = decide(
+        &mut state,
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
+    );
+    let e2 = decide(
+        &mut state,
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::EndpointLoopback,
+        }),
+    );
     let id1 = match e1.as_slice() {
         [Effect::StartCapture { effect_id, .. }] => *effect_id,
         other => panic!("unexpected effects: {other:?}"),
@@ -676,7 +722,10 @@ fn effect_ids_are_allocated_uniquely() {
         [Effect::StartCapture { effect_id, .. }] => *effect_id,
         other => panic!("unexpected effects: {other:?}"),
     };
-    assert_ne!(id1, id2, "each effect must get a distinct, freshly allocated id");
+    assert_ne!(
+        id1, id2,
+        "each effect must get a distinct, freshly allocated id"
+    );
 }
 
 #[test]
@@ -698,10 +747,16 @@ fn default_endpoint_changed_to_the_endpoint_already_in_use_is_a_noop() {
     );
     let effects = decide(
         &mut state,
-        DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }),
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
     );
     let (op0, epoch0) = match effects.as_slice() {
-        [Effect::StartCapture { operation_id, proposed_epoch, .. }] => (*operation_id, *proposed_epoch),
+        [Effect::StartCapture {
+            operation_id,
+            proposed_epoch,
+            ..
+        }] => (*operation_id, *proposed_epoch),
         other => panic!("unexpected effects: {other:?}"),
     };
     decide(
@@ -725,26 +780,41 @@ fn default_endpoint_changed_to_the_endpoint_already_in_use_is_a_noop() {
             endpoint_id: Some(endpoint("MicA")),
         }),
     );
-    assert_eq!(effects, vec![], "must not restart when already connected to the new default");
+    assert_eq!(
+        effects,
+        vec![],
+        "must not restart when already connected to the new default"
+    );
     assert_eq!(
         state.bindings[&BindingKind::Microphone].lifecycle,
-        CaptureBindingState::Running { operation_id: op0, epoch: epoch0, target: ResolvedTarget::Endpoint(endpoint("MicA")) }
+        CaptureBindingState::Running {
+            operation_id: op0,
+            epoch: epoch0,
+            target: ResolvedTarget::Endpoint(endpoint("MicA"))
+        }
     );
 }
-
 
 #[test]
 fn endpoint_removed_does_not_affect_a_binding_pinned_to_a_different_endpoint() {
     let mut state = DecisionState::new().with_binding(CaptureBinding::new(
         BindingKind::Microphone,
-        BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+        BindingSelection::Endpoint(EndpointSelection::Pinned {
+            endpoint_id: endpoint("MicA"),
+        }),
     ));
     let effects = decide(
         &mut state,
-        DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }),
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
     );
     let (op0, epoch0) = match effects.as_slice() {
-        [Effect::StartCapture { operation_id, proposed_epoch, .. }] => (*operation_id, *proposed_epoch),
+        [Effect::StartCapture {
+            operation_id,
+            proposed_epoch,
+            ..
+        }] => (*operation_id, *proposed_epoch),
         other => panic!("unexpected effects: {other:?}"),
     };
     decide(
@@ -761,12 +831,18 @@ fn endpoint_removed_does_not_affect_a_binding_pinned_to_a_different_endpoint() {
     // touch a binding pinned to a distinct endpoint.
     let effects = decide(
         &mut state,
-        DecisionInput::Observation(Observation::EndpointRemoved { endpoint_id: endpoint("MicB") }),
+        DecisionInput::Observation(Observation::EndpointRemoved {
+            endpoint_id: endpoint("MicB"),
+        }),
     );
     assert_eq!(effects, vec![]);
     assert_eq!(
         state.bindings[&BindingKind::Microphone].lifecycle,
-        CaptureBindingState::Running { operation_id: op0, epoch: epoch0, target: ResolvedTarget::Endpoint(endpoint("MicA")) }
+        CaptureBindingState::Running {
+            operation_id: op0,
+            epoch: epoch0,
+            target: ResolvedTarget::Endpoint(endpoint("MicA"))
+        }
     );
 }
 
@@ -774,7 +850,9 @@ fn endpoint_removed_does_not_affect_a_binding_pinned_to_a_different_endpoint() {
 fn endpoint_added_does_not_auto_start_a_binding_that_was_never_asked_to_start() {
     let mut state = DecisionState::new().with_binding(CaptureBinding::new(
         BindingKind::Microphone,
-        BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+        BindingSelection::Endpoint(EndpointSelection::Pinned {
+            endpoint_id: endpoint("MicA"),
+        }),
     ));
     // A fresh binding starts life `Stopped` (see `CaptureBinding::new`) — no
     // `UserIntent::Start` has ever been issued. `EndpointAdded` must only
@@ -783,24 +861,37 @@ fn endpoint_added_does_not_auto_start_a_binding_that_was_never_asked_to_start() 
     // (a `Stopped` binding was never asked to run at all).
     let effects = decide(
         &mut state,
-        DecisionInput::Observation(Observation::EndpointAdded { endpoint_id: endpoint("MicA") }),
+        DecisionInput::Observation(Observation::EndpointAdded {
+            endpoint_id: endpoint("MicA"),
+        }),
     );
     assert_eq!(effects, vec![]);
-    assert_eq!(state.bindings[&BindingKind::Microphone].lifecycle, CaptureBindingState::Stopped);
+    assert_eq!(
+        state.bindings[&BindingKind::Microphone].lifecycle,
+        CaptureBindingState::Stopped
+    );
 }
 
 #[test]
 fn worker_started_with_mismatched_epoch_only_is_rejected_as_stale() {
     let mut state = DecisionState::new().with_binding(CaptureBinding::new(
         BindingKind::Microphone,
-        BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+        BindingSelection::Endpoint(EndpointSelection::Pinned {
+            endpoint_id: endpoint("MicA"),
+        }),
     ));
     let effects = decide(
         &mut state,
-        DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }),
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
     );
     let (op0, epoch0) = match effects.as_slice() {
-        [Effect::StartCapture { operation_id, proposed_epoch, .. }] => (*operation_id, *proposed_epoch),
+        [Effect::StartCapture {
+            operation_id,
+            proposed_epoch,
+            ..
+        }] => (*operation_id, *proposed_epoch),
         other => panic!("unexpected effects: {other:?}"),
     };
     // Correct operation_id but a stale epoch (e.g. a late callback belonging to
@@ -816,7 +907,10 @@ fn worker_started_with_mismatched_epoch_only_is_rejected_as_stale() {
         }),
     );
     assert!(
-        matches!(state.bindings[&BindingKind::Microphone].lifecycle, CaptureBindingState::Starting { .. }),
+        matches!(
+            state.bindings[&BindingKind::Microphone].lifecycle,
+            CaptureBindingState::Starting { .. }
+        ),
         "must remain Starting, not transition to Running, on epoch mismatch alone"
     );
 }
@@ -825,14 +919,22 @@ fn worker_started_with_mismatched_epoch_only_is_rejected_as_stale() {
 fn worker_stopped_with_mismatched_epoch_only_is_rejected_as_stale() {
     let mut state = DecisionState::new().with_binding(CaptureBinding::new(
         BindingKind::Microphone,
-        BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+        BindingSelection::Endpoint(EndpointSelection::Pinned {
+            endpoint_id: endpoint("MicA"),
+        }),
     ));
     let effects = decide(
         &mut state,
-        DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }),
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
     );
     let (op0, epoch0) = match effects.as_slice() {
-        [Effect::StartCapture { operation_id, proposed_epoch, .. }] => (*operation_id, *proposed_epoch),
+        [Effect::StartCapture {
+            operation_id,
+            proposed_epoch,
+            ..
+        }] => (*operation_id, *proposed_epoch),
         other => panic!("unexpected effects: {other:?}"),
     };
     decide(
@@ -846,10 +948,15 @@ fn worker_stopped_with_mismatched_epoch_only_is_rejected_as_stale() {
     );
     let effects = decide(
         &mut state,
-        DecisionInput::Observation(Observation::EndpointRemoved { endpoint_id: endpoint("MicA") }),
+        DecisionInput::Observation(Observation::EndpointRemoved {
+            endpoint_id: endpoint("MicA"),
+        }),
     );
     assert!(matches!(effects.as_slice(), [Effect::StopCapture { .. }]));
-    assert!(matches!(state.bindings[&BindingKind::Microphone].lifecycle, CaptureBindingState::Stopping { .. }));
+    assert!(matches!(
+        state.bindings[&BindingKind::Microphone].lifecycle,
+        CaptureBindingState::Stopping { .. }
+    ));
 
     // A stale WorkerStopped with the correct operation_id but the wrong epoch
     // must not be treated as this Stopping's completion.
@@ -863,7 +970,10 @@ fn worker_stopped_with_mismatched_epoch_only_is_rejected_as_stale() {
     );
     assert_eq!(effects, vec![]);
     assert!(
-        matches!(state.bindings[&BindingKind::Microphone].lifecycle, CaptureBindingState::Stopping { .. }),
+        matches!(
+            state.bindings[&BindingKind::Microphone].lifecycle,
+            CaptureBindingState::Stopping { .. }
+        ),
         "must remain Stopping, not treated as this stop completing, on epoch mismatch alone"
     );
 }
@@ -872,14 +982,22 @@ fn worker_stopped_with_mismatched_epoch_only_is_rejected_as_stale() {
 fn worker_failed_while_running_is_handled_same_as_while_starting() {
     let mut state = DecisionState::new().with_binding(CaptureBinding::new(
         BindingKind::Microphone,
-        BindingSelection::Endpoint(EndpointSelection::Pinned { endpoint_id: endpoint("MicA") }),
+        BindingSelection::Endpoint(EndpointSelection::Pinned {
+            endpoint_id: endpoint("MicA"),
+        }),
     ));
     let effects = decide(
         &mut state,
-        DecisionInput::UserIntent(UserIntent::Start { binding: BindingKind::Microphone }),
+        DecisionInput::UserIntent(UserIntent::Start {
+            binding: BindingKind::Microphone,
+        }),
     );
     let (op0, epoch0) = match effects.as_slice() {
-        [Effect::StartCapture { operation_id, proposed_epoch, .. }] => (*operation_id, *proposed_epoch),
+        [Effect::StartCapture {
+            operation_id,
+            proposed_epoch,
+            ..
+        }] => (*operation_id, *proposed_epoch),
         other => panic!("unexpected effects: {other:?}"),
     };
     decide(
@@ -891,7 +1009,10 @@ fn worker_failed_while_running_is_handled_same_as_while_starting() {
             target: ResolvedTarget::Endpoint(endpoint("MicA")),
         }),
     );
-    assert!(matches!(state.bindings[&BindingKind::Microphone].lifecycle, CaptureBindingState::Running { .. }));
+    assert!(matches!(
+        state.bindings[&BindingKind::Microphone].lifecycle,
+        CaptureBindingState::Running { .. }
+    ));
 
     // The worker fails while actively Running (not merely Starting) — e.g. the
     // capture callback thread hits AUDCLNT_E_DEVICE_INVALIDATED mid-capture.
@@ -903,10 +1024,15 @@ fn worker_failed_while_running_is_handled_same_as_while_starting() {
             error: "AUDCLNT_E_DEVICE_INVALIDATED".to_string(),
         }),
     );
-    assert!(matches!(effects.as_slice(), [Effect::ScheduleRetry { attempt: 1, .. }]));
+    assert!(matches!(
+        effects.as_slice(),
+        [Effect::ScheduleRetry { attempt: 1, .. }]
+    ));
     assert_eq!(
         state.bindings[&BindingKind::Microphone].lifecycle,
-        CaptureBindingState::Waiting { reason: WaitReason::RetryableFailure { attempt: 1 } }
+        CaptureBindingState::Waiting {
+            reason: WaitReason::RetryableFailure { attempt: 1 }
+        }
     );
 }
 
@@ -1045,5 +1171,9 @@ fn shutdown_prevents_new_start_capture() {
             binding: BindingKind::Microphone,
         }),
     );
-    assert_eq!(effects, vec![], "must not issue StartCapture after shutdown");
+    assert_eq!(
+        effects,
+        vec![],
+        "must not issue StartCapture after shutdown"
+    );
 }

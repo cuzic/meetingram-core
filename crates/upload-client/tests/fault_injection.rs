@@ -42,13 +42,24 @@ fn manifest(session_id: SessionId) -> SessionManifest {
             remote_source_id: "speaker-1".to_string(),
             remote_source_kind: RemoteSourceKind::EndpointLoopback,
         },
-        audio: AudioManifest { sample_rate: 48_000, segment_duration_ms: 30_000, tracks: vec![TrackKind::SelfMic] },
-        consent: ConsentManifest { confirmed_by_user: true, confirmed_at: Utc::now() },
+        audio: AudioManifest {
+            sample_rate: 48_000,
+            segment_duration_ms: 30_000,
+            tracks: vec![TrackKind::SelfMic],
+        },
+        consent: ConsentManifest {
+            confirmed_by_user: true,
+            confirmed_at: Utc::now(),
+        },
     }
 }
 
 fn client(base_url: String) -> HttpUploadClient {
-    HttpUploadClient::new(base_url, Duration::from_millis(150), Arc::new(StaticTokenProvider("test-token".to_string())))
+    HttpUploadClient::new(
+        base_url,
+        Duration::from_millis(150),
+        Arc::new(StaticTokenProvider("test-token".to_string())),
+    )
 }
 
 #[tokio::test]
@@ -66,8 +77,13 @@ async fn hundred_segments_with_30_percent_faults_completes_with_no_duplicates_an
     let session_id = SessionId::new();
     store.create_session(&manifest(session_id)).unwrap();
 
-    let remote = client.create_session(&manifest(session_id)).await.expect("create_session failed");
-    store.set_remote_session_id(session_id, &remote.remote_session_id).unwrap();
+    let remote = client
+        .create_session(&manifest(session_id))
+        .await
+        .expect("create_session failed");
+    store
+        .set_remote_session_id(session_id, &remote.remote_session_id)
+        .unwrap();
 
     let files_dir = tempfile::tempdir().unwrap();
     const N: u64 = 100;
@@ -103,8 +119,18 @@ async fn hundred_segments_with_30_percent_faults_completes_with_no_duplicates_an
         let semaphore = semaphore.clone();
         join_set.spawn(async move {
             let _permit = semaphore.acquire_owned().await.unwrap();
-            client.upload_segment(&remote, &segment).await.expect("upload_segment should eventually succeed despite fault injection");
-            store.update_upload_state(session_id, segment.track, segment.sequence, &UploadState::Completed).unwrap();
+            client
+                .upload_segment(&remote, &segment)
+                .await
+                .expect("upload_segment should eventually succeed despite fault injection");
+            store
+                .update_upload_state(
+                    session_id,
+                    segment.track,
+                    segment.sequence,
+                    &UploadState::Completed,
+                )
+                .unwrap();
         });
     }
     while let Some(res) = join_set.join_next().await {
@@ -119,14 +145,27 @@ async fn hundred_segments_with_30_percent_faults_completes_with_no_duplicates_an
         segment_counts_by_track: store.segment_counts_by_track(session_id).unwrap(),
         total_duration_ms: N * 30_000,
     };
-    client.finalize_session(&remote, &summary).await.expect("finalize_session failed");
+    client
+        .finalize_session(&remote, &summary)
+        .await
+        .expect("finalize_session failed");
 
     let stats = state.stats.lock().unwrap();
-    assert_eq!(stats.segment_write_counts.len(), N as usize, "server should register exactly N segments (zero lost)");
+    assert_eq!(
+        stats.segment_write_counts.len(),
+        N as usize,
+        "server should register exactly N segments (zero lost)"
+    );
     for (key, count) in stats.segment_write_counts.iter() {
-        assert_eq!(*count, 1, "each segment's actual write should happen exactly once (zero duplicates): {key:?}");
+        assert_eq!(
+            *count, 1,
+            "each segment's actual write should happen exactly once (zero duplicates): {key:?}"
+        );
     }
-    assert!(stats.faults_injected > 0, "fault injection should actually have fired, or this test proves nothing");
+    assert!(
+        stats.faults_injected > 0,
+        "fault injection should actually have fired, or this test proves nothing"
+    );
 }
 
 #[tokio::test]
@@ -142,8 +181,13 @@ async fn resumes_after_simulated_crash_without_duplicate_registration() {
     let remote = {
         let store = SessionStore::open(&db_path).unwrap();
         store.create_session(&manifest(session_id)).unwrap();
-        let remote = client.create_session(&manifest(session_id)).await.expect("create_session failed");
-        store.set_remote_session_id(session_id, &remote.remote_session_id).unwrap();
+        let remote = client
+            .create_session(&manifest(session_id))
+            .await
+            .expect("create_session failed");
+        store
+            .set_remote_session_id(session_id, &remote.remote_session_id)
+            .unwrap();
 
         // Pre-load 100 segments into the local ledger (design.md §12: the local spool
         // is always the source of truth for what needs to be sent).
@@ -181,11 +225,21 @@ async fn resumes_after_simulated_crash_without_duplicate_registration() {
             if i >= 40 {
                 break;
             }
-            client.upload_segment(&remote, segment).await.expect("upload_segment failed (run1)");
+            client
+                .upload_segment(&remote, segment)
+                .await
+                .expect("upload_segment failed (run1)");
             if i == 39 {
                 break; // crash: update_upload_state deliberately not called
             }
-            store.update_upload_state(session_id, segment.track, segment.sequence, &UploadState::Completed).unwrap();
+            store
+                .update_upload_state(
+                    session_id,
+                    segment.track,
+                    segment.sequence,
+                    &UploadState::Completed,
+                )
+                .unwrap();
         }
     }
 
@@ -193,7 +247,11 @@ async fn resumes_after_simulated_crash_without_duplicate_registration() {
     {
         let store = SessionStore::open(&db_path).unwrap();
         let pending = store.pending_uploads(session_id).unwrap();
-        assert_eq!(pending.len(), 61, "resume set should be 100-39=61 (including segment 39's resend)");
+        assert_eq!(
+            pending.len(),
+            61,
+            "resume set should be 100-39=61 (including segment 39's resend)"
+        );
     }
 
     // "Run 2": a fresh SessionStore handle on the same file simulates a process
@@ -203,8 +261,18 @@ async fn resumes_after_simulated_crash_without_duplicate_registration() {
         let store = SessionStore::open(&db_path).unwrap();
         let pending = store.pending_uploads(session_id).unwrap();
         for segment in pending {
-            client.upload_segment(&remote, &segment).await.expect("upload_segment failed (run2)");
-            store.update_upload_state(session_id, segment.track, segment.sequence, &UploadState::Completed).unwrap();
+            client
+                .upload_segment(&remote, &segment)
+                .await
+                .expect("upload_segment failed (run2)");
+            store
+                .update_upload_state(
+                    session_id,
+                    segment.track,
+                    segment.sequence,
+                    &UploadState::Completed,
+                )
+                .unwrap();
         }
 
         let summary = SessionSummary {
@@ -213,7 +281,10 @@ async fn resumes_after_simulated_crash_without_duplicate_registration() {
             segment_counts_by_track: store.segment_counts_by_track(session_id).unwrap(),
             total_duration_ms: 100 * 30_000,
         };
-        client.finalize_session(&remote, &summary).await.expect("finalize_session failed");
+        client
+            .finalize_session(&remote, &summary)
+            .await
+            .expect("finalize_session failed");
 
         assert!(store.pending_uploads(session_id).unwrap().is_empty());
     }
@@ -224,6 +295,9 @@ async fn resumes_after_simulated_crash_without_duplicate_registration() {
     let stats = state.stats.lock().unwrap();
     assert_eq!(stats.segment_write_counts.len(), 100);
     for (key, count) in stats.segment_write_counts.iter() {
-        assert_eq!(*count, 1, "duplicate client-side sends must not cause duplicate server-side writes: {key:?}");
+        assert_eq!(
+            *count, 1,
+            "duplicate client-side sends must not cause duplicate server-side writes: {key:?}"
+        );
     }
 }

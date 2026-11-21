@@ -26,11 +26,11 @@ pub use error::CaptureError;
 pub use frame::CapturedFrameRecord;
 
 use capture_api::rebinding::BindingKind;
+use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Media::Audio::{WAVEFORMATEX, WAVEFORMATEXTENSIBLE};
 use windows::Win32::Media::KernelStreaming::WAVE_FORMAT_EXTENSIBLE;
 use windows::Win32::Media::Multimedia::WAVE_FORMAT_IEEE_FLOAT;
 use windows::Win32::System::Com::CoTaskMemFree;
-use windows::Win32::Foundation::HANDLE;
 
 /// KSDATAFORMAT_SUBTYPE_IEEE_FLOAT. Unlike KSDATAFORMAT_SUBTYPE_PCM, the `windows`
 /// crate's generated bindings don't include this GUID, so it's hardcoded here from
@@ -216,7 +216,8 @@ unsafe impl Sync for StopSignal {}
 impl StopSignal {
     pub fn new() -> windows::core::Result<Self> {
         // manual_reset=true, initial_state=false, unnamed event.
-        let event = unsafe { windows::Win32::System::Threading::CreateEventW(None, true, false, None)? };
+        let event =
+            unsafe { windows::Win32::System::Threading::CreateEventW(None, true, false, None)? };
         Ok(Self { event })
     }
 
@@ -253,8 +254,14 @@ pub trait CaptureStream: Send {
 /// caller should treat this — not `CaptureEvent::StreamStopped` delivered over the
 /// shared channel — as the source of truth for rebinding decisions.
 pub enum CaptureThreadOutcome {
-    Stopped { exit: CaptureExit, mmcss_applied: bool },
-    Errored { error: CaptureError, mmcss_applied: bool },
+    Stopped {
+        exit: CaptureExit,
+        mmcss_applied: bool,
+    },
+    Errored {
+        error: CaptureError,
+        mmcss_applied: bool,
+    },
 }
 
 pub fn spawn_capture_thread(
@@ -276,7 +283,10 @@ pub fn spawn_capture_thread(
                         exit,
                         mmcss_applied,
                     });
-                    CaptureThreadOutcome::Stopped { exit, mmcss_applied }
+                    CaptureThreadOutcome::Stopped {
+                        exit,
+                        mmcss_applied,
+                    }
                 }
                 Err(e) => {
                     let _ = tx.send(CaptureEvent::StreamError {
