@@ -1,0 +1,2248 @@
+{
+ "meeting": "meetings/m2.json",
+ "backend": "claude",
+ "model": "haiku",
+ "batch": 6,
+ "secs": 45,
+ "live_calls": 29,
+ "calls": [
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1560,
+   "ok": true,
+   "secs": 4.23,
+   "usage": {
+    "input": 2,
+    "cache_create": 9100,
+    "cache_read": 9936,
+    "output": 351,
+    "cost_usd": 0.00209506,
+    "api_ms": 2811
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 0,
+   "applied": 0,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 3118,
+   "ok": true,
+   "secs": 24.14,
+   "usage": {
+    "input": 2,
+    "cache_create": 10576,
+    "cache_read": 9936,
+    "output": 5124,
+    "cost_usd": 0.0047767600000000006,
+    "api_ms": 22997
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 22,
+   "applied": 22,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 1,
+   "prompt_chars": 2341,
+   "ok": true,
+   "secs": 4.14,
+   "usage": {
+    "input": 2,
+    "cache_create": 9748,
+    "cache_read": 9936,
+    "output": 72,
+    "cost_usd": 0.00208516,
+    "api_ms": 1704
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 0,
+   "applied": 0,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2486,
+   "ok": true,
+   "secs": 5.82,
+   "usage": {
+    "input": 2,
+    "cache_create": 9881,
+    "cache_read": 9936,
+    "output": 584,
+    "cost_usd": 0.00236776,
+    "api_ms": 3959
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 0,
+   "applied": 0,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2280,
+   "ok": true,
+   "secs": 8.72,
+   "usage": {
+    "input": 2,
+    "cache_create": 9680,
+    "cache_read": 9936,
+    "output": 1201,
+    "cost_usd": 0.00263606,
+    "api_ms": 7044
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1910,
+   "ok": true,
+   "secs": 12.68,
+   "usage": {
+    "input": 2,
+    "cache_create": 9380,
+    "cache_read": 9936,
+    "output": 2421,
+    "cost_usd": 0.00318606,
+    "api_ms": 10738
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 9,
+   "applied": 9,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2114,
+   "ok": true,
+   "secs": 12.21,
+   "usage": {
+    "input": 2,
+    "cache_create": 9544,
+    "cache_read": 9936,
+    "output": 2225,
+    "cost_usd": 0.00312086,
+    "api_ms": 10285
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2227,
+   "ok": true,
+   "secs": 8.72,
+   "usage": {
+    "input": 2,
+    "cache_create": 9632,
+    "cache_read": 9936,
+    "output": 1376,
+    "cost_usd": 0.00271396,
+    "api_ms": 6660
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2216,
+   "ok": true,
+   "secs": 13.7,
+   "usage": {
+    "input": 2,
+    "cache_create": 9621,
+    "cache_read": 9936,
+    "output": 2288,
+    "cost_usd": 0.00316776,
+    "api_ms": 9362
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 7,
+   "applied": 7,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2194,
+   "ok": true,
+   "secs": 12.07,
+   "usage": {
+    "input": 2,
+    "cache_create": 9601,
+    "cache_read": 9936,
+    "output": 1849,
+    "cost_usd": 0.00294426,
+    "api_ms": 9174
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2187,
+   "ok": true,
+   "secs": 12.05,
+   "usage": {
+    "input": 2,
+    "cache_create": 9590,
+    "cache_read": 9936,
+    "output": 2246,
+    "cost_usd": 0.0031405599999999997,
+    "api_ms": 10761
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2290,
+   "ok": true,
+   "secs": 9.87,
+   "usage": {
+    "input": 2,
+    "cache_create": 9675,
+    "cache_read": 9936,
+    "output": 1912,
+    "cost_usd": 0.00299056,
+    "api_ms": 8593
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2217,
+   "ok": true,
+   "secs": 9.83,
+   "usage": {
+    "input": 2,
+    "cache_create": 9616,
+    "cache_read": 9936,
+    "output": 1328,
+    "cost_usd": 0.00268676,
+    "api_ms": 7041
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2284,
+   "ok": true,
+   "secs": 12.49,
+   "usage": {
+    "input": 2,
+    "cache_create": 9668,
+    "cache_read": 9936,
+    "output": 2277,
+    "cost_usd": 0.0031716599999999998,
+    "api_ms": 10764
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2244,
+   "ok": true,
+   "secs": 9.37,
+   "usage": {
+    "input": 2,
+    "cache_create": 9642,
+    "cache_read": 9936,
+    "output": 1603,
+    "cost_usd": 0.0028294600000000002,
+    "api_ms": 8153
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2232,
+   "ok": true,
+   "secs": 9.64,
+   "usage": {
+    "input": 2,
+    "cache_create": 9629,
+    "cache_read": 9936,
+    "output": 1497,
+    "cost_usd": 0.0027738600000000004,
+    "api_ms": 7488
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2221,
+   "ok": true,
+   "secs": 7.86,
+   "usage": {
+    "input": 2,
+    "cache_create": 9615,
+    "cache_read": 9936,
+    "output": 1170,
+    "cost_usd": 0.00260756,
+    "api_ms": 6513
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2013,
+   "ok": true,
+   "secs": 11.29,
+   "usage": {
+    "input": 2,
+    "cache_create": 12053,
+    "cache_read": 9936,
+    "output": 636,
+    "cost_usd": 0.00282816,
+    "api_ms": 4332
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 0,
+   "applied": 0,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1997,
+   "ok": true,
+   "secs": 15.55,
+   "usage": {
+    "input": 2,
+    "cache_create": 12049,
+    "cache_read": 9936,
+    "output": 1150,
+    "cost_usd": 0.0030843600000000004,
+    "api_ms": 6604
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1990,
+   "ok": true,
+   "secs": 10.1,
+   "usage": {
+    "input": 2,
+    "cache_create": 9432,
+    "cache_read": 9936,
+    "output": 1213,
+    "cost_usd": 0.00259246,
+    "api_ms": 6239
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1990,
+   "ok": true,
+   "secs": 13.67,
+   "usage": {
+    "input": 2,
+    "cache_create": 12039,
+    "cache_read": 9936,
+    "output": 1376,
+    "cost_usd": 0.00319536,
+    "api_ms": 6927
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2117,
+   "ok": true,
+   "secs": 17.22,
+   "usage": {
+    "input": 2,
+    "cache_create": 12142,
+    "cache_read": 9936,
+    "output": 1955,
+    "cost_usd": 0.00350546,
+    "api_ms": 9362
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 8,
+   "applied": 8,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2261,
+   "ok": true,
+   "secs": 10.61,
+   "usage": {
+    "input": 2,
+    "cache_create": 9631,
+    "cache_read": 9936,
+    "output": 1420,
+    "cost_usd": 0.0027357600000000003,
+    "api_ms": 6864
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2173,
+   "ok": true,
+   "secs": 6.38,
+   "usage": {
+    "input": 2,
+    "cache_create": 9563,
+    "cache_read": 9936,
+    "output": 582,
+    "cost_usd": 0.0023031600000000003,
+    "api_ms": 3605
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 0,
+   "applied": 0,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2103,
+   "ok": true,
+   "secs": 9.9,
+   "usage": {
+    "input": 2,
+    "cache_create": 9521,
+    "cache_read": 9936,
+    "output": 1529,
+    "cost_usd": 0.00276826,
+    "api_ms": 7313
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2091,
+   "ok": true,
+   "secs": 12.63,
+   "usage": {
+    "input": 2,
+    "cache_create": 9505,
+    "cache_read": 9936,
+    "output": 2440,
+    "cost_usd": 0.00322056,
+    "api_ms": 11358
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2118,
+   "ok": true,
+   "secs": 14.85,
+   "usage": {
+    "input": 2,
+    "cache_create": 9531,
+    "cache_read": 9936,
+    "output": 2792,
+    "cost_usd": 0.00340176,
+    "api_ms": 13081
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 10,
+   "applied": 10,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2328,
+   "ok": true,
+   "secs": 14.07,
+   "usage": {
+    "input": 2,
+    "cache_create": 9683,
+    "cache_read": 9936,
+    "output": 2410,
+    "cost_usd": 0.00324116,
+    "api_ms": 11892
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2359,
+   "ok": true,
+   "secs": 13.97,
+   "usage": {
+    "input": 2,
+    "cache_create": 9717,
+    "cache_read": 9936,
+    "output": 2186,
+    "cost_usd": 0.00313596,
+    "api_ms": 9844
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "flush",
+   "attempt": 0,
+   "n_utt": 4,
+   "prompt_chars": 2265,
+   "ok": true,
+   "secs": 5.99,
+   "usage": {
+    "input": 2,
+    "cache_create": 9633,
+    "cache_read": 9936,
+    "output": 753,
+    "cost_usd": 0.00240266,
+    "api_ms": 4569
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "consolidate",
+   "prompt_chars": 12572,
+   "ok": true,
+   "secs": 45.44,
+   "usage": {
+    "input": 2,
+    "cache_create": 18171,
+    "cache_read": 9936,
+    "output": 10281,
+    "cost_usd": 0.00887426,
+    "api_ms": 44218
+   },
+   "parsed": true,
+   "err": null,
+   "n_ops": 12,
+   "applied": 9,
+   "rejected": {
+    "edge_duplicate": 3
+   }
+  }
+ ],
+ "rejected": {
+  "edge_duplicate": 3
+ },
+ "nodes": {
+  "n1": {
+   "kind": "issue",
+   "text": "忙しさ・業務負荷をどう減らすか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    5,
+    12,
+    51
+   ],
+   "rev": 2
+  },
+  "n2": {
+   "kind": "position",
+   "text": "問題は問い合わせ当番の割り込み（週10時間、復帰に約30分）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n3": {
+   "kind": "argument",
+   "text": "刷新作業が夜にずれ込み、2〜3時に寝る日があって朝頭が回らない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n4": {
+   "kind": "argument",
+   "text": "週末に平日の残りを片づけて半日使い、休んだ気がせず月曜がしんどい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n5": {
+   "kind": "issue",
+   "text": "基盤チームの仕様変更をどう事前に共有してもらうか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n6": {
+   "kind": "position",
+   "text": "変更時は影響チームにメンションするなど、事前に明示的に知らせてほしい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n7": {
+   "kind": "argument",
+   "text": "変更は別スレッドの小さな書き込みだけで気づけず、2日分の手戻りになった",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12,
+    102
+   ],
+   "rev": 2
+  },
+  "n8": {
+   "kind": "issue",
+   "text": "今後のキャリアを技術寄りにするか、マネジメント／テックリード寄りにするか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n9": {
+   "kind": "position",
+   "text": "設計やパフォーマンスチューニングなど、技術を深める方向に進みたい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n10": {
+   "kind": "position",
+   "text": "人を見ながら技術も担うテックリード／マネジメント寄りも選択肢として検討したい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.4,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n11": {
+   "kind": "argument",
+   "text": "新人メンターが思ったより楽しく、人が伸びていくのを見るのが良いと感じた",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12,
+    63,
+    64
+   ],
+   "rev": 2
+  },
+  "n12": {
+   "kind": "argument",
+   "text": "マネジメントに行くと会議ばかりになり、自分で手を動かす時間がなくなるのが怖い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n13": {
+   "kind": "issue",
+   "text": "来期の目標の方向性をどう決めるか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    12,
+    146
+   ],
+   "rev": 2
+  },
+  "n14": {
+   "kind": "argument",
+   "text": "問い合わせ当番は多い週には週10時間を超える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    20
+   ],
+   "rev": 5
+  },
+  "n15": {
+   "kind": "issue",
+   "text": "刷新の締め切りを後ろにずらせるか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    26,
+    31,
+    32,
+    33
+   ],
+   "rev": 6
+  },
+  "n16": {
+   "kind": "position",
+   "text": "刷新の締め切りを後ろにずらす",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    26,
+    30
+   ],
+   "rev": 6
+  },
+  "n17": {
+   "kind": "argument",
+   "text": "1月末のリリースはお客さんと合意済みで動かせない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    29
+   ],
+   "rev": 6
+  },
+  "n18": {
+   "kind": "decision",
+   "text": "1月末リリースは据え置き（先週の定例で顧客の部長も入って決定済み）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    31
+   ],
+   "rev": 6
+  },
+  "n19": {
+   "kind": "decision",
+   "text": "刷新の締め切りは後ろにずらさない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    32,
+    33
+   ],
+   "rev": 7
+  },
+  "n20": {
+   "kind": "position",
+   "text": "問い合わせ当番から、しばらく外してもらう",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    35
+   ],
+   "rev": 7
+  },
+  "n21": {
+   "kind": "argument",
+   "text": "割り込みがなくなるだけで、負荷はだいぶ違う",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    37
+   ],
+   "rev": 7
+  },
+  "n22": {
+   "kind": "argument",
+   "text": "篠原さんが外れると、その分の当番が他の人に回り、他の人の負担が増える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    40,
+    41
+   ],
+   "rev": 8
+  },
+  "n23": {
+   "kind": "position",
+   "text": "吉岡さんを問い合わせ当番のローテーションに入れる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    48,
+    151
+   ],
+   "rev": 9
+  },
+  "n24": {
+   "kind": "argument",
+   "text": "吉岡さんが入れば、篠原さんが外れても他の人の負担はそれほど増えない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    48,
+    49
+   ],
+   "rev": 9
+  },
+  "n25": {
+   "kind": "argument",
+   "text": "吉岡さんは、まだ当番のローテーションに入っていない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    44
+   ],
+   "rev": 9
+  },
+  "n26": {
+   "kind": "decision",
+   "text": "来月から2か月間、篠原さんは問い合わせ当番から外れる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    51
+   ],
+   "rev": 10
+  },
+  "n27": {
+   "kind": "action",
+   "text": "当番表を調整し、チームに説明する（自分）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    53,
+    168
+   ],
+   "rev": 10
+  },
+  "n28": {
+   "kind": "action",
+   "text": "2か月後に状況を見て、当番の扱いを改めて決める",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    55
+   ],
+   "rev": 10
+  },
+  "n29": {
+   "kind": "argument",
+   "text": "割り込みがなくなり、昼間に作業を進められるので、寝る時間も良くなりそう",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    58
+   ],
+   "rev": 11
+  },
+  "n30": {
+   "kind": "action",
+   "text": "寝る時間が良くならなければ、相手がすぐ伝える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    59,
+    60
+   ],
+   "rev": 11
+  },
+  "n31": {
+   "kind": "position",
+   "text": "どちらか一方に決めず、技術とマネジメントの両方を視野に入れる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    67
+   ],
+   "rev": 12
+  },
+  "n32": {
+   "kind": "argument",
+   "text": "技術を深めたい気持ちがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    63,
+    64
+   ],
+   "rev": 12
+  },
+  "n33": {
+   "kind": "argument",
+   "text": "メンター役が楽しかった",
+   "status": "merged",
+   "merged_into": "n11",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    63,
+    64
+   ],
+   "rev": 12
+  },
+  "n34": {
+   "kind": "argument",
+   "text": "社内のテックリードは半分ぐらい手を動かしている人もいる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    69,
+    70
+   ],
+   "rev": 13
+  },
+  "n35": {
+   "kind": "argument",
+   "text": "うちの評価はマネジメント寄りなので、技術とマネジメントの両立は難しいかもしれない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    72,
+    73
+   ],
+   "rev": 13
+  },
+  "n36": {
+   "kind": "argument",
+   "text": "人を見る方が評価されやすく、スペシャリストの評価の軸がはっきりしない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    74
+   ],
+   "rev": 14
+  },
+  "n37": {
+   "kind": "argument",
+   "text": "今年からスペシャリストの等級ができ、技術の方でも上に行けるよう人事が変えた",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    76,
+    77
+   ],
+   "rev": 14
+  },
+  "n38": {
+   "kind": "action",
+   "text": "自分が評価制度の資料を相手に送る",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    79
+   ],
+   "rev": 14
+  },
+  "n39": {
+   "kind": "position",
+   "text": "いきなり決めず、半年ほどテックリード的な役割を試してみる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    85
+   ],
+   "rev": 15
+  },
+  "n40": {
+   "kind": "argument",
+   "text": "今でも週に8時間ほど会議があり、これ以上会議が増えるのは嫌だ",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    81,
+    82
+   ],
+   "rev": 15
+  },
+  "n41": {
+   "kind": "argument",
+   "text": "合わなければ戻れるので、お試しとして始めやすい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    87
+   ],
+   "rev": 16
+  },
+  "n42": {
+   "kind": "argument",
+   "text": "今すぐではなく、当番などが落ち着いてから始める方がいい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    90
+   ],
+   "rev": 16
+  },
+  "n43": {
+   "kind": "action",
+   "text": "次の1on1までに、やりたいことを書き出してくる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    95,
+    96,
+    169
+   ],
+   "rev": 17
+  },
+  "n44": {
+   "kind": "position",
+   "text": "基盤チームの大塚さんに直接伝える",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    104,
+    106,
+    113
+   ],
+   "rev": 19
+  },
+  "n45": {
+   "kind": "argument",
+   "text": "手戻りで2日の工数が失われている",
+   "status": "merged",
+   "merged_into": "n7",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    102
+   ],
+   "rev": 19
+  },
+  "n46": {
+   "kind": "position",
+   "text": "仕様変更があるときは事前に教えてもらうルールを作る",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    115
+   ],
+   "rev": 20
+  },
+  "n47": {
+   "kind": "position",
+   "text": "影響のあるチームにメンションして事前に知らせる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    116
+   ],
+   "rev": 21
+  },
+  "n48": {
+   "kind": "argument",
+   "text": "基盤チームは今人が足りておらず、ルールを増やしても守れる余裕がない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    119,
+    120
+   ],
+   "rev": 21
+  },
+  "n49": {
+   "kind": "position",
+   "text": "基盤チームのマネージャーの片桐さんに話してみる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    123
+   ],
+   "rev": 22
+  },
+  "n50": {
+   "kind": "argument",
+   "text": "現場同士だと角が立つので、マネージャー同士で話す方がよい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    125
+   ],
+   "rev": 22
+  },
+  "n51": {
+   "kind": "action",
+   "text": "基盤チームの片桐さんに話をする（自分が担当）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    123,
+    168
+   ],
+   "rev": 22
+  },
+  "n52": {
+   "kind": "position",
+   "text": "両チームで月1ぐらいの頻度で、変更を共有する場を作る",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    127
+   ],
+   "rev": 22
+  },
+  "n53": {
+   "kind": "argument",
+   "text": "定例の会議が増えて負担になる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    129
+   ],
+   "rev": 23
+  },
+  "n54": {
+   "kind": "argument",
+   "text": "15分程度の短い場なら負担は小さい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    131
+   ],
+   "rev": 23
+  },
+  "n55": {
+   "kind": "position",
+   "text": "キャリアの方向が見えてから決める",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    141
+   ],
+   "rev": 25
+  },
+  "n56": {
+   "kind": "argument",
+   "text": "方向が決まらないまま目標を立てると形だけになる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    143
+   ],
+   "rev": 25
+  },
+  "n57": {
+   "kind": "position",
+   "text": "まず目標の書き出しを作り、それを見てから方向を決める",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    145
+   ],
+   "rev": 25
+  },
+  "n58": {
+   "kind": "decision",
+   "text": "まず目標の書き出しを作り、それを見てから方向を決める",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    146
+   ],
+   "rev": 26
+  },
+  "n59": {
+   "kind": "argument",
+   "text": "締め切りまで3週間ほどあるので、書き出しを作る時間はある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    146
+   ],
+   "rev": 26
+  },
+  "n60": {
+   "kind": "issue",
+   "text": "吉岡さんを当番に入れることについて、本人は大丈夫そうか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    151
+   ],
+   "rev": 26
+  },
+  "n61": {
+   "kind": "position",
+   "text": "吉岡さんを当番に入れる",
+   "status": "merged",
+   "merged_into": "n23",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    151
+   ],
+   "rev": 27
+  },
+  "n62": {
+   "kind": "argument",
+   "text": "自分のせいで誰かに負担がかかるのは気が引ける",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    155
+   ],
+   "rev": 27
+  },
+  "n63": {
+   "kind": "argument",
+   "text": "そこはチームの問題なので、気にしなくていい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    156
+   ],
+   "rev": 27
+  },
+  "n64": {
+   "kind": "position",
+   "text": "難しそうなら別の方法を考える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    153
+   ],
+   "rev": 27
+  },
+  "n65": {
+   "kind": "action",
+   "text": "吉岡さん本人に大丈夫そうか確認する（自分が担当）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    152
+   ],
+   "rev": 27
+  },
+  "n66": {
+   "kind": "issue",
+   "text": "片桐さんに基盤チームの件を話すとき、自分の名前を出すか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    160
+   ],
+   "rev": 28
+  },
+  "n67": {
+   "kind": "position",
+   "text": "具体例として出すことはあるが、「篠原さんが文句言ってた」のような言い方はしない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    162
+   ],
+   "rev": 28
+  },
+  "n68": {
+   "kind": "argument",
+   "text": "名前を出さない言い方なら大丈夫だと相手が同意",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    163
+   ],
+   "rev": 28
+  },
+  "n69": {
+   "kind": "action",
+   "text": "当番表の調整をする（自分が担当）",
+   "status": "merged",
+   "merged_into": "n27",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    168
+   ],
+   "rev": 29
+  },
+  "n70": {
+   "kind": "action",
+   "text": "片桐さんに相談する（自分が担当）",
+   "status": "merged",
+   "merged_into": "n51",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    168
+   ],
+   "rev": 29
+  },
+  "n71": {
+   "kind": "action",
+   "text": "篠原さんがやりたいことの書き出しを作る",
+   "status": "merged",
+   "merged_into": "n43",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    169
+   ],
+   "rev": 29
+  },
+  "n72": {
+   "kind": "position",
+   "text": "キャリアの件は急がず、後日改めて話す",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    171
+   ],
+   "rev": 30
+  }
+ },
+ "edges": {
+  "e1": {
+   "src": "n2",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e2": {
+   "src": "n3",
+   "dst": "n2",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e3": {
+   "src": "n4",
+   "dst": "n2",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e4": {
+   "src": "n6",
+   "dst": "n5",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e5": {
+   "src": "n7",
+   "dst": "n6",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e6": {
+   "src": "n9",
+   "dst": "n8",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e7": {
+   "src": "n10",
+   "dst": "n8",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e8": {
+   "src": "n11",
+   "dst": "n10",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e9": {
+   "src": "n12",
+   "dst": "n10",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e10": {
+   "src": "n14",
+   "dst": "n2",
+   "kind": "supports",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    20
+   ]
+  },
+  "e11": {
+   "src": "n16",
+   "dst": "n15",
+   "kind": "responds_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    26
+   ]
+  },
+  "e12": {
+   "src": "n17",
+   "dst": "n16",
+   "kind": "objects_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    28,
+    29
+   ]
+  },
+  "e13": {
+   "src": "n18",
+   "dst": "n15",
+   "kind": "resolves",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    31
+   ]
+  },
+  "e14": {
+   "src": "n19",
+   "dst": "n15",
+   "kind": "resolves",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    32
+   ]
+  },
+  "e15": {
+   "src": "n20",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    35
+   ]
+  },
+  "e16": {
+   "src": "n21",
+   "dst": "n20",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    37
+   ]
+  },
+  "e17": {
+   "src": "n22",
+   "dst": "n20",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    40,
+    41
+   ]
+  },
+  "e18": {
+   "src": "n23",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    48
+   ]
+  },
+  "e19": {
+   "src": "n24",
+   "dst": "n22",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    48,
+    49
+   ]
+  },
+  "e20": {
+   "src": "n24",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    48
+   ]
+  },
+  "e21": {
+   "src": "n25",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    44
+   ]
+  },
+  "e22": {
+   "src": "n26",
+   "dst": "n1",
+   "kind": "resolves",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    51
+   ]
+  },
+  "e23": {
+   "src": "n27",
+   "dst": "n26",
+   "kind": "assigns",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    53
+   ]
+  },
+  "e24": {
+   "src": "n28",
+   "dst": "n26",
+   "kind": "assigns",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    55
+   ]
+  },
+  "e25": {
+   "src": "n29",
+   "dst": "n20",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    58
+   ]
+  },
+  "e26": {
+   "src": "n30",
+   "dst": "n26",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    59,
+    60
+   ]
+  },
+  "e27": {
+   "src": "n31",
+   "dst": "n8",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    67
+   ]
+  },
+  "e28": {
+   "src": "n32",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    64
+   ]
+  },
+  "e29": {
+   "src": "n11",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    64
+   ]
+  },
+  "e30": {
+   "src": "n34",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    69
+   ]
+  },
+  "e31": {
+   "src": "n35",
+   "dst": "n31",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    73
+   ]
+  },
+  "e32": {
+   "src": "n36",
+   "dst": "n35",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    74
+   ]
+  },
+  "e33": {
+   "src": "n37",
+   "dst": "n35",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    76,
+    77
+   ]
+  },
+  "e34": {
+   "src": "n38",
+   "dst": "n8",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    79
+   ]
+  },
+  "e35": {
+   "src": "n39",
+   "dst": "n8",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    85
+   ]
+  },
+  "e36": {
+   "src": "n40",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    81
+   ]
+  },
+  "e37": {
+   "src": "n41",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    87,
+    89
+   ]
+  },
+  "e38": {
+   "src": "n42",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.55,
+   "review": "auto",
+   "grounds": [
+    90
+   ]
+  },
+  "e39": {
+   "src": "n43",
+   "dst": "n8",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    94
+   ]
+  },
+  "e40": {
+   "src": "n44",
+   "dst": "n5",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    104
+   ]
+  },
+  "e41": {
+   "src": "n7",
+   "dst": "n44",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    102
+   ]
+  },
+  "e42": {
+   "src": "n7",
+   "dst": "n44",
+   "kind": "objects_to",
+   "confidence": 0.0,
+   "review": "auto",
+   "grounds": [
+    110
+   ]
+  },
+  "e43": {
+   "src": "n46",
+   "dst": "n5",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    115
+   ]
+  },
+  "e44": {
+   "src": "n47",
+   "dst": "n5",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    116
+   ]
+  },
+  "e45": {
+   "src": "n48",
+   "dst": "n47",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    120
+   ]
+  },
+  "e46": {
+   "src": "n49",
+   "dst": "n5",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    123
+   ]
+  },
+  "e47": {
+   "src": "n50",
+   "dst": "n49",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    125
+   ]
+  },
+  "e48": {
+   "src": "n51",
+   "dst": "n5",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    123
+   ]
+  },
+  "e49": {
+   "src": "n52",
+   "dst": "n5",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    127
+   ]
+  },
+  "e50": {
+   "src": "n53",
+   "dst": "n52",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    129
+   ]
+  },
+  "e51": {
+   "src": "n54",
+   "dst": "n52",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    131
+   ]
+  },
+  "e52": {
+   "src": "n55",
+   "dst": "n8",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    141
+   ]
+  },
+  "e53": {
+   "src": "n56",
+   "dst": "n55",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    143
+   ]
+  },
+  "e54": {
+   "src": "n57",
+   "dst": "n13",
+   "kind": "responds_to",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    145
+   ]
+  },
+  "e55": {
+   "src": "n58",
+   "dst": "n13",
+   "kind": "resolves",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    146
+   ]
+  },
+  "e56": {
+   "src": "n59",
+   "dst": "n57",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    146
+   ]
+  },
+  "e57": {
+   "src": "n23",
+   "dst": "n60",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    151
+   ]
+  },
+  "e58": {
+   "src": "n62",
+   "dst": "n23",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    155
+   ]
+  },
+  "e59": {
+   "src": "n63",
+   "dst": "n62",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    156
+   ]
+  },
+  "e60": {
+   "src": "n64",
+   "dst": "n60",
+   "kind": "responds_to",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    153
+   ]
+  },
+  "e61": {
+   "src": "n65",
+   "dst": "n60",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    152
+   ]
+  },
+  "e62": {
+   "src": "n67",
+   "dst": "n66",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    161,
+    162
+   ]
+  },
+  "e63": {
+   "src": "n68",
+   "dst": "n67",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    163
+   ]
+  },
+  "e64": {
+   "src": "n27",
+   "dst": "n60",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    168
+   ]
+  },
+  "e65": {
+   "src": "n51",
+   "dst": "n66",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    168
+   ]
+  },
+  "e66": {
+   "src": "n43",
+   "dst": "n58",
+   "kind": "assigns",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    169
+   ]
+  },
+  "e67": {
+   "src": "n72",
+   "dst": "n8",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    171
+   ]
+  },
+  "e68": {
+   "src": "n48",
+   "dst": "n46",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    119,
+    120
+   ]
+  }
+ }
+}

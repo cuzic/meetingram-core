@@ -1,0 +1,53 @@
+{
+ "kind_strict": {
+  "pred": 50,
+  "gold": 34,
+  "matched": 31,
+  "precision": 0.62,
+  "recall": 0.912,
+  "f1": 0.738,
+  "duplicates": 9
+ },
+ "edges": {
+  "pred": 52,
+  "gold": 31,
+  "matched": 21,
+  "precision": 0.404,
+  "recall": 0.677,
+  "f1": 0.506
+ },
+ "tail_decisions_found": "2/2",
+ "kind_loose": {
+  "pred": 50,
+  "gold": 34,
+  "matched": 32,
+  "precision": 0.64,
+  "recall": 0.941,
+  "f1": 0.762,
+  "duplicates": 11
+ },
+ "calls": {
+  "total": 29,
+  "live": 27,
+  "ok": 29,
+  "parse_rate": 1.0,
+  "p50_s": 7.91,
+  "p95_s": 11.58,
+  "max_prompt_chars": 11341
+ },
+ "tokens": {
+  "input": 58,
+  "cache_create": 297951,
+  "cache_read": 263146,
+  "output": 21865,
+  "cost_usd": 1.4369
+ },
+ "ops": {
+  "total": 156,
+  "rejected": 2,
+  "reject_rate": 0.013,
+  "by_rule": {
+   "edge_duplicate": 2
+  }
+ }
+}

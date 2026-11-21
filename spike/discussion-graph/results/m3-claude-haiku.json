@@ -1,0 +1,2309 @@
+{
+ "meeting": "meetings/m3.json",
+ "backend": "claude",
+ "model": "haiku",
+ "batch": 6,
+ "secs": 45,
+ "live_calls": 27,
+ "calls": [
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1585,
+   "ok": true,
+   "secs": 4.96,
+   "usage": {
+    "input": 2,
+    "cache_create": 9121,
+    "cache_read": 9936,
+    "output": 645,
+    "cost_usd": 0.0022462600000000004,
+    "api_ms": 3583
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 1,
+   "applied": 1,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1736,
+   "ok": true,
+   "secs": 8.43,
+   "usage": {
+    "input": 2,
+    "cache_create": 9260,
+    "cache_read": 9936,
+    "output": 1431,
+    "cost_usd": 0.0026670599999999997,
+    "api_ms": 7087
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 8,
+   "applied": 8,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1898,
+   "ok": true,
+   "secs": 16.2,
+   "usage": {
+    "input": 2,
+    "cache_create": 9348,
+    "cache_read": 9936,
+    "output": 2846,
+    "cost_usd": 0.00339216,
+    "api_ms": 13841
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2049,
+   "ok": true,
+   "secs": 8.45,
+   "usage": {
+    "input": 2,
+    "cache_create": 9460,
+    "cache_read": 9936,
+    "output": 1053,
+    "cost_usd": 0.00251806,
+    "api_ms": 5935
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2122,
+   "ok": true,
+   "secs": 16.94,
+   "usage": {
+    "input": 2,
+    "cache_create": 9511,
+    "cache_read": 9936,
+    "output": 2888,
+    "cost_usd": 0.00344576,
+    "api_ms": 13697
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 4,
+   "rejected": {
+    "edge_duplicate": 1
+   }
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2141,
+   "ok": true,
+   "secs": 10.69,
+   "usage": {
+    "input": 2,
+    "cache_create": 9537,
+    "cache_read": 9936,
+    "output": 1886,
+    "cost_usd": 0.00294996,
+    "api_ms": 8691
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2072,
+   "ok": true,
+   "secs": 9.56,
+   "usage": {
+    "input": 2,
+    "cache_create": 9485,
+    "cache_read": 9936,
+    "output": 1509,
+    "cost_usd": 0.0027510600000000005,
+    "api_ms": 8086
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2134,
+   "ok": true,
+   "secs": 11.83,
+   "usage": {
+    "input": 2,
+    "cache_create": 9523,
+    "cache_read": 9936,
+    "output": 2107,
+    "cost_usd": 0.0030576600000000002,
+    "api_ms": 9687
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2137,
+   "ok": true,
+   "secs": 12.07,
+   "usage": {
+    "input": 2,
+    "cache_create": 9528,
+    "cache_read": 9936,
+    "output": 2195,
+    "cost_usd": 0.00310266,
+    "api_ms": 9533
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2101,
+   "ok": true,
+   "secs": 7.39,
+   "usage": {
+    "input": 2,
+    "cache_create": 9491,
+    "cache_read": 9936,
+    "output": 1173,
+    "cost_usd": 0.00258426,
+    "api_ms": 6180
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 1,
+   "applied": 1,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2008,
+   "ok": true,
+   "secs": 9.77,
+   "usage": {
+    "input": 2,
+    "cache_create": 9427,
+    "cache_read": 9936,
+    "output": 1684,
+    "cost_usd": 0.00282696,
+    "api_ms": 8467
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2063,
+   "ok": true,
+   "secs": 12.06,
+   "usage": {
+    "input": 2,
+    "cache_create": 9466,
+    "cache_read": 9936,
+    "output": 2215,
+    "cost_usd": 0.00310026,
+    "api_ms": 10808
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2102,
+   "ok": true,
+   "secs": 15.33,
+   "usage": {
+    "input": 2,
+    "cache_create": 9505,
+    "cache_read": 9936,
+    "output": 3027,
+    "cost_usd": 0.00351406,
+    "api_ms": 14156
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2207,
+   "ok": true,
+   "secs": 10.34,
+   "usage": {
+    "input": 2,
+    "cache_create": 9584,
+    "cache_read": 9936,
+    "output": 1908,
+    "cost_usd": 0.00297036,
+    "api_ms": 9122
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2288,
+   "ok": true,
+   "secs": 16.85,
+   "usage": {
+    "input": 2,
+    "cache_create": 9658,
+    "cache_read": 9936,
+    "output": 3426,
+    "cost_usd": 0.00374416,
+    "api_ms": 15679
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 8,
+   "applied": 8,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2315,
+   "ok": true,
+   "secs": 18.58,
+   "usage": {
+    "input": 2,
+    "cache_create": 12273,
+    "cache_read": 9936,
+    "output": 2875,
+    "cost_usd": 0.003991659999999999,
+    "api_ms": 13928
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2294,
+   "ok": true,
+   "secs": 14.56,
+   "usage": {
+    "input": 2,
+    "cache_create": 12241,
+    "cache_read": 9936,
+    "output": 1142,
+    "cost_usd": 0.0031187600000000004,
+    "api_ms": 6749
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2293,
+   "ok": true,
+   "secs": 12.77,
+   "usage": {
+    "input": 2,
+    "cache_create": 12244,
+    "cache_read": 9936,
+    "output": 1621,
+    "cost_usd": 0.00335886,
+    "api_ms": 7222
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 10,
+   "applied": 10,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2263,
+   "ok": true,
+   "secs": 21.1,
+   "usage": {
+    "input": 2,
+    "cache_create": 12229,
+    "cache_read": 9936,
+    "output": 2530,
+    "cost_usd": 0.00381036,
+    "api_ms": 12160
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2305,
+   "ok": true,
+   "secs": 18.03,
+   "usage": {
+    "input": 2,
+    "cache_create": 12263,
+    "cache_read": 9936,
+    "output": 2078,
+    "cost_usd": 0.00359116,
+    "api_ms": 10677
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 5,
+   "rejected": {
+    "edge_duplicate": 1
+   }
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2281,
+   "ok": true,
+   "secs": 19.37,
+   "usage": {
+    "input": 2,
+    "cache_create": 9643,
+    "cache_read": 9936,
+    "output": 4132,
+    "cost_usd": 0.00409416,
+    "api_ms": 16823
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 22,
+   "applied": 22,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2566,
+   "ok": true,
+   "secs": 18.28,
+   "usage": {
+    "input": 2,
+    "cache_create": 9832,
+    "cache_read": 9936,
+    "output": 3528,
+    "cost_usd": 0.00382996,
+    "api_ms": 16919
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2443,
+   "ok": true,
+   "secs": 8.58,
+   "usage": {
+    "input": 2,
+    "cache_create": 9723,
+    "cache_read": 9936,
+    "output": 1263,
+    "cost_usd": 0.0026756600000000003,
+    "api_ms": 6640
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2440,
+   "ok": true,
+   "secs": 16.01,
+   "usage": {
+    "input": 2,
+    "cache_create": 9718,
+    "cache_read": 9936,
+    "output": 2083,
+    "cost_usd": 0.00308466,
+    "api_ms": 10326
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 7,
+   "applied": 7,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2241,
+   "ok": true,
+   "secs": 18.24,
+   "usage": {
+    "input": 2,
+    "cache_create": 9592,
+    "cache_read": 9936,
+    "output": 2964,
+    "cost_usd": 0.00349996,
+    "api_ms": 13561
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2190,
+   "ok": true,
+   "secs": 10.1,
+   "usage": {
+    "input": 2,
+    "cache_create": 9551,
+    "cache_read": 9936,
+    "output": 1949,
+    "cost_usd": 0.00298426,
+    "api_ms": 8936
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2264,
+   "ok": true,
+   "secs": 11.48,
+   "usage": {
+    "input": 2,
+    "cache_create": 9622,
+    "cache_read": 9936,
+    "output": 2189,
+    "cost_usd": 0.00311846,
+    "api_ms": 10299
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "flush",
+   "attempt": 0,
+   "n_utt": 2,
+   "prompt_chars": 2054,
+   "ok": true,
+   "secs": 3.2,
+   "usage": {
+    "input": 2,
+    "cache_create": 9462,
+    "cache_read": 9936,
+    "output": 115,
+    "cost_usd": 0.00204946,
+    "api_ms": 1556
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 0,
+   "applied": 0,
+   "rejected": {}
+  },
+  {
+   "source": "consolidate",
+   "prompt_chars": 11880,
+   "ok": true,
+   "secs": 40.86,
+   "usage": {
+    "input": 2,
+    "cache_create": 19575,
+    "cache_read": 9936,
+    "output": 8234,
+    "cost_usd": 0.00813156,
+    "api_ms": 36352
+   },
+   "parsed": true,
+   "err": null,
+   "n_ops": 11,
+   "applied": 11,
+   "rejected": {}
+  }
+ ],
+ "rejected": {
+  "edge_duplicate": 2
+ },
+ "nodes": {
+  "n1": {
+   "kind": "issue",
+   "text": "ログ監視基盤の乗り換え先をどれにするか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    5,
+    130
+   ],
+   "rev": 1
+  },
+  "n2": {
+   "kind": "position",
+   "text": "SaaSのログナビに乗り換える",
+   "status": "merged",
+   "merged_into": "n39",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    8
+   ],
+   "rev": 2
+  },
+  "n3": {
+   "kind": "position",
+   "text": "OSSを自前で運用する",
+   "status": "merged",
+   "merged_into": "n15",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    8
+   ],
+   "rev": 2
+  },
+  "n4": {
+   "kind": "position",
+   "text": "今使っているクラウドのマネージド監視サービスに移行する",
+   "status": "merged",
+   "merged_into": "n23",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    8
+   ],
+   "rev": 2
+  },
+  "n5": {
+   "kind": "argument",
+   "text": "話者2はログナビでよいと考えている(理由は未言及)",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12
+   ],
+   "rev": 2
+  },
+  "n6": {
+   "kind": "argument",
+   "text": "社内の別部署で去年導入しており、評判がよいと聞いている",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    14
+   ],
+   "rev": 3
+  },
+  "n7": {
+   "kind": "argument",
+   "text": "構築がほとんど不要",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    15
+   ],
+   "rev": 3
+  },
+  "n8": {
+   "kind": "argument",
+   "text": "エージェントを入れれば当日から利用でき、立ち上がりが最も早い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    16,
+    17
+   ],
+   "rev": 3
+  },
+  "n9": {
+   "kind": "argument",
+   "text": "従量課金で、ログ量が去年から倍増しており、年間コストが大きく増えるおそれがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    19,
+    20,
+    21
+   ],
+   "rev": 4
+  },
+  "n10": {
+   "kind": "argument",
+   "text": "見積もりは現在のログ量で年間約900万円",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    23
+   ],
+   "rev": 4
+  },
+  "n11": {
+   "kind": "argument",
+   "text": "年間の予算上限は700万円",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    26,
+    27
+   ],
+   "rev": 5
+  },
+  "n12": {
+   "kind": "argument",
+   "text": "ボリュームディスカウントの交渉で費用を下げられる可能性がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    30
+   ],
+   "rev": 5
+  },
+  "n13": {
+   "kind": "argument",
+   "text": "3割引いても630万で、ログが増えれば再び予算を超える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    33,
+    34
+   ],
+   "rev": 6
+  },
+  "n14": {
+   "kind": "argument",
+   "text": "ログナビは独自のエージェントを使うことが気になる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    36
+   ],
+   "rev": 6
+  },
+  "n15": {
+   "kind": "position",
+   "text": "OSSを使って自前で運用する",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    8,
+    41,
+    58,
+    125,
+    130
+   ],
+   "rev": 7
+  },
+  "n16": {
+   "kind": "argument",
+   "text": "SaaSは一度導入すると乗り換えが大変でロックインが強い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    37
+   ],
+   "rev": 7
+  },
+  "n17": {
+   "kind": "argument",
+   "text": "OSSならライセンス費がゼロ",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    42
+   ],
+   "rev": 7
+  },
+  "n18": {
+   "kind": "argument",
+   "text": "OSSは中身が全部見えて、どこにも縛られない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    43
+   ],
+   "rev": 8
+  },
+  "n19": {
+   "kind": "argument",
+   "text": "OSSはアップデートやストレージ管理を全部自社で行う必要がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    46,
+    47,
+    48
+   ],
+   "rev": 8
+  },
+  "n20": {
+   "kind": "argument",
+   "text": "OSS運用には約0.5人分の工数がかかる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    50
+   ],
+   "rev": 9
+  },
+  "n21": {
+   "kind": "argument",
+   "text": "インフラチームは藤井さん込みで3人しかいない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    52,
+    53
+   ],
+   "rev": 9
+  },
+  "n22": {
+   "kind": "argument",
+   "text": "インフラチームはクラウド移行で手いっぱいである",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    54
+   ],
+   "rev": 9
+  },
+  "n23": {
+   "kind": "position",
+   "text": "今使っているクラウドのマネージドサービスに乗り換える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    8,
+    61,
+    62,
+    126
+   ],
+   "rev": 11
+  },
+  "n24": {
+   "kind": "argument",
+   "text": "既存のクラウドの権限とネットワークがそのまま使える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    64
+   ],
+   "rev": 11
+  },
+  "n25": {
+   "kind": "argument",
+   "text": "構築の手間はログナビほどではないがそれほどかからない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    65,
+    66
+   ],
+   "rev": 11
+  },
+  "n26": {
+   "kind": "argument",
+   "text": "年間の見積もりは約600万円",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    68
+   ],
+   "rev": 12
+  },
+  "n27": {
+   "kind": "argument",
+   "text": "見積もり額は予算内に収まる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    69
+   ],
+   "rev": 12
+  },
+  "n28": {
+   "kind": "argument",
+   "text": "ログが増えてもストレージ単価が安く、ログナビほどはコストが跳ねない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    70
+   ],
+   "rev": 12
+  },
+  "n29": {
+   "kind": "argument",
+   "text": "マネージドサービスに寄せると、クラウドベンダーへのロックインが進み、他に移れなくなる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    73,
+    74
+   ],
+   "rev": 13
+  },
+  "n30": {
+   "kind": "issue",
+   "text": "ロックインは実際に避けられるか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    76,
+    131,
+    132
+   ],
+   "rev": 13
+  },
+  "n31": {
+   "kind": "position",
+   "text": "収集部分をOpenTelemetryに揃え、後から送り先だけを変えられるようにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    77,
+    78,
+    126
+   ],
+   "rev": 13
+  },
+  "n32": {
+   "kind": "argument",
+   "text": "アプリ側はベンダー独自形式に依存しないので、送り先を変えやすい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    80
+   ],
+   "rev": 14
+  },
+  "n33": {
+   "kind": "argument",
+   "text": "送り先を変えると、ダッシュボードとアラート設定は作り直しになる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    81
+   ],
+   "rev": 14
+  },
+  "n34": {
+   "kind": "argument",
+   "text": "収集部分が共通なら、ロックインの影響はまだ小さい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    83
+   ],
+   "rev": 14
+  },
+  "n35": {
+   "kind": "argument",
+   "text": "ログナビもOpenTelemetryで受けられる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    86
+   ],
+   "rev": 15
+  },
+  "n36": {
+   "kind": "argument",
+   "text": "OpenTelemetryで受ければ、ログナビの独自エージェントの問題も解決する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    87
+   ],
+   "rev": 15
+  },
+  "n37": {
+   "kind": "argument",
+   "text": "ログナビの便利な機能は独自エージェント前提が多い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    89
+   ],
+   "rev": 15
+  },
+  "n38": {
+   "kind": "argument",
+   "text": "OpenTelemetryで送ると、ログナビの機能が半分ほど使えなくなるという話がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    90
+   ],
+   "rev": 15
+  },
+  "n39": {
+   "kind": "position",
+   "text": "ログナビに乗り換える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    8,
+    94,
+    124
+   ],
+   "rev": 16
+  },
+  "n40": {
+   "kind": "argument",
+   "text": "ログナビにすると、実質的に独自エージェントを使うことになる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    92
+   ],
+   "rev": 16
+  },
+  "n41": {
+   "kind": "argument",
+   "text": "コストの問題がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    95
+   ],
+   "rev": 16
+  },
+  "n42": {
+   "kind": "issue",
+   "text": "ログ監視基盤の移行工数はどれくらい見ておくべきか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    98
+   ],
+   "rev": 17
+  },
+  "n43": {
+   "kind": "argument",
+   "text": "監視対象のサービスは約40あり、細かいものを含む",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    100,
+    102
+   ],
+   "rev": 17
+  },
+  "n44": {
+   "kind": "position",
+   "text": "3か月かけて段階的に移行する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    103
+   ],
+   "rev": 18
+  },
+  "n45": {
+   "kind": "argument",
+   "text": "重要度の低いサービスから順に移し、問題がないか確認しながら進められる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    104
+   ],
+   "rev": 18
+  },
+  "n46": {
+   "kind": "argument",
+   "text": "3か月は長すぎるのではないか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    105
+   ],
+   "rev": 18
+  },
+  "n47": {
+   "kind": "position",
+   "text": "一気に切り替える（週末などに行う）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    106
+   ],
+   "rev": 18
+  },
+  "n48": {
+   "kind": "argument",
+   "text": "一気に移すと、設定漏れがあった場合にアラートが飛ばないサービスが出る",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    108
+   ],
+   "rev": 18
+  },
+  "n49": {
+   "kind": "argument",
+   "text": "障害を見逃すことが一番怖い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    109
+   ],
+   "rev": 19
+  },
+  "n50": {
+   "kind": "argument",
+   "text": "段階的に移行すると、並行期間は両方の費用を払うことになる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    112,
+    113
+   ],
+   "rev": 19
+  },
+  "n51": {
+   "kind": "argument",
+   "text": "今の監視ツールは3月まで契約済みのため、並行期間の二重払いは限定的",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    114
+   ],
+   "rev": 19
+  },
+  "n52": {
+   "kind": "issue",
+   "text": "移行の進め方をどうするか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    119,
+    120,
+    153
+   ],
+   "rev": 20
+  },
+  "n53": {
+   "kind": "decision",
+   "text": "12月に開始し、3月までに全部移す",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    119,
+    120
+   ],
+   "rev": 20
+  },
+  "n54": {
+   "kind": "position",
+   "text": "ログナビに乗り換える",
+   "status": "merged",
+   "merged_into": "n39",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    124
+   ],
+   "rev": 21
+  },
+  "n55": {
+   "kind": "position",
+   "text": "OSSのログ基盤に乗り換える",
+   "status": "merged",
+   "merged_into": "n15",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    125,
+    130
+   ],
+   "rev": 21
+  },
+  "n56": {
+   "kind": "position",
+   "text": "マネージドサービスに乗り換える",
+   "status": "merged",
+   "merged_into": "n23",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    126
+   ],
+   "rev": 21
+  },
+  "n57": {
+   "kind": "position",
+   "text": "オープンテレメトリを使えば、ロックインはある程度避けられる",
+   "status": "merged",
+   "merged_into": "n31",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    126
+   ],
+   "rev": 21
+  },
+  "n58": {
+   "kind": "argument",
+   "text": "立ち上がりが早い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    124
+   ],
+   "rev": 21
+  },
+  "n59": {
+   "kind": "argument",
+   "text": "コストが従量課金で跳ねる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    124
+   ],
+   "rev": 21
+  },
+  "n60": {
+   "kind": "argument",
+   "text": "独自エージェントでロックインが強い",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    124
+   ],
+   "rev": 21
+  },
+  "n61": {
+   "kind": "argument",
+   "text": "ライセンス費用がゼロ",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    125
+   ],
+   "rev": 21
+  },
+  "n62": {
+   "kind": "argument",
+   "text": "運用を担当する人がいない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    125
+   ],
+   "rev": 21
+  },
+  "n63": {
+   "kind": "argument",
+   "text": "予算内に収まる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    126
+   ],
+   "rev": 21
+  },
+  "n64": {
+   "kind": "argument",
+   "text": "既存の環境とつながっている",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    126
+   ],
+   "rev": 21
+  },
+  "n65": {
+   "kind": "decision",
+   "text": "ログ監視基盤はマネージドサービスに乗り換える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    129,
+    130
+   ],
+   "rev": 22
+  },
+  "n66": {
+   "kind": "decision",
+   "text": "ロックイン対策として、オープンテレメトリで揃えるルールにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    131,
+    132
+   ],
+   "rev": 22
+  },
+  "n67": {
+   "kind": "action",
+   "text": "マネージドの600万に来年の値上げが入っているか確認する（上振れなら予算を取り直す）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    137,
+    138
+   ],
+   "rev": 23
+  },
+  "n68": {
+   "kind": "argument",
+   "text": "マネージドの600万は今の単価で、来年の値上げは含まれていない（上振れリスク）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    135,
+    136
+   ],
+   "rev": 23
+  },
+  "n69": {
+   "kind": "issue",
+   "text": "1年分のログ保存は見積もりに含まれているか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    139,
+    143
+   ],
+   "rev": 24
+  },
+  "n70": {
+   "kind": "argument",
+   "text": "監査で1年分のログ保存が求められている",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    140
+   ],
+   "rev": 24
+  },
+  "n71": {
+   "kind": "position",
+   "text": "1年分の保存はアーカイブへ流す設定で対応する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    142
+   ],
+   "rev": 24
+  },
+  "n72": {
+   "kind": "argument",
+   "text": "マネージドの標準の保存期間は90日",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    141
+   ],
+   "rev": 24
+  },
+  "n73": {
+   "kind": "action",
+   "text": "1年分のログ保存を含めて見積もりを取り直す",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    145,
+    146,
+    160,
+    161
+   ],
+   "rev": 25
+  },
+  "n74": {
+   "kind": "argument",
+   "text": "予算700万以内に収まるなら、多少の値上がりは許容できる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    147
+   ],
+   "rev": 25
+  },
+  "n75": {
+   "kind": "issue",
+   "text": "ログ監視基盤の移行の進め方と期限はどうするか",
+   "status": "merged",
+   "merged_into": "n52",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    153
+   ],
+   "rev": 26
+  },
+  "n76": {
+   "kind": "decision",
+   "text": "12月から3か月かけて、重要度の低いサービスから段階的に移行し、3月末までに完了する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    153
+   ],
+   "rev": 26
+  },
+  "n77": {
+   "kind": "issue",
+   "text": "ログ・テレメトリの収集方式をどう揃えるか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    155
+   ],
+   "rev": 26
+  },
+  "n78": {
+   "kind": "decision",
+   "text": "収集は全部オープンテレメトリに揃える（ルールとする）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    155
+   ],
+   "rev": 26
+  },
+  "n79": {
+   "kind": "action",
+   "text": "藤井さんが40サービスの移行計画を作る（来週金曜まで）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    158,
+    159
+   ],
+   "rev": 27
+  },
+  "n80": {
+   "kind": "action",
+   "text": "三浦さんがクラウド営業に値上げと1年保存アーカイブ込みの見積もり取り直しを依頼する",
+   "status": "merged",
+   "merged_into": "n73",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    160,
+    161
+   ],
+   "rev": 27
+  }
+ },
+ "edges": {
+  "e4": {
+   "src": "n5",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e5": {
+   "src": "n6",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    14
+   ]
+  },
+  "e6": {
+   "src": "n7",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    15
+   ]
+  },
+  "e7": {
+   "src": "n8",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    16,
+    17
+   ]
+  },
+  "e8": {
+   "src": "n9",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    19,
+    21
+   ]
+  },
+  "e9": {
+   "src": "n10",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    23
+   ]
+  },
+  "e10": {
+   "src": "n11",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    26
+   ]
+  },
+  "e11": {
+   "src": "n12",
+   "dst": "n9",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    30
+   ]
+  },
+  "e12": {
+   "src": "n13",
+   "dst": "n12",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    33,
+    34
+   ]
+  },
+  "e13": {
+   "src": "n14",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    36
+   ]
+  },
+  "e14": {
+   "src": "n15",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    41
+   ]
+  },
+  "e15": {
+   "src": "n16",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    37
+   ]
+  },
+  "e16": {
+   "src": "n17",
+   "dst": "n15",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    42
+   ]
+  },
+  "e17": {
+   "src": "n18",
+   "dst": "n15",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    43
+   ]
+  },
+  "e18": {
+   "src": "n19",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    47
+   ]
+  },
+  "e19": {
+   "src": "n20",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    50
+   ]
+  },
+  "e20": {
+   "src": "n21",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    52,
+    53
+   ]
+  },
+  "e21": {
+   "src": "n22",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    54
+   ]
+  },
+  "e22": {
+   "src": "n23",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    61
+   ]
+  },
+  "e23": {
+   "src": "n24",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    64
+   ]
+  },
+  "e24": {
+   "src": "n25",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    65,
+    66
+   ]
+  },
+  "e25": {
+   "src": "n26",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    68
+   ]
+  },
+  "e26": {
+   "src": "n27",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    69
+   ]
+  },
+  "e27": {
+   "src": "n28",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    70
+   ]
+  },
+  "e28": {
+   "src": "n29",
+   "dst": "n23",
+   "kind": "objects_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    73,
+    74
+   ]
+  },
+  "e29": {
+   "src": "n31",
+   "dst": "n30",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    77,
+    78
+   ]
+  },
+  "e30": {
+   "src": "n32",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    80
+   ]
+  },
+  "e31": {
+   "src": "n33",
+   "dst": "n31",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    81
+   ]
+  },
+  "e32": {
+   "src": "n34",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    83
+   ]
+  },
+  "e33": {
+   "src": "n35",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    86
+   ]
+  },
+  "e34": {
+   "src": "n36",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    87
+   ]
+  },
+  "e35": {
+   "src": "n37",
+   "dst": "n36",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    88,
+    89
+   ]
+  },
+  "e36": {
+   "src": "n38",
+   "dst": "n37",
+   "kind": "supports",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    90
+   ]
+  },
+  "e37": {
+   "src": "n39",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    94
+   ]
+  },
+  "e38": {
+   "src": "n40",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    92
+   ]
+  },
+  "e39": {
+   "src": "n41",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    95
+   ]
+  },
+  "e40": {
+   "src": "n43",
+   "dst": "n41",
+   "kind": "supports",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    100
+   ]
+  },
+  "e41": {
+   "src": "n44",
+   "dst": "n42",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    103
+   ]
+  },
+  "e42": {
+   "src": "n45",
+   "dst": "n44",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    104
+   ]
+  },
+  "e43": {
+   "src": "n46",
+   "dst": "n44",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    105
+   ]
+  },
+  "e44": {
+   "src": "n47",
+   "dst": "n42",
+   "kind": "responds_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    106
+   ]
+  },
+  "e45": {
+   "src": "n48",
+   "dst": "n47",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    108
+   ]
+  },
+  "e46": {
+   "src": "n49",
+   "dst": "n48",
+   "kind": "supports",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    109
+   ]
+  },
+  "e47": {
+   "src": "n50",
+   "dst": "n44",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    112
+   ]
+  },
+  "e48": {
+   "src": "n51",
+   "dst": "n50",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    114
+   ]
+  },
+  "e49": {
+   "src": "n44",
+   "dst": "n52",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    119
+   ]
+  },
+  "e50": {
+   "src": "n53",
+   "dst": "n52",
+   "kind": "resolves",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    119,
+    120
+   ]
+  },
+  "e55": {
+   "src": "n58",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    124
+   ]
+  },
+  "e56": {
+   "src": "n59",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    124
+   ]
+  },
+  "e57": {
+   "src": "n60",
+   "dst": "n39",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    124
+   ]
+  },
+  "e58": {
+   "src": "n61",
+   "dst": "n15",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    125
+   ]
+  },
+  "e59": {
+   "src": "n62",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    125
+   ]
+  },
+  "e60": {
+   "src": "n63",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    126
+   ]
+  },
+  "e61": {
+   "src": "n64",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    126
+   ]
+  },
+  "e62": {
+   "src": "n65",
+   "dst": "n1",
+   "kind": "resolves",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    130
+   ]
+  },
+  "e63": {
+   "src": "n66",
+   "dst": "n30",
+   "kind": "resolves",
+   "confidence": 0.5,
+   "review": "auto",
+   "grounds": [
+    132
+   ]
+  },
+  "e64": {
+   "src": "n67",
+   "dst": "n65",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    137,
+    138
+   ]
+  },
+  "e65": {
+   "src": "n68",
+   "dst": "n23",
+   "kind": "objects_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    135,
+    136
+   ]
+  },
+  "e66": {
+   "src": "n71",
+   "dst": "n69",
+   "kind": "responds_to",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    142
+   ]
+  },
+  "e67": {
+   "src": "n70",
+   "dst": "n71",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    140
+   ]
+  },
+  "e68": {
+   "src": "n72",
+   "dst": "n71",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    141
+   ]
+  },
+  "e69": {
+   "src": "n73",
+   "dst": "n69",
+   "kind": "assigns",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    145
+   ]
+  },
+  "e70": {
+   "src": "n74",
+   "dst": "n23",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    147
+   ]
+  },
+  "e71": {
+   "src": "n76",
+   "dst": "n52",
+   "kind": "resolves",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    153
+   ]
+  },
+  "e72": {
+   "src": "n78",
+   "dst": "n77",
+   "kind": "resolves",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    155
+   ]
+  },
+  "e73": {
+   "src": "n79",
+   "dst": "n76",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    158
+   ]
+  },
+  "e74": {
+   "src": "n47",
+   "dst": "n52",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    106
+   ]
+  }
+ }
+}

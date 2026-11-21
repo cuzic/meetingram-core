@@ -1,0 +1,1967 @@
+{
+ "meeting": "meetings/m1.json",
+ "backend": "claude",
+ "model": "sonnet",
+ "batch": 6,
+ "secs": 45,
+ "live_calls": 28,
+ "calls": [
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1596,
+   "ok": true,
+   "secs": 4.12,
+   "usage": {
+    "input": 2,
+    "cache_create": 10817,
+    "cache_read": 7422,
+    "output": 361,
+    "cost_usd": 0.0476242,
+    "api_ms": 2410
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1883,
+   "ok": true,
+   "secs": 5.3,
+   "usage": {
+    "input": 2,
+    "cache_create": 9337,
+    "cache_read": 9133,
+    "output": 499,
+    "cost_usd": 0.043255299999999997,
+    "api_ms": 3952
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1940,
+   "ok": true,
+   "secs": 4.14,
+   "usage": {
+    "input": 2,
+    "cache_create": 9378,
+    "cache_read": 9133,
+    "output": 344,
+    "cost_usd": 0.0418693,
+    "api_ms": 2616
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2064,
+   "ok": true,
+   "secs": 6.94,
+   "usage": {
+    "input": 2,
+    "cache_create": 9467,
+    "cache_read": 9133,
+    "output": 657,
+    "cost_usd": 0.0453553,
+    "api_ms": 4922
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 3,
+   "rejected": {
+    "edge_duplicate": 1
+   }
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2126,
+   "ok": true,
+   "secs": 7.32,
+   "usage": {
+    "input": 2,
+    "cache_create": 9507,
+    "cache_read": 9133,
+    "output": 563,
+    "cost_usd": 0.0445753,
+    "api_ms": 4468
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2083,
+   "ok": true,
+   "secs": 8.78,
+   "usage": {
+    "input": 2,
+    "cache_create": 9468,
+    "cache_read": 9133,
+    "output": 660,
+    "cost_usd": 0.0453893,
+    "api_ms": 5170
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2016,
+   "ok": true,
+   "secs": 5.09,
+   "usage": {
+    "input": 2,
+    "cache_create": 9419,
+    "cache_read": 9133,
+    "output": 463,
+    "cost_usd": 0.0432233,
+    "api_ms": 2889
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 7,
+   "applied": 7,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2080,
+   "ok": true,
+   "secs": 7.13,
+   "usage": {
+    "input": 2,
+    "cache_create": 9454,
+    "cache_read": 9133,
+    "output": 660,
+    "cost_usd": 0.0453333,
+    "api_ms": 5028
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1998,
+   "ok": true,
+   "secs": 5.85,
+   "usage": {
+    "input": 2,
+    "cache_create": 9403,
+    "cache_read": 9133,
+    "output": 528,
+    "cost_usd": 0.043809299999999995,
+    "api_ms": 3778
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2093,
+   "ok": true,
+   "secs": 7.38,
+   "usage": {
+    "input": 2,
+    "cache_create": 9475,
+    "cache_read": 9133,
+    "output": 755,
+    "cost_usd": 0.0463673,
+    "api_ms": 5888
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2115,
+   "ok": true,
+   "secs": 8.08,
+   "usage": {
+    "input": 2,
+    "cache_create": 9509,
+    "cache_read": 9133,
+    "output": 771,
+    "cost_usd": 0.0466633,
+    "api_ms": 5817
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2062,
+   "ok": true,
+   "secs": 5.53,
+   "usage": {
+    "input": 2,
+    "cache_create": 9466,
+    "cache_read": 9133,
+    "output": 413,
+    "cost_usd": 0.0429113,
+    "api_ms": 3386
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2059,
+   "ok": true,
+   "secs": 13.17,
+   "usage": {
+    "input": 2,
+    "cache_create": 9462,
+    "cache_read": 9133,
+    "output": 876,
+    "cost_usd": 0.0475253,
+    "api_ms": 6930
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2207,
+   "ok": true,
+   "secs": 11.15,
+   "usage": {
+    "input": 2,
+    "cache_create": 9580,
+    "cache_read": 9133,
+    "output": 730,
+    "cost_usd": 0.0465373,
+    "api_ms": 5256
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2164,
+   "ok": true,
+   "secs": 8.74,
+   "usage": {
+    "input": 2,
+    "cache_create": 9542,
+    "cache_read": 9133,
+    "output": 722,
+    "cost_usd": 0.0463053,
+    "api_ms": 5893
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2056,
+   "ok": true,
+   "secs": 6.08,
+   "usage": {
+    "input": 2,
+    "cache_create": 9449,
+    "cache_read": 9133,
+    "output": 488,
+    "cost_usd": 0.0435933,
+    "api_ms": 3904
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2074,
+   "ok": true,
+   "secs": 8.26,
+   "usage": {
+    "input": 2,
+    "cache_create": 9470,
+    "cache_read": 9133,
+    "output": 835,
+    "cost_usd": 0.047147299999999996,
+    "api_ms": 6159
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2133,
+   "ok": true,
+   "secs": 7.15,
+   "usage": {
+    "input": 2,
+    "cache_create": 9510,
+    "cache_read": 9133,
+    "output": 747,
+    "cost_usd": 0.0464273,
+    "api_ms": 5277
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2208,
+   "ok": true,
+   "secs": 4.83,
+   "usage": {
+    "input": 2,
+    "cache_create": 9580,
+    "cache_read": 9133,
+    "output": 452,
+    "cost_usd": 0.0437573,
+    "api_ms": 3215
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2224,
+   "ok": true,
+   "secs": 8.43,
+   "usage": {
+    "input": 2,
+    "cache_create": 9595,
+    "cache_read": 9133,
+    "output": 688,
+    "cost_usd": 0.0461773,
+    "api_ms": 5455
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2160,
+   "ok": true,
+   "secs": 7.31,
+   "usage": {
+    "input": 2,
+    "cache_create": 9552,
+    "cache_read": 9133,
+    "output": 927,
+    "cost_usd": 0.0483953,
+    "api_ms": 6109
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 7,
+   "applied": 7,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2186,
+   "ok": true,
+   "secs": 5.58,
+   "usage": {
+    "input": 2,
+    "cache_create": 9570,
+    "cache_read": 9133,
+    "output": 533,
+    "cost_usd": 0.044527300000000006,
+    "api_ms": 4140
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2247,
+   "ok": true,
+   "secs": 6.57,
+   "usage": {
+    "input": 2,
+    "cache_create": 9613,
+    "cache_read": 9133,
+    "output": 670,
+    "cost_usd": 0.0460693,
+    "api_ms": 5277
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2212,
+   "ok": true,
+   "secs": 7.24,
+   "usage": {
+    "input": 2,
+    "cache_create": 9589,
+    "cache_read": 9133,
+    "output": 802,
+    "cost_usd": 0.0472933,
+    "api_ms": 5780
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2197,
+   "ok": true,
+   "secs": 9.46,
+   "usage": {
+    "input": 2,
+    "cache_create": 12192,
+    "cache_read": 9133,
+    "output": 663,
+    "cost_usd": 0.0563153,
+    "api_ms": 4780
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2336,
+   "ok": true,
+   "secs": 8.78,
+   "usage": {
+    "input": 2,
+    "cache_create": 12294,
+    "cache_read": 9133,
+    "output": 211,
+    "cost_usd": 0.052203299999999994,
+    "api_ms": 2046
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2188,
+   "ok": true,
+   "secs": 12.4,
+   "usage": {
+    "input": 2,
+    "cache_create": 12166,
+    "cache_read": 9133,
+    "output": 533,
+    "cost_usd": 0.054911299999999996,
+    "api_ms": 4040
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2221,
+   "ok": true,
+   "secs": 14.77,
+   "usage": {
+    "input": 2,
+    "cache_create": 12205,
+    "cache_read": 9133,
+    "output": 1162,
+    "cost_usd": 0.061357300000000004,
+    "api_ms": 7602
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 10,
+   "applied": 10,
+   "rejected": {}
+  },
+  {
+   "source": "consolidate",
+   "prompt_chars": 11130,
+   "ok": true,
+   "secs": 17.3,
+   "usage": {
+    "input": 2,
+    "cache_create": 19331,
+    "cache_read": 9133,
+    "output": 1186,
+    "cost_usd": 0.09010130000000001,
+    "api_ms": 10063
+   },
+   "parsed": true,
+   "err": null,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  }
+ ],
+ "rejected": {
+  "edge_duplicate": 1
+ },
+ "nodes": {
+  "n1": {
+   "kind": "issue",
+   "text": "v3.2のリリースを予定通り12月10日に出すか、延期するか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    4,
+    5,
+    165
+   ],
+   "rev": 1
+  },
+  "n2": {
+   "kind": "position",
+   "text": "予定通り12月10日にリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    5
+   ],
+   "rev": 1
+  },
+  "n3": {
+   "kind": "position",
+   "text": "リリースを延期する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    5,
+    73
+   ],
+   "rev": 1
+  },
+  "n4": {
+   "kind": "argument",
+   "text": "全体のテストは8割完了だが、同期機能の回帰テストが6割しか終わっておらず、12月10日に出すのは不安",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    9,
+    10,
+    12
+   ],
+   "rev": 2
+  },
+  "n5": {
+   "kind": "argument",
+   "text": "同期機能は後半でかなり手を入れたので、回帰テストが不十分なのは確かに懸念",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    14
+   ],
+   "rev": 3
+  },
+  "n6": {
+   "kind": "argument",
+   "text": "営業が顧客に12月10日と伝えており、特にA社には12月中に出ると明言している",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    16,
+    17
+   ],
+   "rev": 3
+  },
+  "n7": {
+   "kind": "argument",
+   "text": "競合が年内に似た機能を出す見込み（プレスリリースあり）で、年明けにずれると先に出される可能性がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    22,
+    23,
+    24
+   ],
+   "rev": 4
+  },
+  "n8": {
+   "kind": "argument",
+   "text": "前回のv3.1も同期まわりのテストが間に合わないまま出して障害になり、週末対応になった。今回も同じことになりかねない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    27,
+    28,
+    29,
+    30
+   ],
+   "rev": 5
+  },
+  "n9": {
+   "kind": "position",
+   "text": "1週間延期して12月17日にリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    31
+   ],
+   "rev": 6
+  },
+  "n10": {
+   "kind": "argument",
+   "text": "1週間あれば回帰テストを最後まで回せる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    33
+   ],
+   "rev": 6
+  },
+  "n11": {
+   "kind": "position",
+   "text": "2週間延期する",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    39,
+    48
+   ],
+   "rev": 7
+  },
+  "n12": {
+   "kind": "argument",
+   "text": "1週間だと、また問題が見つかったときに結局足りなくなる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    40
+   ],
+   "rev": 7
+  },
+  "n13": {
+   "kind": "argument",
+   "text": "2週間の延期は長すぎる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    42
+   ],
+   "rev": 7
+  },
+  "n14": {
+   "kind": "argument",
+   "text": "2週間延期すると12月24日リリースになり、年末年始で人が少なく、リリース直後の障害に対応できる人が薄くなる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    43,
+    44,
+    45
+   ],
+   "rev": 8
+  },
+  "n15": {
+   "kind": "position",
+   "text": "同期機能だけフィーチャーフラグでオフにして、予定通りリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    50,
+    51
+   ],
+   "rev": 9
+  },
+  "n16": {
+   "kind": "argument",
+   "text": "同期以外の機能は、ほぼテストが終わっている",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    53,
+    54
+   ],
+   "rev": 9
+  },
+  "n17": {
+   "kind": "argument",
+   "text": "同期だけ切れば、リスクのある部分はユーザーに出ない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    55,
+    56
+   ],
+   "rev": 10
+  },
+  "n18": {
+   "kind": "argument",
+   "text": "フラグでオフにした状態は、そもそもテストしていない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    60
+   ],
+   "rev": 10
+  },
+  "n19": {
+   "kind": "argument",
+   "text": "v3.0でも同じ仕組みで共有リンク機能をフラグで止めて問題なかったので、仕組み自体は実績がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    63,
+    64
+   ],
+   "rev": 11
+  },
+  "n20": {
+   "kind": "argument",
+   "text": "仕組みに実績があっても、今回のコードでオフ時に他へ影響が出ないか確認したい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    61,
+    65
+   ],
+   "rev": 11
+  },
+  "n21": {
+   "kind": "argument",
+   "text": "A社が一番待っているのは同期機能なので、同期を外して出してもA社にとってはあまり意味がない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    68,
+    69,
+    71
+   ],
+   "rev": 12
+  },
+  "n22": {
+   "kind": "position",
+   "text": "v3.2のリリースを延期する",
+   "status": "merged",
+   "merged_into": "n3",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    73
+   ],
+   "rev": 13
+  },
+  "n23": {
+   "kind": "argument",
+   "text": "壊れた同期を出すよりは、リリースが遅れる方がまだよい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    73
+   ],
+   "rev": 13
+  },
+  "n24": {
+   "kind": "issue",
+   "text": "A社（顧客）にリリースの状況をどう説明するか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    75,
+    76,
+    123,
+    124
+   ],
+   "rev": 13
+  },
+  "n25": {
+   "kind": "issue",
+   "text": "同期機能のテスト不足をどう埋めるか",
+   "status": "resolved",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    79,
+    98,
+    99
+   ],
+   "rev": 14
+  },
+  "n26": {
+   "kind": "position",
+   "text": "同期のシナリオを20本ほど自動テストとして追加で書く（レビュー込みで約5日）",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    80,
+    81,
+    83,
+    86,
+    87
+   ],
+   "rev": 14
+  },
+  "n27": {
+   "kind": "argument",
+   "text": "テスト追加に5日かかると、12月10日のリリースには間に合わない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    84
+   ],
+   "rev": 14
+  },
+  "n28": {
+   "kind": "position",
+   "text": "同期機能について、話者1が探索的テストを2日間集中して行う",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    89,
+    90
+   ],
+   "rev": 15
+  },
+  "n29": {
+   "kind": "argument",
+   "text": "同期をオフにする案になった場合も、オフ状態の確認を同じ2日間の探索的テストの中で一緒にできる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    93,
+    94
+   ],
+   "rev": 16
+  },
+  "n30": {
+   "kind": "decision",
+   "text": "同期機能のテストは、探索的テスト2日間で行い、自動テストの追加は次のスプリントにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    98,
+    99
+   ],
+   "rev": 17
+  },
+  "n31": {
+   "kind": "action",
+   "text": "同期の自動テストを次のスプリントで書く（話者2）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    97
+   ],
+   "rev": 17
+  },
+  "n32": {
+   "kind": "position",
+   "text": "森川さんのフラグ案と田辺さんの探索的テストを組み合わせ、12月10日に同期以外をリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    103,
+    104
+   ],
+   "rev": 18
+  },
+  "n33": {
+   "kind": "argument",
+   "text": "同期を出さないなら、話者1は1週間の延期にこだわらない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    105,
+    106
+   ],
+   "rev": 18
+  },
+  "n34": {
+   "kind": "position",
+   "text": "事前にA社へ連絡し、同期機能は1月になると説明する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    114
+   ],
+   "rev": 19
+  },
+  "n35": {
+   "kind": "argument",
+   "text": "黙って出して後で気づかれるより、先に伝えた方がよい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    113
+   ],
+   "rev": 19
+  },
+  "n36": {
+   "kind": "argument",
+   "text": "A社は春に事前相談なしの画面変更で苦情を言っていたので、今回は先に伝えないとむしろまずい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    116,
+    117,
+    118
+   ],
+   "rev": 20
+  },
+  "n37": {
+   "kind": "issue",
+   "text": "A社に伝える同期機能の時期を、1月のいつと具体的に言うか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    120,
+    121,
+    122
+   ],
+   "rev": 20
+  },
+  "n38": {
+   "kind": "decision",
+   "text": "A社には事前に連絡し、同期機能は1月中旬めどと説明する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    123,
+    124
+   ],
+   "rev": 21
+  },
+  "n39": {
+   "kind": "decision",
+   "text": "同期機能の時期は具体的な日付を言わず「1月中旬めど」と伝える",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.88,
+   "review": "auto",
+   "grounds": [
+    121,
+    122,
+    123
+   ],
+   "rev": 21
+  },
+  "n40": {
+   "kind": "issue",
+   "text": "前回の障害時にホットフィックスを出すまで時間がかかった件をどうするか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    125,
+    126,
+    146,
+    147
+   ],
+   "rev": 21
+  },
+  "n41": {
+   "kind": "position",
+   "text": "当番を決めて、当番1人の承認でホットフィックスを出せるようにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    131
+   ],
+   "rev": 22
+  },
+  "n42": {
+   "kind": "argument",
+   "text": "現行ルールは承認が2人必要で、夜中は2人目が捕まらず前回は3時間止まった",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    128,
+    129
+   ],
+   "rev": 22
+  },
+  "n43": {
+   "kind": "argument",
+   "text": "1人の承認だと、特に夜中はレビューが甘くなり、本当に大丈夫か不安がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    133,
+    134
+   ],
+   "rev": 23
+  },
+  "n44": {
+   "kind": "argument",
+   "text": "顧客から見れば、とにかく早く直してもらえる方がありがたい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    136
+   ],
+   "rev": 23
+  },
+  "n45": {
+   "kind": "position",
+   "text": "夜間だけは当番1人の承認でホットフィックスを出し、翌営業日の朝にもう1人が事後レビューする。昼間は従来どおり2人承認",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    139,
+    142
+   ],
+   "rev": 24
+  },
+  "n46": {
+   "kind": "argument",
+   "text": "夜間の迅速さと事後レビューによる確認の両方を確保できる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    144
+   ],
+   "rev": 24
+  },
+  "n47": {
+   "kind": "argument",
+   "text": "事後レビューが必ず行われるなら、夜間1人承認でも許容できる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    141
+   ],
+   "rev": 24
+  },
+  "n48": {
+   "kind": "decision",
+   "text": "ホットフィックスは、夜間は当番1人の承認で出し、翌朝に事後レビューする（昼間は従来どおり2人承認）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    142,
+    146
+   ],
+   "rev": 25
+  },
+  "n49": {
+   "kind": "issue",
+   "text": "リリースノートで同期についてどう書くか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    149
+   ],
+   "rev": 25
+  },
+  "n50": {
+   "kind": "position",
+   "text": "同期には触れず、他の新機能だけを書く",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    150
+   ],
+   "rev": 25
+  },
+  "n51": {
+   "kind": "argument",
+   "text": "ベータで同期を使っていた人がいるので、何も書かないと「同期はどこへ行ったか」という問い合わせが来る",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    151,
+    152
+   ],
+   "rev": 26
+  },
+  "n52": {
+   "kind": "issue",
+   "text": "フラグをオフにした状態の動作確認を誰がどこでやるか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    158,
+    159
+   ],
+   "rev": 27
+  },
+  "n53": {
+   "kind": "action",
+   "text": "森川さんが開発環境でフラグをオフにした状態を一通り確認する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    160,
+    161
+   ],
+   "rev": 27
+  },
+  "n54": {
+   "kind": "decision",
+   "text": "v3.2は12月10日に予定通りリリースし、同期機能だけフラグでオフにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    165
+   ],
+   "rev": 28
+  },
+  "n55": {
+   "kind": "action",
+   "text": "小野寺さんがA社さんへ今週金曜までに連絡する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    165,
+    166
+   ],
+   "rev": 28
+  },
+  "n56": {
+   "kind": "action",
+   "text": "探索的テストの計画を明日の午前中までにまとめて共有する（話者1）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    167
+   ],
+   "rev": 28
+  },
+  "n57": {
+   "kind": "action",
+   "text": "ホットフィックスの手順書を更新する（発話者本人）",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    168
+   ],
+   "rev": 28
+  }
+ },
+ "edges": {
+  "e1": {
+   "src": "n2",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    5
+   ]
+  },
+  "e2": {
+   "src": "n3",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    5
+   ]
+  },
+  "e3": {
+   "src": "n4",
+   "dst": "n2",
+   "kind": "objects_to",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    10,
+    12
+   ]
+  },
+  "e4": {
+   "src": "n4",
+   "dst": "n3",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    12
+   ]
+  },
+  "e5": {
+   "src": "n5",
+   "dst": "n3",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    14
+   ]
+  },
+  "e6": {
+   "src": "n6",
+   "dst": "n2",
+   "kind": "supports",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    16,
+    17
+   ]
+  },
+  "e7": {
+   "src": "n7",
+   "dst": "n2",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    24
+   ]
+  },
+  "e8": {
+   "src": "n7",
+   "dst": "n3",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    24
+   ]
+  },
+  "e9": {
+   "src": "n8",
+   "dst": "n3",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    27,
+    29
+   ]
+  },
+  "e10": {
+   "src": "n8",
+   "dst": "n2",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    27,
+    29
+   ]
+  },
+  "e11": {
+   "src": "n9",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    31
+   ]
+  },
+  "e12": {
+   "src": "n10",
+   "dst": "n9",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    33
+   ]
+  },
+  "e13": {
+   "src": "n11",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    39
+   ]
+  },
+  "e14": {
+   "src": "n12",
+   "dst": "n11",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    40
+   ]
+  },
+  "e15": {
+   "src": "n12",
+   "dst": "n9",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    40
+   ]
+  },
+  "e16": {
+   "src": "n13",
+   "dst": "n11",
+   "kind": "objects_to",
+   "confidence": 0.65,
+   "review": "auto",
+   "grounds": [
+    42
+   ]
+  },
+  "e17": {
+   "src": "n14",
+   "dst": "n11",
+   "kind": "objects_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    43,
+    45
+   ]
+  },
+  "e18": {
+   "src": "n15",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    51
+   ]
+  },
+  "e19": {
+   "src": "n16",
+   "dst": "n15",
+   "kind": "supports",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    53,
+    54
+   ]
+  },
+  "e20": {
+   "src": "n17",
+   "dst": "n15",
+   "kind": "supports",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    55,
+    56
+   ]
+  },
+  "e21": {
+   "src": "n18",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    59,
+    60
+   ]
+  },
+  "e22": {
+   "src": "n19",
+   "dst": "n18",
+   "kind": "objects_to",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    63,
+    64
+   ]
+  },
+  "e23": {
+   "src": "n19",
+   "dst": "n15",
+   "kind": "supports",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    64
+   ]
+  },
+  "e24": {
+   "src": "n20",
+   "dst": "n19",
+   "kind": "objects_to",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    65
+   ]
+  },
+  "e25": {
+   "src": "n21",
+   "dst": "n15",
+   "kind": "objects_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    69
+   ]
+  },
+  "e27": {
+   "src": "n23",
+   "dst": "n3",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    73
+   ]
+  },
+  "e28": {
+   "src": "n26",
+   "dst": "n25",
+   "kind": "responds_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    80
+   ]
+  },
+  "e29": {
+   "src": "n27",
+   "dst": "n26",
+   "kind": "objects_to",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    84
+   ]
+  },
+  "e30": {
+   "src": "n28",
+   "dst": "n25",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    90
+   ]
+  },
+  "e31": {
+   "src": "n29",
+   "dst": "n28",
+   "kind": "supports",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    94
+   ]
+  },
+  "e32": {
+   "src": "n30",
+   "dst": "n25",
+   "kind": "resolves",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    98,
+    99
+   ]
+  },
+  "e33": {
+   "src": "n31",
+   "dst": "n30",
+   "kind": "assigns",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    97,
+    98
+   ]
+  },
+  "e34": {
+   "src": "n32",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    101,
+    104
+   ]
+  },
+  "e35": {
+   "src": "n33",
+   "dst": "n32",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    105,
+    106
+   ]
+  },
+  "e36": {
+   "src": "n34",
+   "dst": "n24",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    114
+   ]
+  },
+  "e37": {
+   "src": "n35",
+   "dst": "n34",
+   "kind": "supports",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    113
+   ]
+  },
+  "e38": {
+   "src": "n36",
+   "dst": "n34",
+   "kind": "supports",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    118
+   ]
+  },
+  "e39": {
+   "src": "n38",
+   "dst": "n24",
+   "kind": "resolves",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    123
+   ]
+  },
+  "e40": {
+   "src": "n39",
+   "dst": "n37",
+   "kind": "resolves",
+   "confidence": 0.88,
+   "review": "auto",
+   "grounds": [
+    121,
+    122
+   ]
+  },
+  "e41": {
+   "src": "n41",
+   "dst": "n40",
+   "kind": "responds_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    131
+   ]
+  },
+  "e42": {
+   "src": "n42",
+   "dst": "n41",
+   "kind": "supports",
+   "confidence": 0.75,
+   "review": "auto",
+   "grounds": [
+    128,
+    129,
+    131
+   ]
+  },
+  "e43": {
+   "src": "n43",
+   "dst": "n41",
+   "kind": "objects_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    133,
+    134
+   ]
+  },
+  "e44": {
+   "src": "n44",
+   "dst": "n41",
+   "kind": "supports",
+   "confidence": 0.65,
+   "review": "auto",
+   "grounds": [
+    136
+   ]
+  },
+  "e45": {
+   "src": "n45",
+   "dst": "n40",
+   "kind": "responds_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    139
+   ]
+  },
+  "e46": {
+   "src": "n46",
+   "dst": "n45",
+   "kind": "supports",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    144
+   ]
+  },
+  "e47": {
+   "src": "n47",
+   "dst": "n45",
+   "kind": "supports",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    140,
+    141
+   ]
+  },
+  "e48": {
+   "src": "n48",
+   "dst": "n40",
+   "kind": "resolves",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    146
+   ]
+  },
+  "e49": {
+   "src": "n50",
+   "dst": "n49",
+   "kind": "responds_to",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    150
+   ]
+  },
+  "e50": {
+   "src": "n51",
+   "dst": "n50",
+   "kind": "objects_to",
+   "confidence": 0.85,
+   "review": "auto",
+   "grounds": [
+    151,
+    152,
+    153
+   ]
+  },
+  "e51": {
+   "src": "n53",
+   "dst": "n52",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    160,
+    161
+   ]
+  },
+  "e52": {
+   "src": "n54",
+   "dst": "n1",
+   "kind": "resolves",
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    165
+   ]
+  },
+  "e53": {
+   "src": "n55",
+   "dst": "n54",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    165,
+    166
+   ]
+  },
+  "e54": {
+   "src": "n56",
+   "dst": "n54",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    167
+   ]
+  },
+  "e55": {
+   "src": "n57",
+   "dst": "n48",
+   "kind": "assigns",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    168
+   ]
+  },
+  "e56": {
+   "src": "n53",
+   "dst": "n54",
+   "kind": "assigns",
+   "confidence": 0.6,
+   "review": "auto",
+   "grounds": [
+    168
+   ]
+  },
+  "e57": {
+   "src": "n55",
+   "dst": "n38",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    165,
+    166
+   ]
+  },
+  "e58": {
+   "src": "n56",
+   "dst": "n30",
+   "kind": "assigns",
+   "confidence": 0.8,
+   "review": "auto",
+   "grounds": [
+    167
+   ]
+  },
+  "e59": {
+   "src": "n29",
+   "dst": "n18",
+   "kind": "objects_to",
+   "confidence": 0.7,
+   "review": "auto",
+   "grounds": [
+    93,
+    94
+   ]
+  }
+ }
+}

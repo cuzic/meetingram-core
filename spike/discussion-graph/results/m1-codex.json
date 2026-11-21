@@ -1,0 +1,2070 @@
+{
+ "meeting": "meetings/m1.json",
+ "backend": "codex",
+ "model": "",
+ "batch": 6,
+ "secs": 45,
+ "live_calls": 29,
+ "calls": [
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1596,
+   "ok": true,
+   "secs": 8.44,
+   "usage": {
+    "input": 16906,
+    "cache_read": 13696,
+    "output": 254
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1904,
+   "ok": true,
+   "secs": 8.11,
+   "usage": {
+    "input": 17117,
+    "cache_read": 13696,
+    "output": 214
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 1969,
+   "ok": true,
+   "secs": 14.63,
+   "usage": {
+    "input": 17148,
+    "cache_read": 13696,
+    "output": 363
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2080,
+   "ok": true,
+   "secs": 13.21,
+   "usage": {
+    "input": 17221,
+    "cache_read": 13696,
+    "output": 351
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 3,
+   "rejected": {
+    "edge_duplicate": 1
+   }
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2135,
+   "ok": true,
+   "secs": 9.51,
+   "usage": {
+    "input": 17261,
+    "cache_read": 13696,
+    "output": 197
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2153,
+   "ok": true,
+   "secs": 13.82,
+   "usage": {
+    "input": 17265,
+    "cache_read": 15744,
+    "output": 257
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2136,
+   "ok": true,
+   "secs": 15.96,
+   "usage": {
+    "input": 18462,
+    "cache_read": 13696,
+    "output": 344
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2084,
+   "ok": true,
+   "secs": 10.51,
+   "usage": {
+    "input": 17216,
+    "cache_read": 13696,
+    "output": 258
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2060,
+   "ok": true,
+   "secs": 11.22,
+   "usage": {
+    "input": 18406,
+    "cache_read": 13696,
+    "output": 298
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2073,
+   "ok": true,
+   "secs": 11.41,
+   "usage": {
+    "input": 18407,
+    "cache_read": 13696,
+    "output": 264
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 4,
+   "rejected": {
+    "edge_duplicate": 1
+   }
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2130,
+   "ok": true,
+   "secs": 13.96,
+   "usage": {
+    "input": 17243,
+    "cache_read": 13696,
+    "output": 496
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2130,
+   "ok": true,
+   "secs": 8.3,
+   "usage": {
+    "input": 17243,
+    "cache_read": 13696,
+    "output": 209
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2160,
+   "ok": true,
+   "secs": 11.08,
+   "usage": {
+    "input": 17258,
+    "cache_read": 13696,
+    "output": 361
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 5,
+   "applied": 5,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2254,
+   "ok": true,
+   "secs": 14.3,
+   "usage": {
+    "input": 17322,
+    "cache_read": 15744,
+    "output": 555
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 10,
+   "applied": 10,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2331,
+   "ok": true,
+   "secs": 14.32,
+   "usage": {
+    "input": 17362,
+    "cache_read": 13696,
+    "output": 532
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2291,
+   "ok": true,
+   "secs": 7.66,
+   "usage": {
+    "input": 18540,
+    "cache_read": 13696,
+    "output": 180
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2299,
+   "ok": true,
+   "secs": 11.7,
+   "usage": {
+    "input": 18549,
+    "cache_read": 13696,
+    "output": 349
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 7,
+   "applied": 7,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2348,
+   "ok": true,
+   "secs": 15.0,
+   "usage": {
+    "input": 17360,
+    "cache_read": 13696,
+    "output": 349
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2290,
+   "ok": true,
+   "secs": 11.75,
+   "usage": {
+    "input": 17337,
+    "cache_read": 13696,
+    "output": 309
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2328,
+   "ok": true,
+   "secs": 9.68,
+   "usage": {
+    "input": 17364,
+    "cache_read": 13696,
+    "output": 260
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 3,
+   "applied": 3,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2221,
+   "ok": true,
+   "secs": 14.45,
+   "usage": {
+    "input": 18520,
+    "cache_read": 13696,
+    "output": 469
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 10,
+   "applied": 10,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2275,
+   "ok": true,
+   "secs": 12.68,
+   "usage": {
+    "input": 18544,
+    "cache_read": 13696,
+    "output": 335
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2346,
+   "ok": true,
+   "secs": 11.94,
+   "usage": {
+    "input": 17380,
+    "cache_read": 13696,
+    "output": 317
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2309,
+   "ok": true,
+   "secs": 12.55,
+   "usage": {
+    "input": 17345,
+    "cache_read": 13696,
+    "output": 364
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2218,
+   "ok": true,
+   "secs": 14.75,
+   "usage": {
+    "input": 18501,
+    "cache_read": 13696,
+    "output": 456
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 6,
+   "applied": 6,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2369,
+   "ok": true,
+   "secs": 11.94,
+   "usage": {
+    "input": 17379,
+    "cache_read": 13696,
+    "output": 352
+   },
+   "err": null,
+   "parsed": false
+  },
+  {
+   "source": "live",
+   "attempt": 1,
+   "n_utt": 6,
+   "prompt_chars": 2412,
+   "ok": true,
+   "secs": 16.13,
+   "usage": {
+    "input": 17405,
+    "cache_read": 13696,
+    "output": 349
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 4,
+   "applied": 4,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2276,
+   "ok": true,
+   "secs": 7.53,
+   "usage": {
+    "input": 17325,
+    "cache_read": 13696,
+    "output": 220
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 2,
+   "applied": 2,
+   "rejected": {}
+  },
+  {
+   "source": "live",
+   "attempt": 0,
+   "n_utt": 6,
+   "prompt_chars": 2354,
+   "ok": true,
+   "secs": 12.83,
+   "usage": {
+    "input": 17379,
+    "cache_read": 13696,
+    "output": 478
+   },
+   "err": null,
+   "parsed": true,
+   "n_ops": 10,
+   "applied": 10,
+   "rejected": {}
+  },
+  {
+   "source": "consolidate",
+   "prompt_chars": 12067,
+   "ok": true,
+   "secs": 16.36,
+   "usage": {
+    "input": 23608,
+    "cache_read": 13696,
+    "output": 666
+   },
+   "parsed": true,
+   "err": null,
+   "n_ops": 7,
+   "applied": 7,
+   "rejected": {}
+  }
+ ],
+ "rejected": {
+  "edge_duplicate": 2
+ },
+ "nodes": {
+  "n1": {
+   "kind": "issue",
+   "text": "v3.2を予定どおり12月10日にリリースするか、延期するか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    4,
+    5,
+    165
+   ],
+   "rev": 1
+  },
+  "n2": {
+   "kind": "position",
+   "text": "v3.2を予定どおり12月10日にリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    5
+   ],
+   "rev": 1
+  },
+  "n3": {
+   "kind": "position",
+   "text": "v3.2のリリースを12月10日より後に延期する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    5,
+    73
+   ],
+   "rev": 1
+  },
+  "n4": {
+   "kind": "argument",
+   "text": "テストは全体で約8割完了しているが、同期機能のテストは約6割しか完了しておらず、12月10日のリリースには不安がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    9,
+    10,
+    12
+   ],
+   "rev": 2
+  },
+  "n5": {
+   "kind": "argument",
+   "text": "同期機能には開発後半に大きな変更を加えた",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    14
+   ],
+   "rev": 3
+  },
+  "n6": {
+   "kind": "argument",
+   "text": "営業は顧客に12月10日のリリースを伝えており、A社には12月中に出すと明言している",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    16,
+    17
+   ],
+   "rev": 3
+  },
+  "n7": {
+   "kind": "argument",
+   "text": "競合が年内に類似機能を出す可能性があり、年明けまで延期すると先を越されるおそれがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    22,
+    23,
+    24
+   ],
+   "rev": 4
+  },
+  "n8": {
+   "kind": "argument",
+   "text": "前回のv3.1ではテストが間に合わないままリリースし、同期機能で障害が起きて週末対応が必要になった",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    27,
+    29
+   ],
+   "rev": 5
+  },
+  "n9": {
+   "kind": "position",
+   "text": "v3.2のリリースを1週間延期し、12月17日にする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    31,
+    36
+   ],
+   "rev": 6
+  },
+  "n10": {
+   "kind": "argument",
+   "text": "1週間の延期で同期機能のテストを最後まで実施できる見込みがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    33
+   ],
+   "rev": 6
+  },
+  "n11": {
+   "kind": "position",
+   "text": "v3.2のリリースを約2週間延期する",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    39,
+    48
+   ],
+   "rev": 7
+  },
+  "n12": {
+   "kind": "argument",
+   "text": "新たな問題が見つかると、1週間の延期では対応時間が足りなくなる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    40
+   ],
+   "rev": 7
+  },
+  "n13": {
+   "kind": "argument",
+   "text": "12月24日にリリースすると、年末年始に入るため、リリース直後の問題に対応できる人員が少ない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    43,
+    44,
+    45
+   ],
+   "rev": 8
+  },
+  "n14": {
+   "kind": "position",
+   "text": "同期機能だけをフィーチャーフラグで無効にしてv3.2をリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    51
+   ],
+   "rev": 9
+  },
+  "n15": {
+   "kind": "argument",
+   "text": "同期機能以外のテストはほぼ完了している",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    54
+   ],
+   "rev": 9
+  },
+  "n16": {
+   "kind": "argument",
+   "text": "同期機能を無効にすれば、リスクのある機能をユーザーに公開せずに済む",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    55
+   ],
+   "rev": 10
+  },
+  "n17": {
+   "kind": "argument",
+   "text": "フィーチャーフラグで同期機能を無効にした状態は未テストである",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    60
+   ],
+   "rev": 10
+  },
+  "n18": {
+   "kind": "argument",
+   "text": "同期機能を無効にした場合に他の機能へ影響が出ないか、まだ確認していない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    61
+   ],
+   "rev": 11
+  },
+  "n19": {
+   "kind": "argument",
+   "text": "v3.0では同じフラグの仕組みで共有リンク機能を無効にし、問題は起きなかった",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    63,
+    64
+   ],
+   "rev": 11
+  },
+  "n20": {
+   "kind": "argument",
+   "text": "フラグの仕組みに実績があっても、v3.2のコードで同期機能を無効にした場合の影響は確認したい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    61,
+    65
+   ],
+   "rev": 11
+  },
+  "n21": {
+   "kind": "argument",
+   "text": "A社が最も待っているのは同期機能である",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    68
+   ],
+   "rev": 12
+  },
+  "n22": {
+   "kind": "argument",
+   "text": "同期機能を無効にしてv3.2をリリースしても、A社にとっての価値は小さい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    69
+   ],
+   "rev": 12
+  },
+  "n23": {
+   "kind": "position",
+   "text": "v3.2のリリースを延期する",
+   "status": "merged",
+   "merged_into": "n3",
+   "confidence": 0.9,
+   "review": "auto",
+   "grounds": [
+    73
+   ],
+   "rev": 13
+  },
+  "n24": {
+   "kind": "argument",
+   "text": "不具合のある同期機能を公開するより、リリースが遅れる方がよい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    73
+   ],
+   "rev": 13
+  },
+  "n25": {
+   "kind": "issue",
+   "text": "v3.2のリリースについてA社にどう説明するか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    75,
+    76,
+    123
+   ],
+   "rev": 13
+  },
+  "n26": {
+   "kind": "issue",
+   "text": "同期機能のテスト不足をどう補うか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    79,
+    98
+   ],
+   "rev": 14
+  },
+  "n27": {
+   "kind": "position",
+   "text": "話者2が同期シナリオの自動テストを約20本追加する",
+   "status": "retracted",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    80,
+    81,
+    87
+   ],
+   "rev": 14
+  },
+  "n28": {
+   "kind": "argument",
+   "text": "同期シナリオを約20本追加すれば、テスト範囲を大きく広げられる見込みがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    81
+   ],
+   "rev": 14
+  },
+  "n29": {
+   "kind": "issue",
+   "text": "同期機能の自動テスト追加に何日かかるか",
+   "status": "resolved",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    82,
+    83,
+    84
+   ],
+   "rev": 14
+  },
+  "n30": {
+   "kind": "position",
+   "text": "自動テストの追加にはレビュー込みで約5日かかる見込み",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    83
+   ],
+   "rev": 14
+  },
+  "n31": {
+   "kind": "argument",
+   "text": "自動テスト追加に約5日かかると、12月10日のリリースに間に合わない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    83,
+    84
+   ],
+   "rev": 14
+  },
+  "n32": {
+   "kind": "argument",
+   "text": "12月1日時点で他の作業も残っており、12月10日までに自動テストを追加するのは難しい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    85
+   ],
+   "rev": 15
+  },
+  "n33": {
+   "kind": "decision",
+   "text": "今回は同期機能の自動テストを追加しない",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.97,
+   "review": "auto",
+   "grounds": [
+    87,
+    88
+   ],
+   "rev": 15
+  },
+  "n34": {
+   "kind": "position",
+   "text": "話者1が同期機能の探索的テストを2日間集中的に行う",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    90
+   ],
+   "rev": 15
+  },
+  "n35": {
+   "kind": "argument",
+   "text": "同期機能をオフにする場合は、2日間の探索的テストの中でオフにした状態も確認できる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    93,
+    94
+   ],
+   "rev": 16
+  },
+  "n36": {
+   "kind": "decision",
+   "text": "同期機能は田辺さんが2日間探索的テストを行い、自動テストは次のスプリントで追加する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    98
+   ],
+   "rev": 17
+  },
+  "n37": {
+   "kind": "action",
+   "text": "田辺さんが同期機能の探索的テストを2日間行う",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    98,
+    99
+   ],
+   "rev": 17
+  },
+  "n38": {
+   "kind": "action",
+   "text": "話者2が次のスプリントで同期機能の自動テストを追加する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    97,
+    98
+   ],
+   "rev": 17
+  },
+  "n39": {
+   "kind": "position",
+   "text": "同期機能をフラグで無効にし、それ以外を12月10日にリリースする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.97,
+   "review": "auto",
+   "grounds": [
+    103,
+    104
+   ],
+   "rev": 18
+  },
+  "n40": {
+   "kind": "argument",
+   "text": "機能フラグと田辺さんの探索的テストを組み合わせれば、同期機能を除いて12月10日にリリースできる見込みがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    103,
+    104
+   ],
+   "rev": 18
+  },
+  "n41": {
+   "kind": "position",
+   "text": "A社に事前に連絡し、同期機能の提供は1月になると説明する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    114
+   ],
+   "rev": 19
+  },
+  "n42": {
+   "kind": "argument",
+   "text": "A社がリリース後に同期機能の未提供に気づくより、事前に伝える方がよい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    113
+   ],
+   "rev": 19
+  },
+  "n43": {
+   "kind": "argument",
+   "text": "A社は春ごろ、事前相談なしに画面を変更した際に苦情を述べたため、今回は事前に伝えるべき",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    117,
+    118
+   ],
+   "rev": 20
+  },
+  "n44": {
+   "kind": "issue",
+   "text": "同期機能の提供時期について、1月のいつとA社に伝えるか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    120,
+    123
+   ],
+   "rev": 20
+  },
+  "n45": {
+   "kind": "position",
+   "text": "具体的な日付は伝えず、同期機能の提供は1月中旬めどと説明する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    121,
+    122
+   ],
+   "rev": 21
+  },
+  "n46": {
+   "kind": "argument",
+   "text": "具体的な日付を伝えると、その日付に縛られる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    122
+   ],
+   "rev": 21
+  },
+  "n47": {
+   "kind": "decision",
+   "text": "A社に事前に連絡し、同期機能の提供は1月中旬めどと説明する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    123
+   ],
+   "rev": 21
+  },
+  "n48": {
+   "kind": "issue",
+   "text": "障害時のホットフィックス提供に時間がかかる問題にどう対処するか",
+   "status": "decided",
+   "merged_into": null,
+   "confidence": 0.89,
+   "review": "auto",
+   "grounds": [
+    125,
+    126,
+    146
+   ],
+   "rev": 21
+  },
+  "n49": {
+   "kind": "position",
+   "text": "当番を決め、当番1人の承認でホットフィックスを出せるようにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    131
+   ],
+   "rev": 22
+  },
+  "n50": {
+   "kind": "argument",
+   "text": "現行ルールでは2人の承認が必要で、前回の障害では深夜に2人目を確保できず、ホットフィックスの提供が約3時間滞った",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.97,
+   "review": "auto",
+   "grounds": [
+    128,
+    129
+   ],
+   "rev": 22
+  },
+  "n51": {
+   "kind": "argument",
+   "text": "深夜に1人でホットフィックスをレビューすると、確認が甘くなるおそれがある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    133,
+    134
+   ],
+   "rev": 23
+  },
+  "n52": {
+   "kind": "argument",
+   "text": "顧客にとっては障害を早く修正してもらえる方がありがたい",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    136
+   ],
+   "rev": 23
+  },
+  "n53": {
+   "kind": "position",
+   "text": "夜間は当番1人の承認でホットフィックスを提供し、翌営業日の朝に別の1人が必ず事後レビューする。昼間は従来どおり2人の承認を必要とする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    139,
+    141,
+    142
+   ],
+   "rev": 24
+  },
+  "n54": {
+   "kind": "argument",
+   "text": "夜間のホットフィックス提供を早めつつ、別の担当者によるレビューも確保できる",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    144
+   ],
+   "rev": 24
+  },
+  "n55": {
+   "kind": "decision",
+   "text": "夜間のホットフィックスは当番1人の承認で提供し、翌営業日の朝に別の担当者が事後レビューする。昼間は従来どおり2人の承認を必要とする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    142,
+    146
+   ],
+   "rev": 25
+  },
+  "n56": {
+   "kind": "issue",
+   "text": "リリースノートで同期機能についてどう記載するか",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    149
+   ],
+   "rev": 25
+  },
+  "n57": {
+   "kind": "position",
+   "text": "同期機能には触れず、他の新機能だけをリリースノートに記載する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    150
+   ],
+   "rev": 25
+  },
+  "n58": {
+   "kind": "argument",
+   "text": "同期機能に触れないと、ベータ版で使った利用者から同期機能の所在について問い合わせが来る可能性がある",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    151,
+    152
+   ],
+   "rev": 26
+  },
+  "n59": {
+   "kind": "action",
+   "text": "サポート担当者を交え、同期機能のリリースノートへの記載方針を別途決める",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    155,
+    156
+   ],
+   "rev": 26
+  },
+  "n60": {
+   "kind": "action",
+   "text": "話者1が探索的テストで同期機能のフラグをオフにした状態を確認する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    158,
+    159
+   ],
+   "rev": 27
+  },
+  "n61": {
+   "kind": "action",
+   "text": "森川さんが開発環境で同期機能のフラグをオフにした状態を一通り確認する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    158,
+    159,
+    160,
+    161
+   ],
+   "rev": 27
+  },
+  "n62": {
+   "kind": "decision",
+   "text": "v3.2は予定どおり12月10日にリリースし、同期機能だけをフラグでオフにする",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    165
+   ],
+   "rev": 28
+  },
+  "n63": {
+   "kind": "action",
+   "text": "小野寺さんが今週金曜までにA社に連絡する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    165,
+    166
+   ],
+   "rev": 28
+  },
+  "n64": {
+   "kind": "action",
+   "text": "話者1が明日の午前中までに探索的テストの計画をまとめて共有する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    167
+   ],
+   "rev": 28
+  },
+  "n65": {
+   "kind": "action",
+   "text": "発話者（自分）がホットフィックスの手順書を更新する",
+   "status": "open",
+   "merged_into": null,
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    168
+   ],
+   "rev": 28
+  }
+ },
+ "edges": {
+  "e1": {
+   "src": "n2",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    5
+   ]
+  },
+  "e2": {
+   "src": "n3",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    5
+   ]
+  },
+  "e3": {
+   "src": "n4",
+   "dst": "n2",
+   "kind": "objects_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    10,
+    12
+   ]
+  },
+  "e4": {
+   "src": "n5",
+   "dst": "n4",
+   "kind": "supports",
+   "confidence": 0.92,
+   "review": "auto",
+   "grounds": [
+    14
+   ]
+  },
+  "e5": {
+   "src": "n6",
+   "dst": "n2",
+   "kind": "supports",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    16,
+    17
+   ]
+  },
+  "e6": {
+   "src": "n6",
+   "dst": "n3",
+   "kind": "objects_to",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    16,
+    17,
+    19
+   ]
+  },
+  "e7": {
+   "src": "n7",
+   "dst": "n3",
+   "kind": "objects_to",
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    24
+   ]
+  },
+  "e8": {
+   "src": "n8",
+   "dst": "n4",
+   "kind": "supports",
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    27,
+    29
+   ]
+  },
+  "e9": {
+   "src": "n9",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    31
+   ]
+  },
+  "e10": {
+   "src": "n8",
+   "dst": "n9",
+   "kind": "supports",
+   "confidence": 0.97,
+   "review": "auto",
+   "grounds": [
+    29,
+    31
+   ]
+  },
+  "e11": {
+   "src": "n10",
+   "dst": "n9",
+   "kind": "supports",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    31,
+    33
+   ]
+  },
+  "e12": {
+   "src": "n11",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    39
+   ]
+  },
+  "e13": {
+   "src": "n12",
+   "dst": "n11",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    39,
+    40
+   ]
+  },
+  "e14": {
+   "src": "n12",
+   "dst": "n9",
+   "kind": "objects_to",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    40
+   ]
+  },
+  "e15": {
+   "src": "n13",
+   "dst": "n11",
+   "kind": "objects_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    43,
+    44,
+    45
+   ]
+  },
+  "e16": {
+   "src": "n14",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    51
+   ]
+  },
+  "e17": {
+   "src": "n15",
+   "dst": "n14",
+   "kind": "supports",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    51,
+    53,
+    54
+   ]
+  },
+  "e18": {
+   "src": "n16",
+   "dst": "n14",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    55,
+    56
+   ]
+  },
+  "e19": {
+   "src": "n17",
+   "dst": "n14",
+   "kind": "objects_to",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    59,
+    60
+   ]
+  },
+  "e20": {
+   "src": "n18",
+   "dst": "n14",
+   "kind": "objects_to",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    60,
+    61
+   ]
+  },
+  "e21": {
+   "src": "n19",
+   "dst": "n14",
+   "kind": "supports",
+   "confidence": 0.97,
+   "review": "auto",
+   "grounds": [
+    63,
+    64
+   ]
+  },
+  "e22": {
+   "src": "n20",
+   "dst": "n19",
+   "kind": "objects_to",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    64,
+    65
+   ]
+  },
+  "e23": {
+   "src": "n21",
+   "dst": "n22",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    68,
+    69
+   ]
+  },
+  "e24": {
+   "src": "n22",
+   "dst": "n14",
+   "kind": "objects_to",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    69
+   ]
+  },
+  "e26": {
+   "src": "n24",
+   "dst": "n3",
+   "kind": "supports",
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    73
+   ]
+  },
+  "e27": {
+   "src": "n27",
+   "dst": "n26",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    79,
+    80,
+    81
+   ]
+  },
+  "e28": {
+   "src": "n28",
+   "dst": "n27",
+   "kind": "supports",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    81
+   ]
+  },
+  "e29": {
+   "src": "n30",
+   "dst": "n29",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    82,
+    83
+   ]
+  },
+  "e30": {
+   "src": "n31",
+   "dst": "n27",
+   "kind": "objects_to",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    84
+   ]
+  },
+  "e31": {
+   "src": "n32",
+   "dst": "n31",
+   "kind": "supports",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    85
+   ]
+  },
+  "e32": {
+   "src": "n34",
+   "dst": "n26",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    89,
+    90
+   ]
+  },
+  "e33": {
+   "src": "n35",
+   "dst": "n34",
+   "kind": "supports",
+   "confidence": 0.96,
+   "review": "auto",
+   "grounds": [
+    90,
+    93,
+    94
+   ]
+  },
+  "e34": {
+   "src": "n36",
+   "dst": "n26",
+   "kind": "resolves",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    98
+   ]
+  },
+  "e35": {
+   "src": "n37",
+   "dst": "n36",
+   "kind": "assigns",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    98
+   ]
+  },
+  "e36": {
+   "src": "n38",
+   "dst": "n36",
+   "kind": "assigns",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    97,
+    98
+   ]
+  },
+  "e37": {
+   "src": "n39",
+   "dst": "n1",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    101,
+    104
+   ]
+  },
+  "e38": {
+   "src": "n40",
+   "dst": "n39",
+   "kind": "supports",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    103,
+    104
+   ]
+  },
+  "e39": {
+   "src": "n41",
+   "dst": "n25",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    110,
+    114
+   ]
+  },
+  "e40": {
+   "src": "n42",
+   "dst": "n41",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    113,
+    114
+   ]
+  },
+  "e41": {
+   "src": "n43",
+   "dst": "n41",
+   "kind": "supports",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    118
+   ]
+  },
+  "e42": {
+   "src": "n45",
+   "dst": "n44",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    120,
+    121
+   ]
+  },
+  "e43": {
+   "src": "n46",
+   "dst": "n45",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    121,
+    122
+   ]
+  },
+  "e44": {
+   "src": "n47",
+   "dst": "n25",
+   "kind": "resolves",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    123
+   ]
+  },
+  "e45": {
+   "src": "n47",
+   "dst": "n44",
+   "kind": "resolves",
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    123
+   ]
+  },
+  "e46": {
+   "src": "n49",
+   "dst": "n48",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    131
+   ]
+  },
+  "e47": {
+   "src": "n50",
+   "dst": "n49",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    129,
+    131
+   ]
+  },
+  "e48": {
+   "src": "n51",
+   "dst": "n49",
+   "kind": "objects_to",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    133,
+    134
+   ]
+  },
+  "e49": {
+   "src": "n52",
+   "dst": "n49",
+   "kind": "supports",
+   "confidence": 0.82,
+   "review": "auto",
+   "grounds": [
+    131,
+    136
+   ]
+  },
+  "e50": {
+   "src": "n53",
+   "dst": "n48",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    139,
+    142
+   ]
+  },
+  "e51": {
+   "src": "n54",
+   "dst": "n53",
+   "kind": "supports",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    144
+   ]
+  },
+  "e52": {
+   "src": "n55",
+   "dst": "n48",
+   "kind": "resolves",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    146
+   ]
+  },
+  "e53": {
+   "src": "n57",
+   "dst": "n56",
+   "kind": "responds_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    149,
+    150
+   ]
+  },
+  "e54": {
+   "src": "n58",
+   "dst": "n57",
+   "kind": "objects_to",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    151,
+    152
+   ]
+  },
+  "e55": {
+   "src": "n59",
+   "dst": "n56",
+   "kind": "assigns",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    149,
+    155,
+    156
+   ]
+  },
+  "e56": {
+   "src": "n62",
+   "dst": "n1",
+   "kind": "resolves",
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    165
+   ]
+  },
+  "e57": {
+   "src": "n63",
+   "dst": "n62",
+   "kind": "assigns",
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    165
+   ]
+  },
+  "e58": {
+   "src": "n64",
+   "dst": "n62",
+   "kind": "assigns",
+   "confidence": 0.95,
+   "review": "auto",
+   "grounds": [
+    165,
+    167
+   ]
+  },
+  "e59": {
+   "src": "n61",
+   "dst": "n62",
+   "kind": "assigns",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    165,
+    168
+   ]
+  },
+  "e60": {
+   "src": "n65",
+   "dst": "n55",
+   "kind": "assigns",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    168
+   ]
+  },
+  "e61": {
+   "src": "n4",
+   "dst": "n9",
+   "kind": "supports",
+   "confidence": 0.98,
+   "review": "auto",
+   "grounds": [
+    10,
+    12,
+    31
+   ]
+  },
+  "e62": {
+   "src": "n6",
+   "dst": "n9",
+   "kind": "objects_to",
+   "confidence": 0.93,
+   "review": "auto",
+   "grounds": [
+    16,
+    31
+   ]
+  },
+  "e63": {
+   "src": "n60",
+   "dst": "n36",
+   "kind": "assigns",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    98,
+    159
+   ]
+  },
+  "e64": {
+   "src": "n63",
+   "dst": "n47",
+   "kind": "assigns",
+   "confidence": 1.0,
+   "review": "auto",
+   "grounds": [
+    123,
+    165,
+    166
+   ]
+  },
+  "e65": {
+   "src": "n64",
+   "dst": "n36",
+   "kind": "assigns",
+   "confidence": 0.99,
+   "review": "auto",
+   "grounds": [
+    98,
+    167
+   ]
+  }
+ }
+}

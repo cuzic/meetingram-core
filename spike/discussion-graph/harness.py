@@ -196,6 +196,9 @@ def utt_line(u, cap=None):
     return f'{u["uid"]} {u["speaker_label"]}: {t}'
 
 
+CTX_ALL = False
+
+
 def build_incremental(g, K=3):
     budget = LIMIT - len(SYSTEM)
     third = budget // 3
@@ -204,6 +207,10 @@ def build_incremental(g, K=3):
                if g.live(nid) and g.nodes[nid]["kind"] == "issue" and g.nodes[nid]["status"] == "open"]
     for t in reversed(g.touched[-K:]):
         for nid in sorted(t, key=lambda x: -int(x[1:])):
+            if g.live(nid) and nid not in ctx_ids:
+                ctx_ids.append(nid)
+    if CTX_ALL:  # then every other live node, newest first, until the budget runs out
+        for nid in sorted(g.nodes, key=lambda x: -int(x[1:])):
             if g.live(nid) and nid not in ctx_ids:
                 ctx_ids.append(nid)
     ctx, used = [], 0
@@ -494,10 +501,13 @@ def main():
     r.add_argument("--model", default=""); r.add_argument("--out", required=True)
     r.add_argument("--batch", type=int, default=6); r.add_argument("--secs", type=int, default=45)
     r.add_argument("--no-consolidate", action="store_true")
+    r.add_argument("--ctx-all", action="store_true")
     e = sp.add_parser("eval")
     e.add_argument("--result", required=True); e.add_argument("--gold", required=True)
     a = ap.parse_args()
     if a.cmd == "run":
+        global CTX_ALL
+        CTX_ALL = a.ctx_all
         run(a)
     else:
         print(json.dumps(evaluate(json.load(open(a.result, encoding="utf-8")), json.load(open(a.gold, encoding="utf-8"))),
