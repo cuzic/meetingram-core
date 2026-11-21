@@ -196,3 +196,36 @@ fn detects_four_gaps_and_checks_decisions_after_flush() {
         .is_empty());
     assert_eq!(graph_updated_subject("test"), "graph.test.updated");
 }
+
+#[test]
+fn merging_duplicates_into_the_node_with_more_grounds_is_not_an_error() {
+    use discussion_graph::{apply_patch, Op};
+    use serde_json::json;
+
+    let gold = GoldGraph {
+        nodes: vec![gold_node("g1", NodeKind::Issue, 1)],
+        edges: vec![],
+    };
+    let mut larger = gold_node("n2", NodeKind::Issue, 1);
+    larger.grounds.extend([2, 3]);
+    let before = graph_from_gold(
+        (1..=3).map(|i| utterance(i, String::new())).collect(),
+        &GoldGraph {
+            nodes: vec![gold_node("n1", NodeKind::Issue, 1), larger],
+            edges: vec![],
+        },
+    );
+    let merged = apply_patch(
+        &before,
+        &[Op(json!({
+            "op": "merge", "from": "n1", "into": "n2",
+            "grounds": [{"uid": "u1"}]
+        }))],
+        &["u1"],
+    );
+    assert_eq!(merged.applied.len(), 1);
+    assert_eq!(
+        evaluate(&merged.graph, &gold, &before, &merged.applied).wrong_merges,
+        0
+    );
+}

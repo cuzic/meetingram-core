@@ -303,15 +303,15 @@ fn merge_redirects_edges_grounds_and_earlier_aliases_without_duplicates() {
     assert_eq!(result.graph.nodes["n4"].merged_into.as_deref(), Some("n5"));
     assert_eq!(
         result.graph.edges.keys().collect::<Vec<_>>(),
-        vec!["e1", "e3"]
+        vec!["e1", "e2"]
     );
-    assert_eq!(result.graph.edges["e3"].src, "n5");
-    assert_eq!(result.graph.edges["e3"].dst, "n2");
+    assert_eq!(result.graph.edges["e2"].src, "n5");
+    assert_eq!(result.graph.edges["e2"].dst, "n2");
     assert!(result
         .graph
         .grounds
         .iter()
-        .all(|g| !["e2", "e4", "e5", "n3", "n4"].contains(&g.target.as_str())));
+        .all(|g| !["e3", "e4", "e5", "n3", "n4"].contains(&g.target.as_str())));
     let grounds = result
         .graph
         .grounds
@@ -371,4 +371,65 @@ fn checks_status_kind_and_disallows_direct_merge_status() {
         .grounds
         .iter()
         .any(|g| g.target == "n1" && g.uid == "u2"));
+}
+
+#[test]
+fn rejects_tmp_matching_existing_node_id() {
+    let result = apply(&graph(), [add("n1", "position")]);
+    assert!(result.applied.is_empty());
+    assert_eq!(result.rejected, [(Rejection::TmpMatchesNodeId, 1)].into());
+}
+
+#[test]
+fn rejects_references_to_dropped_tmp_even_if_it_matches_an_existing_node() {
+    let result = apply(
+        &graph(),
+        [
+            add("n1", "unknown"),
+            add("new", "position"),
+            edge("new", "n1", "responds_to"),
+            status("n1", "decided"),
+            merge("n1", "n1"),
+        ],
+    );
+    assert_eq!(result.rejected[&Rejection::EdgeEndpoint], 1);
+    assert_eq!(result.rejected[&Rejection::StatusEndpoint], 1);
+    assert_eq!(result.rejected[&Rejection::MergeEndpoint], 1);
+}
+
+#[test]
+fn keeps_revision_when_no_operations_apply() {
+    let graph = graph();
+    for ops in [vec![], vec![add("bad", "unknown")]] {
+        let result = apply(&graph, ops);
+        assert_eq!(result.graph, graph);
+        assert_eq!(result.patch_rev(), None);
+        assert!(result.applied.is_empty());
+        assert!(result.touched.is_empty());
+    }
+    let result = apply(&graph, [add("bad", "unknown"), add("good", "issue")]);
+    assert_eq!(result.graph.rev, graph.rev + 1);
+    assert_eq!(result.patch_rev(), Some(graph.rev + 1));
+    assert_eq!(result.applied.len(), 1);
+}
+
+#[test]
+fn redirect_prefers_earlier_creation_then_numeric_edge_id() {
+    let mut graph = apply(
+        &graph(),
+        [edge("n3", "n2", "supports"), edge("n4", "n2", "supports")],
+    )
+    .graph;
+    let mut destination = graph.edges.remove("e3").unwrap();
+    destination.eid = "e10".into();
+    graph.edges.insert(destination.eid.clone(), destination);
+
+    let tied = apply(&graph, [merge("n3", "n4")]);
+    assert!(tied.graph.edges.contains_key("e2"));
+    assert!(!tied.graph.edges.contains_key("e10"));
+
+    graph.edges.get_mut("e10").unwrap().created_rev -= 1;
+    let earlier = apply(&graph, [merge("n3", "n4")]);
+    assert!(earlier.graph.edges.contains_key("e10"));
+    assert!(!earlier.graph.edges.contains_key("e2"));
 }

@@ -95,6 +95,7 @@ pub enum Rejection {
     UnknownNodeKind,
     EmptyText,
     DuplicateTmp,
+    TmpMatchesNodeId,
     EdgeEndpoint,
     EdgeKind,
     EdgeSelfLoop,
@@ -119,15 +120,20 @@ pub struct PatchResult {
     pub touched: BTreeSet<String>,
 }
 
+impl PatchResult {
+    /// Revision to record for this patch, when at least one operation applied.
+    pub fn patch_rev(&self) -> Option<u64> {
+        (!self.applied.is_empty()).then_some(self.graph.rev)
+    }
+}
+
 /// Validate in response order. The IDs in `allowed_uids` are those actually
 /// presented to the model, including any reference utterances.
 pub fn apply_patch(graph: &Graph, ops: &[Op], allowed_uids: &[&str]) -> PatchResult {
-    let mut graph = graph.clone();
-    graph.rev += 1;
     let mut patch = Patch {
         next_node: last_id(graph.nodes.keys(), 'n'),
         next_edge: last_id(graph.edges.keys(), 'e'),
-        graph,
+        graph: graph.clone(),
         allowed: allowed_uids.iter().copied().collect(),
         tmp: BTreeMap::new(),
         seen_tmp: BTreeSet::new(),
@@ -140,6 +146,9 @@ pub fn apply_patch(graph: &Graph, ops: &[Op], allowed_uids: &[&str]) -> PatchRes
             Ok(op) => applied.push(op),
             Err(reason) => *rejected.entry(reason).or_default() += 1,
         }
+    }
+    if !applied.is_empty() {
+        patch.graph.rev += 1;
     }
     for id in &patch.touched {
         if let Some(node) = patch.graph.nodes.get_mut(id) {
@@ -203,6 +212,9 @@ impl Patch<'_> {
                     return Err(Rejection::DuplicateTmp);
                 }
                 let tmp = field("tmp")?;
+                if self.graph.nodes.contains_key(tmp) {
+                    return Err(Rejection::TmpMatchesNodeId);
+                }
                 self.next_node += 1;
                 let nid = format!("n{}", self.next_node);
                 let node = Node {
@@ -213,8 +225,8 @@ impl Patch<'_> {
                     merged_into: None,
                     confidence,
                     review: Review::Auto,
-                    created_rev: self.graph.rev,
-                    updated_rev: self.graph.rev,
+                    created_rev: self.graph.rev + 1,
+                    updated_rev: self.graph.rev + 1,
                 };
                 self.tmp.insert(tmp.to_owned(), nid.clone());
                 self.touched.insert(nid.clone());
@@ -328,7 +340,7 @@ impl Patch<'_> {
             kind,
             confidence,
             review: Review::Auto,
-            created_rev: self.graph.rev,
+            created_rev: self.graph.rev + 1,
         };
         self.touched.extend([edge.src.clone(), edge.dst.clone()]);
         self.add_grounds(&edge.eid, &grounds);
@@ -405,16 +417,17 @@ impl Patch<'_> {
     }
 
     fn redirect_edges(&mut self, from: &str, into: &str) {
-        // Reserve keys of edges already attached to the destination before
-        // moving any edge, irrespective of the order in which IDs were assigned.
-        let mut keys = BTreeSet::new();
+        let mut keys = BTreeMap::new();
         let mut moving = Vec::new();
         self.graph.edges.retain(|_, edge| {
             if edge.src == from || edge.dst == from {
                 moving.push(edge.clone());
                 false
             } else {
-                keys.insert((edge.src.clone(), edge.dst.clone(), edge.kind));
+                keys.insert(
+                    (edge.src.clone(), edge.dst.clone(), edge.kind),
+                    edge.eid.clone(),
+                );
                 true
             }
         });
@@ -427,12 +440,22 @@ impl Patch<'_> {
                 edge.dst = into.to_owned();
             }
             self.touched.extend([edge.src.clone(), edge.dst.clone()]);
-            if edge.src == edge.dst || !keys.insert((edge.src.clone(), edge.dst.clone(), edge.kind))
-            {
+            if edge.src == edge.dst {
                 removed.insert(edge.eid);
-            } else {
-                self.graph.edges.insert(edge.eid.clone(), edge);
+                continue;
             }
+            let key = (edge.src.clone(), edge.dst.clone(), edge.kind);
+            if let Some(existing_id) = keys.get(&key) {
+                let existing = &self.graph.edges[existing_id];
+                if existing.review != Review::Auto || edge_age(existing) <= edge_age(&edge) {
+                    removed.insert(edge.eid);
+                    continue;
+                }
+                self.graph.edges.remove(existing_id);
+                removed.insert(existing_id.clone());
+            }
+            keys.insert(key, edge.eid.clone());
+            self.graph.edges.insert(edge.eid.clone(), edge);
         }
         self.graph
             .grounds
@@ -475,6 +498,11 @@ impl Patch<'_> {
             grounds,
         })
     }
+}
+
+fn edge_age(edge: &Edge) -> (u64, u64, &str) {
+    let numeric_id = edge.eid.strip_prefix('e').and_then(|id| id.parse().ok());
+    (edge.created_rev, numeric_id.unwrap_or(u64::MAX), &edge.eid)
 }
 
 fn valid_edge(kind: EdgeKind, src: NodeKind, dst: NodeKind) -> bool {

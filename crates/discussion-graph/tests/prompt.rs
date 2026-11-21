@@ -31,11 +31,13 @@ fn incremental_limits_context_and_drops_oldest_and_hidden_nodes() {
         let mut node = node(&id, NodeKind::Issue);
         node.text = "議".repeat(480);
         node.created_rev = i;
+        node.updated_rev = 0;
         graph.nodes.insert(id, node);
     }
     graph.nodes.get_mut("n8").unwrap().review = Review::Rejected;
     graph.nodes.get_mut("n7").unwrap().status = Status::Merged;
     graph.nodes.get_mut("n6").unwrap().status = Status::Decided;
+    graph.nodes.get_mut("n1").unwrap().updated_rev = 9;
     let recent = [["n6".to_owned(), "n7".to_owned(), "n8".to_owned()].into()];
     let limit = 3_500;
     let prompt = build_incremental(&graph, &[], &recent, false, limit).unwrap();
@@ -51,7 +53,7 @@ fn incremental_limits_context_and_drops_oldest_and_hidden_nodes() {
             .iter()
             .map(|n| n["nid"].as_str().unwrap())
             .collect::<Vec<_>>(),
-        ["n5", "n4"]
+        ["n1", "n6"]
     );
     let roomy = build_incremental(&graph, &[], &recent, false, DEFAULT_INPUT_LIMIT).unwrap();
     let context = section(&roomy, "context");

@@ -38,8 +38,8 @@ pub struct Evaluation {
 }
 
 /// Evaluate live nodes and edges. Pass the applied operations from
-/// consolidation in order; merge endpoints are classified using the one-to-one
-/// matching from the graph before consolidation.
+/// consolidation in order. Each merge endpoint is independently matched to
+/// the best overlapping gold node from the graph before consolidation.
 pub fn evaluate(
     prediction: &Graph,
     gold: &GoldGraph,
@@ -68,7 +68,10 @@ pub fn evaluate(
         }
     }
 
-    let before = matching(before_consolidation, gold);
+    let mut before = BTreeMap::new();
+    for (_, prediction_id, gold_id) in candidates(before_consolidation, gold, |_| true) {
+        before.entry(prediction_id).or_insert(gold_id);
+    }
     let wrong_merges = consolidation_ops
         .iter()
         .filter(|op| {
@@ -97,7 +100,11 @@ fn ratio(numerator: usize, denominator: usize) -> f64 {
     }
 }
 
-fn matching<'a>(prediction: &'a Graph, gold: &'a GoldGraph) -> BTreeMap<&'a str, &'a str> {
+fn candidates<'a>(
+    prediction: &'a Graph,
+    gold: &'a GoldGraph,
+    include: impl Fn(&crate::Node) -> bool,
+) -> Vec<(f64, &'a str, &'a str)> {
     let mut row_ids = BTreeMap::<_, BTreeSet<_>>::new();
     for ground in &prediction.grounds {
         if let Some(utterance) = prediction.utterances.get(&ground.uid) {
@@ -113,7 +120,7 @@ fn matching<'a>(prediction: &'a Graph, gold: &'a GoldGraph) -> BTreeMap<&'a str,
         for node in prediction
             .nodes
             .values()
-            .filter(|node| node.is_live() && node.kind == gold_node.kind)
+            .filter(|node| node.kind == gold_node.kind && include(node))
         {
             if let Some(rows) = row_ids.get(node.nid.as_str()) {
                 let shared = rows.intersection(&gold_rows).count();
@@ -132,9 +139,13 @@ fn matching<'a>(prediction: &'a Graph, gold: &'a GoldGraph) -> BTreeMap<&'a str,
     candidates.sort_by(|(left, lp, lg), (right, rp, rg)| {
         right.total_cmp(left).then_with(|| (lp, lg).cmp(&(rp, rg)))
     });
+    candidates
+}
+
+fn matching<'a>(prediction: &'a Graph, gold: &'a GoldGraph) -> BTreeMap<&'a str, &'a str> {
     let mut matched = BTreeMap::new();
     let mut used_gold = BTreeSet::new();
-    for (_, prediction_id, gold_id) in candidates {
+    for (_, prediction_id, gold_id) in candidates(prediction, gold, crate::Node::is_live) {
         if !matched.contains_key(prediction_id) && used_gold.insert(gold_id) {
             matched.insert(prediction_id, gold_id);
         }

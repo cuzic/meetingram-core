@@ -53,16 +53,35 @@ pub fn build_incremental(
         .copied()
         .filter(|u| pending_ids.contains(u.uid.as_str()))
         .collect();
-    let mut context = context_lines(graph, recent_touched);
+    let mut context: Vec<_> = context_nodes(graph, recent_touched)
+        .into_iter()
+        .enumerate()
+        .map(|(index, node)| {
+            let revision = if node.updated_rev == 0 {
+                node.created_rev
+            } else {
+                node.updated_rev
+            };
+            let line = json!({
+                "nid": node.nid, "kind": node.kind, "status": node.status, "text": node.text,
+            })
+            .to_string();
+            (index, revision, node, line)
+        })
+        .collect();
+    // Trim by age across both groups, then restore their presentation order.
+    context.sort_by_key(|(_, revision, node, _)| {
+        std::cmp::Reverse((*revision, node.created_rev, &node.nid))
+    });
 
     let frame = chars(&incremental_user(&[], &[], &[]));
     let budget = limit
         .checked_sub(chars(EXTRACT) + frame)
         .ok_or(PromptError::InputLimit)?;
     let third = limit / 3;
-    let mut context_len: usize = context.iter().map(|line| chars(line) + 1).sum();
+    let mut context_len: usize = context.iter().map(|(_, _, _, line)| chars(line) + 1).sum();
     while context_len > third.min(budget) {
-        if let Some(line) = context.pop() {
+        if let Some((_, _, _, line)) = context.pop() {
             context_len -= chars(&line) + 1;
         }
     }
@@ -88,7 +107,9 @@ pub fn build_incremental(
         ref_len -= chars(&line) + 1;
     }
     while context_len + first_len > budget {
-        let Some(line) = context.pop() else { break };
+        let Some((_, _, _, line)) = context.pop() else {
+            break;
+        };
         context_len -= chars(&line) + 1;
     }
 
@@ -110,6 +131,8 @@ pub fn build_incremental(
     }
     let (mut allowed_uids, ref_lines): (Vec<_>, Vec<_>) = refs.into_iter().unzip();
     allowed_uids.extend(new_uids.iter().cloned());
+    context.sort_by_key(|(index, _, _, _)| *index);
+    let context: Vec<_> = context.into_iter().map(|(_, _, _, line)| line).collect();
     Ok(Prompt {
         system: EXTRACT.to_owned(),
         user: incremental_user(&context, &ref_lines, &new_lines),
@@ -118,7 +141,7 @@ pub fn build_incremental(
     })
 }
 
-fn context_lines(graph: &Graph, recent_touched: &[BTreeSet<String>]) -> Vec<String> {
+fn context_nodes<'a>(graph: &'a Graph, recent_touched: &[BTreeSet<String>]) -> Vec<&'a Node> {
     let mut nodes: Vec<_> = graph.nodes.values().filter(|n| n.is_live()).collect();
     nodes.sort_by_key(|n| {
         std::cmp::Reverse((
@@ -131,14 +154,9 @@ fn context_lines(graph: &Graph, recent_touched: &[BTreeSet<String>]) -> Vec<Stri
     });
     let mut context = Vec::new();
     let mut seen = BTreeSet::new();
-    let mut add = |node: &Node| {
-        if seen.insert(node.nid.clone()) {
-            context.push(
-                json!({
-                    "nid":node.nid, "kind":node.kind, "status":node.status, "text":node.text,
-                })
-                .to_string(),
-            );
+    let mut add = |node: &'a Node| {
+        if seen.insert(&node.nid) {
+            context.push(node);
         }
     };
     for node in nodes
