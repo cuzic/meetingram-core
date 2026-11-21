@@ -456,3 +456,68 @@ fn redirect_preserves_newer_approved_edge_and_its_ground() {
     assert!(!result.graph.edges.contains_key("e2"));
     assert!(result.graph.grounds.contains(&ground));
 }
+
+#[test]
+fn sub_issue_hierarchy_survives_patch_and_merge() {
+    let result = apply(
+        &Graph::default(),
+        [
+            add("a", "issue"),
+            add("b", "issue"),
+            add("c", "issue"),
+            add("d", "issue"),
+            edge("a", "b", "sub_issue_of"),
+            edge("b", "c", "sub_issue_of"),
+            edge("a", "d", "sub_issue_of"),
+            edge("c", "a", "sub_issue_of"),
+        ],
+    );
+    assert_eq!(result.graph.edges.len(), 2);
+    assert_eq!(result.rejected.values().copied().sum::<usize>(), 2);
+    assert_eq!(
+        result.rejected,
+        [
+            (Rejection::IssueAlreadyHasParent, 1),
+            (Rejection::IssueParentCycle, 1)
+        ]
+        .into()
+    );
+
+    let competing = apply(&result.graph, [merge("n1", "n2")]);
+    assert_eq!(competing.graph.edges.len(), 1);
+    let competing = apply(
+        &result.graph,
+        [merge("n2", "n1"), edge("n4", "n2", "sub_issue_of")],
+    );
+    assert_eq!(competing.graph.edges.len(), 1);
+
+    let cycle = apply(&result.graph, [merge("n1", "n3")]);
+    assert_eq!(cycle.graph.edges.len(), 1);
+    assert_eq!(cycle.graph.edges.values().next().unwrap().src, "n2");
+
+    let competing = apply(
+        &result.graph,
+        [edge("n4", "n3", "sub_issue_of"), merge("n1", "n4")],
+    );
+    assert_eq!(competing.graph.edges.len(), 2);
+    assert!(competing
+        .graph
+        .edges
+        .values()
+        .any(|edge| edge.src == "n4" && edge.dst == "n3"));
+}
+
+#[test]
+fn sub_issue_edges_require_two_issues() {
+    let graph = apply(&Graph::default(), [add("a", "issue"), add("b", "position")]).graph;
+    reject(
+        &graph,
+        edge("n2", "n1", "sub_issue_of"),
+        Rejection::EdgeKind,
+    );
+    reject(
+        &graph,
+        edge("n1", "n2", "sub_issue_of"),
+        Rejection::EdgeKind,
+    );
+}

@@ -229,3 +229,160 @@ fn merging_duplicates_into_the_node_with_more_grounds_is_not_an_error() {
         0
     );
 }
+
+#[test]
+fn evaluates_agendas_and_shared_nodes_without_sub_question_branches() {
+    use EdgeKind::*;
+    use NodeKind::*;
+    let gold = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", Issue, 1),
+            gold_node("shared", Position, 4),
+        ],
+        edges: vec![gold_edge("shared", "agenda", RespondsTo)],
+    };
+    let prediction = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", Issue, 1),
+            gold_node("detail", Issue, 1),
+            gold_node("nested", Issue, 2),
+            gold_node("private", Position, 4),
+            gold_node("shared", Position, 4),
+            gold_node("reason", Argument, 5),
+        ],
+        edges: vec![
+            gold_edge("detail", "agenda", SubIssueOf),
+            gold_edge("nested", "detail", SubIssueOf),
+            gold_edge("private", "nested", RespondsTo),
+            gold_edge("shared", "nested", RespondsTo),
+            gold_edge("shared", "agenda", RespondsTo),
+            gold_edge("reason", "private", ObjectsTo),
+        ],
+    };
+    let graph = graph_from_gold(
+        (1..=5).map(|i| utterance(i, "Synthetic".into())).collect(),
+        &prediction,
+    );
+    let score = evaluate(&graph, &gold, &graph, &[]);
+    assert_eq!(score.node_precision, 1.0);
+    assert_eq!(score.node_recall, 1.0);
+    assert_eq!(score.edge_f1, 1.0);
+    assert_eq!(score.agendas, 1);
+    assert_eq!(score.sub_questions, 2);
+    assert_eq!(score.live_nodes, 6);
+}
+
+#[test]
+fn outlines_nested_issues_and_counts_unanswered_questions_by_agenda() {
+    use EdgeKind::*;
+    use NodeKind::*;
+    let data = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", Issue, 1),
+            gold_node("detail", Issue, 2),
+            gold_node("nested", Issue, 3),
+            gold_node("position", Position, 4),
+            gold_node("argument", Argument, 5),
+            gold_node("objection", Argument, 6),
+        ],
+        edges: vec![
+            gold_edge("detail", "agenda", SubIssueOf),
+            gold_edge("nested", "detail", SubIssueOf),
+            gold_edge("position", "nested", RespondsTo),
+            gold_edge("argument", "position", Supports),
+            gold_edge("objection", "argument", ObjectsTo),
+            gold_edge("argument", "objection", Supports),
+        ],
+    };
+    let graph = graph_from_gold(vec![], &data);
+    assert_eq!(
+        discussion_graph::unanswered_by_agenda(&graph),
+        [("agenda".into(), 2)].into()
+    );
+    let outline = discussion_graph::build_outline(&graph);
+    assert_eq!(outline.agendas.len(), 1);
+    let mut branch = &outline.agendas[0];
+    for (id, relation) in [
+        ("agenda", None),
+        ("detail", Some(SubIssueOf)),
+        ("nested", Some(SubIssueOf)),
+        ("position", Some(RespondsTo)),
+        ("argument", Some(Supports)),
+        ("objection", Some(ObjectsTo)),
+    ] {
+        assert_eq!(branch.node.nid, id);
+        assert_eq!(branch.relation, relation);
+        if id == "objection" {
+            assert!(branch.children.is_empty());
+        } else {
+            assert_eq!(branch.children.len(), 1);
+            branch = &branch.children[0];
+        }
+    }
+}
+
+#[test]
+fn outline_lists_live_unattached_nodes_by_kind_then_nid() {
+    use NodeKind::*;
+    let mut graph = graph_from_gold(
+        vec![],
+        &GoldGraph {
+            nodes: vec![
+                gold_node("agenda", Issue, 1),
+                gold_node("rejected", Issue, 2),
+                gold_node("z-position", Position, 3),
+                gold_node("b-position", Position, 4),
+                gold_node("a-argument", Argument, 5),
+                gold_node("decision", Decision, 6),
+                gold_node("attached", Position, 7),
+                gold_node("hidden", Action, 8),
+            ],
+            edges: vec![
+                gold_edge("b-position", "rejected", EdgeKind::RespondsTo),
+                gold_edge("a-argument", "b-position", EdgeKind::Supports),
+                gold_edge("attached", "agenda", EdgeKind::RespondsTo),
+            ],
+        },
+    );
+    graph.nodes.get_mut("rejected").unwrap().review = Review::Rejected;
+    graph.nodes.get_mut("hidden").unwrap().status = Status::Merged;
+
+    let outline = discussion_graph::build_outline(&graph);
+    assert_eq!(
+        outline
+            .unattached
+            .iter()
+            .map(|node| node.nid.as_str())
+            .collect::<Vec<_>>(),
+        ["b-position", "z-position", "a-argument", "decision"]
+    );
+}
+
+#[test]
+fn outline_puts_sub_questions_before_positions() {
+    use NodeKind::*;
+    let graph = graph_from_gold(
+        vec![],
+        &GoldGraph {
+            nodes: vec![
+                gold_node("agenda", Issue, 1),
+                gold_node("z-question", Issue, 2),
+                gold_node("a-position", Position, 3),
+            ],
+            edges: vec![
+                gold_edge("a-position", "agenda", EdgeKind::RespondsTo),
+                gold_edge("z-question", "agenda", EdgeKind::SubIssueOf),
+            ],
+        },
+    );
+
+    let outline = discussion_graph::build_outline(&graph);
+    assert_eq!(
+        outline.agendas[0]
+            .children
+            .iter()
+            .map(|child| child.node.nid.as_str())
+            .collect::<Vec<_>>(),
+        ["z-question", "a-position"]
+    );
+}

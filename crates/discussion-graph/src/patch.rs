@@ -100,6 +100,8 @@ pub enum Rejection {
     EdgeKind,
     EdgeSelfLoop,
     EdgeDuplicate,
+    IssueAlreadyHasParent,
+    IssueParentCycle,
     MergeSameNode,
     MergeEndpoint,
     MergeKind,
@@ -113,6 +115,7 @@ pub enum Rejection {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct PatchResult {
     pub graph: Graph,
     pub applied: Vec<AppliedOp>,
@@ -341,6 +344,9 @@ impl Patch<'_> {
         {
             return Err(Rejection::EdgeDuplicate);
         }
+        if kind == EdgeKind::SubIssueOf {
+            validate_issue_parent(&self.graph, &src.nid, &dst.nid)?;
+        }
         let src = src.nid.clone();
         let dst = dst.nid.clone();
         self.next_edge += 1;
@@ -464,6 +470,11 @@ impl Patch<'_> {
                 }
                 self.graph.edges.remove(&existing_id);
                 removed.insert(existing_id);
+            } else if edge.kind == EdgeKind::SubIssueOf
+                && validate_issue_parent(&self.graph, &edge.src, &edge.dst).is_err()
+            {
+                removed.insert(edge.eid);
+                continue;
             }
             keys.insert(key, edge.eid.clone());
             self.graph.edges.insert(edge.eid.clone(), edge);
@@ -519,11 +530,30 @@ fn edge_age(edge: &Edge) -> (u64, u64, &str) {
 fn valid_edge(kind: EdgeKind, src: NodeKind, dst: NodeKind) -> bool {
     use NodeKind::*;
     match kind {
+        EdgeKind::SubIssueOf => (src, dst) == (Issue, Issue),
         EdgeKind::RespondsTo => (src, dst) == (Position, Issue),
         EdgeKind::Supports | EdgeKind::ObjectsTo => {
             src == Argument && matches!(dst, Position | Argument)
         }
         EdgeKind::Resolves => (src, dst) == (Decision, Issue),
         EdgeKind::Assigns => src == Action && matches!(dst, Decision | Issue),
+    }
+}
+
+fn validate_issue_parent(graph: &Graph, src: &str, dst: &str) -> Result<(), Rejection> {
+    let parents = graph.issue_parents();
+    if parents.contains_key(src) {
+        return Err(Rejection::IssueAlreadyHasParent);
+    }
+    let mut ancestor = dst;
+    let mut visited = BTreeSet::new();
+    loop {
+        if ancestor == src || !visited.insert(ancestor) {
+            return Err(Rejection::IssueParentCycle);
+        }
+        match parents.get(ancestor) {
+            Some(&parent) => ancestor = parent,
+            None => return Ok(()),
+        }
     }
 }
