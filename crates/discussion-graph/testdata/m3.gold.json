@@ -1,0 +1,526 @@
+{
+  "nodes": [
+    {
+      "id": "g1",
+      "kind": "issue",
+      "text": "サポート終了する現行ログ監視基盤の乗り換え先をどれにするか",
+      "status": "decided",
+      "grounds": [
+        5,
+        122
+      ]
+    },
+    {
+      "id": "g2",
+      "kind": "issue",
+      "text": "約40サービスの監視の移行をどう進めるか(工数・方式)",
+      "status": "resolved",
+      "grounds": [
+        98,
+        99
+      ]
+    },
+    {
+      "id": "g3",
+      "kind": "issue",
+      "text": "監視基盤のベンダーロックインをどう避けるか",
+      "status": "resolved",
+      "grounds": [
+        76
+      ]
+    },
+    {
+      "id": "g4",
+      "kind": "issue",
+      "text": "年間700万円の予算内に収まるか",
+      "status": "open",
+      "grounds": [
+        25,
+        26,
+        147
+      ]
+    },
+    {
+      "id": "g5",
+      "kind": "position",
+      "text": "SaaSのログナビを採用する",
+      "status": "open",
+      "grounds": [
+        12
+      ]
+    },
+    {
+      "id": "g6",
+      "kind": "position",
+      "text": "OSSを自前で運用する",
+      "status": "retracted",
+      "grounds": [
+        40,
+        41,
+        58,
+        125
+      ]
+    },
+    {
+      "id": "g7",
+      "kind": "position",
+      "text": "利用中クラウドのマネージド監視サービスを採用する",
+      "status": "open",
+      "grounds": [
+        61,
+        62,
+        129,
+        130
+      ]
+    },
+    {
+      "id": "g8",
+      "kind": "argument",
+      "text": "ログナビは構築がほぼ不要で導入当日から使える",
+      "status": "open",
+      "grounds": [
+        15,
+        16,
+        17,
+        124
+      ]
+    },
+    {
+      "id": "g9",
+      "kind": "argument",
+      "text": "ログナビはデータ量の従量課金でログ増加に伴い年間コストが跳ねる",
+      "status": "open",
+      "grounds": [
+        19,
+        20,
+        21,
+        28,
+        34,
+        95,
+        124
+      ]
+    },
+    {
+      "id": "g10",
+      "kind": "argument",
+      "text": "OSSはライセンス費ゼロで中身が見え縛られない",
+      "status": "open",
+      "grounds": [
+        42,
+        43,
+        125
+      ]
+    },
+    {
+      "id": "g11",
+      "kind": "argument",
+      "text": "OSSの運用には0.5人分必要だがインフラチーム3人は手いっぱい",
+      "status": "open",
+      "grounds": [
+        46,
+        47,
+        50,
+        54,
+        56,
+        125
+      ]
+    },
+    {
+      "id": "g12",
+      "kind": "argument",
+      "text": "マネージドは既存クラウドの権限・ネットワークとつながっており構築が軽い",
+      "status": "open",
+      "grounds": [
+        64,
+        65,
+        126
+      ]
+    },
+    {
+      "id": "g13",
+      "kind": "argument",
+      "text": "マネージドにするとクラウドベンダーへのロックインが強まる",
+      "status": "open",
+      "grounds": [
+        73,
+        74
+      ]
+    },
+    {
+      "id": "g14",
+      "kind": "argument",
+      "text": "収集をOpenTelemetryにしておけば送り先を変えるだけで乗り換えられる",
+      "status": "open",
+      "grounds": [
+        78,
+        80,
+        83,
+        126
+      ]
+    },
+    {
+      "id": "g15",
+      "kind": "argument",
+      "text": "ログナビは独自エージェントでロックインが強い",
+      "status": "open",
+      "grounds": [
+        36,
+        37,
+        124
+      ]
+    },
+    {
+      "id": "g16",
+      "kind": "argument",
+      "text": "ボリュームディスカウントを交渉すれば値引きできる",
+      "status": "open",
+      "grounds": [
+        30,
+        31
+      ]
+    },
+    {
+      "id": "g17",
+      "kind": "argument",
+      "text": "マネージドの見積もりは年間約600万円で予算内、ログ増加でも跳ねにくい",
+      "status": "open",
+      "grounds": [
+        68,
+        69,
+        70,
+        126
+      ]
+    },
+    {
+      "id": "g18",
+      "kind": "argument",
+      "text": "ログナビの見積もりは現行ログ量で年間約900万円",
+      "status": "open",
+      "grounds": [
+        23
+      ]
+    },
+    {
+      "id": "g19",
+      "kind": "position",
+      "text": "12月から3か月かけて重要度の低いサービスから段階的に移行する",
+      "status": "open",
+      "grounds": [
+        103,
+        104,
+        119,
+        120
+      ]
+    },
+    {
+      "id": "g20",
+      "kind": "position",
+      "text": "週末などに一括で切り替える",
+      "status": "open",
+      "grounds": [
+        106
+      ]
+    },
+    {
+      "id": "g21",
+      "kind": "argument",
+      "text": "一括移行だと設定漏れでアラートが飛ばず障害を見逃す恐れがある",
+      "status": "open",
+      "grounds": [
+        108,
+        109,
+        110
+      ]
+    },
+    {
+      "id": "g22",
+      "kind": "argument",
+      "text": "段階移行では並行稼働期間に二重コストがかかる",
+      "status": "open",
+      "grounds": [
+        112,
+        113
+      ]
+    },
+    {
+      "id": "g23",
+      "kind": "argument",
+      "text": "現行ツールは3月分まで支払済みなので並行期間の追加費用は新ツール分のみ",
+      "status": "open",
+      "grounds": [
+        114,
+        115,
+        117
+      ]
+    },
+    {
+      "id": "g24",
+      "kind": "position",
+      "text": "ログ収集をOpenTelemetryに統一する",
+      "status": "open",
+      "grounds": [
+        77,
+        79,
+        131
+      ]
+    },
+    {
+      "id": "g25",
+      "kind": "decision",
+      "text": "ログ監視基盤はクラウドのマネージド監視サービスを採用する",
+      "status": "open",
+      "grounds": [
+        150
+      ]
+    },
+    {
+      "id": "g27",
+      "kind": "decision",
+      "text": "12月から3か月で段階移行し3月末までに完了する",
+      "status": "open",
+      "grounds": [
+        153
+      ]
+    },
+    {
+      "id": "g28",
+      "kind": "decision",
+      "text": "ログ収集はすべてOpenTelemetryに揃えることをルールにする",
+      "status": "open",
+      "grounds": [
+        132,
+        155
+      ]
+    },
+    {
+      "id": "g29",
+      "kind": "action",
+      "text": "藤井が40サービスの移行計画を来週金曜までに作成する",
+      "status": "open",
+      "grounds": [
+        158,
+        159
+      ]
+    },
+    {
+      "id": "g30",
+      "kind": "action",
+      "text": "三浦がクラウド営業に値上げと1年保存アーカイブ込みの見積もり取り直しを依頼する",
+      "status": "open",
+      "grounds": [
+        145,
+        160,
+        161
+      ]
+    },
+    {
+      "id": "g35",
+      "kind": "argument",
+      "text": "OpenTelemetryでもダッシュボードやアラート設定は作り直しになる",
+      "status": "open",
+      "grounds": [
+        81
+      ]
+    },
+    {
+      "id": "g36",
+      "kind": "argument",
+      "text": "ログナビもOpenTelemetryで受けられるので独自エージェントの問題は解決する",
+      "status": "open",
+      "grounds": [
+        87
+      ]
+    },
+    {
+      "id": "g37",
+      "kind": "argument",
+      "text": "ログナビの便利な機能は独自エージェント前提でOpenTelemetryだと半分使えない",
+      "status": "open",
+      "grounds": [
+        89,
+        90,
+        92
+      ]
+    },
+    {
+      "id": "g38",
+      "kind": "argument",
+      "text": "マネージドの600万円の見積もりには来年の値上げが入っていない",
+      "status": "open",
+      "grounds": [
+        135,
+        136,
+        137
+      ]
+    },
+    {
+      "id": "g39",
+      "kind": "argument",
+      "text": "監査上ログを1年保存する必要があり標準90日では足りずアーカイブ費用が見積もり外",
+      "status": "open",
+      "grounds": [
+        140,
+        141,
+        142,
+        144
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "g5",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g6",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g7",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g19",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g20",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g24",
+      "dst": "g3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g8",
+      "dst": "g5",
+      "kind": "supports"
+    },
+    {
+      "src": "g9",
+      "dst": "g5",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g18",
+      "dst": "g9",
+      "kind": "supports"
+    },
+    {
+      "src": "g16",
+      "dst": "g9",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g15",
+      "dst": "g5",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g36",
+      "dst": "g15",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g37",
+      "dst": "g36",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g10",
+      "dst": "g6",
+      "kind": "supports"
+    },
+    {
+      "src": "g11",
+      "dst": "g6",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g12",
+      "dst": "g7",
+      "kind": "supports"
+    },
+    {
+      "src": "g17",
+      "dst": "g7",
+      "kind": "supports"
+    },
+    {
+      "src": "g13",
+      "dst": "g7",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g14",
+      "dst": "g13",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g35",
+      "dst": "g14",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g38",
+      "dst": "g17",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g39",
+      "dst": "g17",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g14",
+      "dst": "g24",
+      "kind": "supports"
+    },
+    {
+      "src": "g21",
+      "dst": "g20",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g22",
+      "dst": "g19",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g23",
+      "dst": "g22",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g25",
+      "dst": "g1",
+      "kind": "resolves"
+    },
+    {
+      "src": "g27",
+      "dst": "g2",
+      "kind": "resolves"
+    },
+    {
+      "src": "g28",
+      "dst": "g3",
+      "kind": "resolves"
+    },
+    {
+      "src": "g29",
+      "dst": "g27",
+      "kind": "assigns"
+    },
+    {
+      "src": "g30",
+      "dst": "g25",
+      "kind": "assigns"
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{"row_id": 1, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、えーと、じゃあ時間なので始めます。"}
+{"row_id": 2, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "はい、よろしく。"}
+{"row_id": 3, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "お願いします。"}
+{"row_id": 4, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "今日は、ログ監視の基盤の選定ですね。"}
+{"row_id": 5, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "今のやつが来年の3月でサポート切れるので、どれに乗り換えるかを、今日ある程度決めたいなと。"}
+{"row_id": 6, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 7, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "候補は、えーと、3つで、"}
+{"row_id": 8, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "1つ目がSaaSのログナビ、2つ目がOSSを自前で運用する案、3つ目が、今使ってるクラウドのマネージドの監視サービス、です。"}
+{"row_id": 9, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 10, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん、資料は一応見てきました。"}
+{"row_id": 11, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ありがとうございます。"}
+{"row_id": 12, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "私はね、正直、ログナビでいいんじゃないかと思ってて。"}
+{"row_id": 13, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 14, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ほら、去年、別の部署で入れてたじゃない。評判いいって聞いてるし、"}
+{"row_id": 15, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "何より、構築がほとんどいらないっていうのが大きいと思うんだよね。"}
+{"row_id": 16, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "エージェント入れたら、もうその日から見れるっていう。"}
+{"row_id": 17, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "そうですね、立ち上がりは一番早いと思います。"}
+{"row_id": 18, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うーん、ちょっといいですか。"}
+{"row_id": 19, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ログナビって、データ量の従量課金なんですよね。"}
+{"row_id": 20, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うちのログって、去年から倍ぐらいになってるので、"}
+{"row_id": 21, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "このペースで増えると、年間のコストが、結構跳ねるんじゃないかなっていうのが気になってて。"}
+{"row_id": 22, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "あー、そうなの。"}
+{"row_id": 23, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "見積もり取ったのが、えーと、今のログ量で年間900万ぐらいですね。"}
+{"row_id": 24, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "900万か。"}
+{"row_id": 25, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "それはちょっと、予算的にきついな。"}
+{"row_id": 26, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい。予算としては、年間700万が上限って聞いてるので。"}
+{"row_id": 27, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "そうそう、700万。"}
+{"row_id": 28, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "で、それが倍になったら、もう、ちょっと話にならないので。"}
+{"row_id": 29, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うーん。"}
+{"row_id": 30, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ただ、ああいうのって、ボリュームディスカウントの交渉とか、できるんじゃないの?"}
+{"row_id": 31, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "量が多いなら、むしろ値引きしてもらえるっていう見方もあるよね。"}
+{"row_id": 32, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ああ、それは、まだ聞いてないですね。"}
+{"row_id": 33, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "できるかもしれないですけど、今の900万から3割引いても、まだ630万なので、"}
+{"row_id": 34, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ログが増えたら、結局また超えると思います。"}
+{"row_id": 35, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うーん、そっか。"}
+{"row_id": 36, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "あと、ちょっと気になるのが、ログナビって、独自のエージェントなんですよ。"}
+{"row_id": 37, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "なので、一回入れちゃうと、そこから抜けるのが結構大変で、ロッキンが強いっていうか。"}
+{"row_id": 38, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ああ、それはありますね。"}
+{"row_id": 39, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ロックインね。"}
+{"row_id": 40, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "えーと、じゃあ、藤井さんはOSSの方がいいって感じですか。"}
+{"row_id": 41, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい、私はOSSで自前でやるのがいいかなと思ってます。"}
+{"row_id": 42, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ライセンス費はゼロですし、"}
+{"row_id": 43, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "中身も全部見えるので、どこにも縛られないっていう。"}
+{"row_id": 44, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ゼロはいいね。"}
+{"row_id": 45, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 46, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ただ、ちょっと気になるのが、運用ですよね。"}
+{"row_id": 47, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "OSSだと、アップデートとか、ストレージの管理とか、全部うちでやらないといけないので。"}
+{"row_id": 48, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "そうですね、まあ、それは、そうなんですけど。"}
+{"row_id": 49, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "それ、どれぐらい人がいるの?"}
+{"row_id": 50, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うーん、まあ、ざっくり、0.5人分ぐらいですかね。"}
+{"row_id": 51, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "0.5人か。"}
+{"row_id": 52, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "今のインフラチームって、藤井さん入れて3人ですよね。"}
+{"row_id": 53, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい、3人です。"}
+{"row_id": 54, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "で、もう今、クラウド移行の方で、手いっぱいですよね。"}
+{"row_id": 55, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うーん…"}
+{"row_id": 56, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "そうですね、正直、今の体制で0.5人分出すのは、厳しいです。"}
+{"row_id": 57, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ちょっと、OSS推しといてあれなんですけど、"}
+{"row_id": 58, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "運用まで考えると、うちでは無理ですね。OSSは、取り下げます。"}
+{"row_id": 59, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "そっか、了解。"}
+{"row_id": 60, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ありがとうございます。"}
+{"row_id": 61, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "で、えーと、3つ目のマネージ度の方なんですけど、"}
+{"row_id": 62, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "私はこれが一番バランスいいかなと思ってて。"}
+{"row_id": 63, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 64, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "今使ってるクラウドの中のサービスなので、権限とか、ネットワークとか、もう全部つながってるんですよね。"}
+{"row_id": 65, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "なので、構築も、ログナビほどではないですけど、まあ、そんなにかからない。"}
+{"row_id": 66, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うん、それは確かにそうですね。"}
+{"row_id": 67, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "お金は?"}
+{"row_id": 68, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "見積もりが、年間で、だいたい600万ぐらいです。"}
+{"row_id": 69, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "600万。じゃあ予算内だね。"}
+{"row_id": 70, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、ログが増えても、ストレージの単価が安いので、ログナビほどは跳ねないと思います。"}
+{"row_id": 71, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ああ、それはいいね。"}
+{"row_id": 72, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うーん、でも、"}
+{"row_id": 73, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "それって、クラウドベンダーに、もっとロックインされるっていう見方もありますよね。"}
+{"row_id": 74, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "今でもかなり依存してるのに、監視までそこに寄せちゃうと、もう他に移れなくなるっていう。"}
+{"row_id": 75, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "うん、そこは、そうですね。"}
+{"row_id": 76, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "そのロックインは、実際どうするの。避けられるの?"}
+{"row_id": 77, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "えーと、そこは、収集の部分を、オープンテレメトリに揃えておけば、"}
+{"row_id": 78, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "後で別のサービスに移りたくなっても、送り先を変えるだけで済むんですよ。"}
+{"row_id": 79, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ああ、オープンテレメトリで出しておくってことですね。"}
+{"row_id": 80, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "そうです。アプリ側は、ベンダーの独自形式に依存しないので。"}
+{"row_id": 81, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うーん、まあ、ダッシュボードとか、アラートの設定は、作り直しになりますけどね。"}
+{"row_id": 82, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、それはそうです。そこは割り切りかなと。"}
+{"row_id": 83, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "でも、収集のところが共通なら、まあ、ましかな。"}
+{"row_id": 84, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 85, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ちょっと、私よくわかってないんだけど、そのオープンなんとかって、ログナビでも使えるの?"}
+{"row_id": 86, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "あ、使えます。ログナビも、オープンテレメトリで受けられます。"}
+{"row_id": 87, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "じゃあ、ログナビの独自エージェントの話も、それで解決するんじゃない?"}
+{"row_id": 88, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ああ…まあ、受けられるんですけど、"}
+{"row_id": 89, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ログナビの便利な機能って、だいたい独自エージェント前提なんですよね。"}
+{"row_id": 90, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "オープンテレメトリで送ると、半分ぐらい使えなくなるって、前に聞いたことあります。"}
+{"row_id": 91, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "あ、そうなんだ。"}
+{"row_id": 92, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、なので、ログナビにするなら、実質、独自エージェントになるかなと。"}
+{"row_id": 93, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うーん、なるほどね。"}
+{"row_id": 94, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "じゃあ、私のログナビ推しは、ちょっと弱いか。"}
+{"row_id": 95, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "まあ、コストもあるしね。"}
+{"row_id": 96, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 97, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ちょっと、話変わっちゃうんですけど、"}
+{"row_id": 98, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "どれにするにしても、移行の工数って、どれぐらい見ておけばいいんですかね。"}
+{"row_id": 99, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ああ、そうですね、それも決めないと。"}
+{"row_id": 100, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "今、監視対象のサービスが、えーと、40ぐらいあるので。"}
+{"row_id": 101, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "40もあるの。"}
+{"row_id": 102, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい、細かいのも入れると。"}
+{"row_id": 103, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "で、私としては、3か月ぐらいかけて、段階的に移していくのがいいかなと。"}
+{"row_id": 104, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "重要度の低いサービスから順番に移して、問題ないの確認しながら。"}
+{"row_id": 105, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "3か月か。長くない?"}
+{"row_id": 106, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "一気に切り替えちゃえばいいんじゃないの。週末とかに。"}
+{"row_id": 107, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "うーん、一気にやると、"}
+{"row_id": 108, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "もし設定漏れとかがあったときに、アラートが飛ばないサービスが出ちゃうんですよ。"}
+{"row_id": 109, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "それに気づかないで、障害を見逃すっていうのが、一番怖いので。"}
+{"row_id": 110, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "それは怖いですね。監視の移行で監視が漏れるっていう。"}
+{"row_id": 111, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "あー、それはまずいね。"}
+{"row_id": 112, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "でも、段階的にやると、その間、両方にお金払うことになるでしょ。"}
+{"row_id": 113, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "それは、そうですね。並行で動かす期間は、二重になります。"}
+{"row_id": 114, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "えーと、ただ、今の監視ツールの契約って、3月までは、もう払っちゃってるので、"}
+{"row_id": 115, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "12月から3月の並行期間は、実質、新しい方の分だけなんですよ。"}
+{"row_id": 116, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "あ、そうなの。"}
+{"row_id": 117, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、なので、二重コストっていうほどには、ならないと思います。"}
+{"row_id": 118, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "じゃあ、いいか。"}
+{"row_id": 119, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい、なので、12月に始めて、3月までに全部移す、っていう感じで。"}
+{"row_id": 120, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん、3か月で、3月までに終わるなら、まあいいよ。"}
+{"row_id": 121, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 122, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "で、結局、どれにする?"}
+{"row_id": 123, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "えーと、ちょっと整理すると、"}
+{"row_id": 124, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ログナビは、立ち上がりは早いけど、コストが従量で跳ねるのと、独自エージェントでロックインが強い。"}
+{"row_id": 125, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "OSSは、ライセンスはゼロだけど、運用の人がいないので、なし。"}
+{"row_id": 126, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "マネージドは、予算内で、既存の環境とつながってて、ロックインはオープンテレメトリである程度逃げられる。"}
+{"row_id": 127, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 128, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい、そんな感じだと思います。"}
+{"row_id": 129, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "そう聞くと、マネージドかな。"}
+{"row_id": 130, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "私も、OSS取り下げたので、マネージドでいいと思います。"}
+{"row_id": 131, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ロックインの件だけ、オープンテレメトリで揃えるっていうのを、ちゃんとルールにしてもらえれば。"}
+{"row_id": 132, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、それは、ルールにしましょう。"}
+{"row_id": 133, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 134, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "ちょっと一個だけ、気になるんだけど、"}
+{"row_id": 135, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "マネージドの600万って、来年の値上げとか、入ってるの?"}
+{"row_id": 136, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "あー、それは、入ってないですね。今の単価です。"}
+{"row_id": 137, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "そこは、ちゃんと確認しておいてほしいな。上振れしたら、また予算取り直しになるので。"}
+{"row_id": 138, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、わかりました。"}
+{"row_id": 139, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "あと、ログの保存期間も、確認しといた方がいいですね。"}
+{"row_id": 140, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "監査で、1年分は残せって言われてるので。"}
+{"row_id": 141, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ああ、そうですね。マネージドの標準だと、たしか90日なので、"}
+{"row_id": 142, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "1年残すなら、アーカイブの方に流す設定が必要です。"}
+{"row_id": 143, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "それも見積もりに入ってます?"}
+{"row_id": 144, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "えーと、入ってない、かもしれないです。"}
+{"row_id": 145, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "じゃあ、それも含めて、見積もり取り直しだね。"}
+{"row_id": 146, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 147, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "まあ、それで多少上がっても、700万に収まるなら、いいよ。"}
+{"row_id": 148, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 149, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "えーと、じゃあ、まとめます。"}
+{"row_id": 150, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "ログ監視の基盤は、クラウドのマネージドの監視サービスに決定します。"}
+{"row_id": 151, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん。"}
+{"row_id": 152, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 153, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "移行は、12月から3か月かけて、重要度の低いサービスから段階的に。3月末までに完了。"}
+{"row_id": 154, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい。"}
+{"row_id": 155, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "で、収集は、全部オープンテレメトリに揃える、っていうのをルールにします。"}
+{"row_id": 156, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん、いいと思う。"}
+{"row_id": 157, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "アクションは2つで、"}
+{"row_id": 158, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "藤井さんに、40サービスの移行計画を、来週の金曜までに作ってもらう。"}
+{"row_id": 159, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "はい、来週金曜までに作ります。"}
+{"row_id": 160, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "三浦さんには、クラウドの営業さんに、値上げと、1年保存のアーカイブ込みで、見積もりの取り直しをお願いしてもらう、と。"}
+{"row_id": 161, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "うん、わかった、私から言っとく。"}
+{"row_id": 162, "track": "self", "speaker_label": "自分", "start_ms": null, "end_ms": null, "text": "はい、ありがとうございました。"}
+{"row_id": 163, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": null, "end_ms": null, "text": "ありがとうございました。"}
+{"row_id": 164, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": null, "end_ms": null, "text": "お疲れさま。"}

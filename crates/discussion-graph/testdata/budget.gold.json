@@ -1,0 +1,603 @@
+{
+  "nodes": [
+    {
+      "id": "i1",
+      "kind": "issue",
+      "text": "今期の追加採用枠を開けるか",
+      "status": "open",
+      "grounds": [
+        4,
+        112
+      ]
+    },
+    {
+      "id": "p1",
+      "kind": "position",
+      "text": "週二日の補助を入れる",
+      "status": "open",
+      "grounds": [
+        5,
+        8
+      ]
+    },
+    {
+      "id": "a1",
+      "kind": "argument",
+      "text": "補助が入れば棚卸しが進む",
+      "status": "open",
+      "grounds": [
+        6
+      ]
+    },
+    {
+      "id": "a2",
+      "kind": "argument",
+      "text": "引き継ぎを教える人が空いていない",
+      "status": "open",
+      "grounds": [
+        7,
+        9
+      ]
+    },
+    {
+      "id": "p2",
+      "kind": "position",
+      "text": "棚卸しを金曜午前に小分けにする",
+      "status": "open",
+      "grounds": [
+        10,
+        12,
+        13
+      ]
+    },
+    {
+      "id": "a3",
+      "kind": "argument",
+      "text": "棚卸しを分けると確認待ちが減る",
+      "status": "open",
+      "grounds": [
+        14
+      ]
+    },
+    {
+      "id": "a4",
+      "kind": "argument",
+      "text": "金曜は飛び込み依頼がある",
+      "status": "open",
+      "grounds": [
+        15
+      ]
+    },
+    {
+      "id": "a5",
+      "kind": "argument",
+      "text": "窓口を当番にすれば追加採用を待てる",
+      "status": "open",
+      "grounds": [
+        16,
+        17
+      ]
+    },
+    {
+      "id": "d1",
+      "kind": "decision",
+      "text": "追加採用を今期見送り金曜分割を四週試す",
+      "status": "open",
+      "grounds": [
+        19,
+        20,
+        113,
+        119,
+        120
+      ]
+    },
+    {
+      "id": "t1",
+      "kind": "action",
+      "text": "金曜の当番表を作る",
+      "status": "open",
+      "grounds": [
+        21,
+        127
+      ]
+    },
+    {
+      "id": "t2",
+      "kind": "action",
+      "text": "四週目に作業時間を報告する",
+      "status": "open",
+      "grounds": [
+        22,
+        127
+      ]
+    },
+    {
+      "id": "i2",
+      "kind": "issue",
+      "text": "検証端末を購入するか借りるか",
+      "status": "open",
+      "grounds": [
+        31,
+        57,
+        131,
+        132
+      ]
+    },
+    {
+      "id": "p3",
+      "kind": "position",
+      "text": "検証用の予備機を一台買う",
+      "status": "open",
+      "grounds": [
+        32,
+        39
+      ]
+    },
+    {
+      "id": "a6",
+      "kind": "argument",
+      "text": "一台を常時検証に使える",
+      "status": "open",
+      "grounds": [
+        33
+      ]
+    },
+    {
+      "id": "a7",
+      "kind": "argument",
+      "text": "使用日は月に二日しかない",
+      "status": "open",
+      "grounds": [
+        34
+      ]
+    },
+    {
+      "id": "p4",
+      "kind": "position",
+      "text": "検証用端末を借りる",
+      "status": "open",
+      "grounds": [
+        35
+      ]
+    },
+    {
+      "id": "a8",
+      "kind": "argument",
+      "text": "借用日程に試験をまとめられる",
+      "status": "open",
+      "grounds": [
+        36
+      ]
+    },
+    {
+      "id": "a9",
+      "kind": "argument",
+      "text": "借用では機種を毎回そろえにくい",
+      "status": "open",
+      "grounds": [
+        37,
+        38
+      ]
+    },
+    {
+      "id": "a10",
+      "kind": "argument",
+      "text": "借用端末は返却前に初期化が要る",
+      "status": "open",
+      "grounds": [
+        53,
+        54
+      ]
+    },
+    {
+      "id": "t3",
+      "kind": "action",
+      "text": "保守費と作業時間を含めて購入と借用の総費用を比較する",
+      "status": "open",
+      "grounds": [
+        40,
+        41,
+        44,
+        47,
+        55,
+        56,
+        59,
+        128
+      ]
+    },
+    {
+      "id": "i3",
+      "kind": "issue",
+      "text": "残りの研修費をどう使うか",
+      "status": "open",
+      "grounds": [
+        61
+      ]
+    },
+    {
+      "id": "p5",
+      "kind": "position",
+      "text": "内製の短い説明会を開く",
+      "status": "open",
+      "grounds": [
+        63,
+        71
+      ]
+    },
+    {
+      "id": "a11",
+      "kind": "argument",
+      "text": "説明内容を現在の手順に合わせられる",
+      "status": "open",
+      "grounds": [
+        64
+      ]
+    },
+    {
+      "id": "a12",
+      "kind": "argument",
+      "text": "講師役の工数を見ていない",
+      "status": "open",
+      "grounds": [
+        65,
+        66
+      ]
+    },
+    {
+      "id": "p6",
+      "kind": "position",
+      "text": "外部講座の枠を一席取る",
+      "status": "open",
+      "grounds": [
+        67
+      ]
+    },
+    {
+      "id": "a13",
+      "kind": "argument",
+      "text": "外部から異なる視点が入る",
+      "status": "open",
+      "grounds": [
+        68
+      ]
+    },
+    {
+      "id": "a14",
+      "kind": "argument",
+      "text": "受講後に内容を社内共有する工数が残る",
+      "status": "open",
+      "grounds": [
+        69,
+        72
+      ]
+    },
+    {
+      "id": "d2",
+      "kind": "decision",
+      "text": "今年は希望者向けの内製説明会を一回開く",
+      "status": "open",
+      "grounds": [
+        70,
+        82,
+        83
+      ]
+    },
+    {
+      "id": "t4",
+      "kind": "action",
+      "text": "二十分の説明資料の下書きを作る",
+      "status": "open",
+      "grounds": [
+        78,
+        80,
+        129
+      ]
+    },
+    {
+      "id": "i4",
+      "kind": "issue",
+      "text": "余剰予算を予備費に移すか来期に回すか",
+      "status": "open",
+      "grounds": [
+        85,
+        86,
+        97
+      ]
+    },
+    {
+      "id": "p7",
+      "kind": "position",
+      "text": "余剰予算を予備費に移す",
+      "status": "open",
+      "grounds": [
+        86,
+        87
+      ]
+    },
+    {
+      "id": "p8",
+      "kind": "position",
+      "text": "余剰予算を来期に回す",
+      "status": "open",
+      "grounds": [
+        86
+      ]
+    },
+    {
+      "id": "a15",
+      "kind": "argument",
+      "text": "予備費に置くと見通しがよい",
+      "status": "open",
+      "grounds": [
+        87
+      ]
+    },
+    {
+      "id": "t5",
+      "kind": "action",
+      "text": "費目の扱いと調整先を事務に確認する",
+      "status": "open",
+      "grounds": [
+        88,
+        94,
+        95,
+        130
+      ]
+    },
+    {
+      "id": "i-metric",
+      "kind": "issue",
+      "text": "四週の試行の作業時間を何で割って比較するか",
+      "status": "open",
+      "grounds": [
+        24
+      ]
+    },
+    {
+      "id": "i-metricp1",
+      "kind": "position",
+      "text": "棚卸し一件あたりで比較する",
+      "status": "open",
+      "grounds": [
+        25
+      ]
+    },
+    {
+      "id": "i-metricp2",
+      "kind": "position",
+      "text": "当番の勤務一回あたりで比較する",
+      "status": "open",
+      "grounds": [
+        26
+      ]
+    },
+    {
+      "id": "t-metric",
+      "kind": "action",
+      "text": "四週の測定表に件数と当番時間を記録する",
+      "status": "open",
+      "grounds": [
+        22,
+        29
+      ]
+    },
+    {
+      "id": "i-adjust",
+      "kind": "issue",
+      "text": "予算が不足したときにどの費目から調整するか",
+      "status": "open",
+      "grounds": [
+        99
+      ]
+    },
+    {
+      "id": "i-adjustp1",
+      "kind": "position",
+      "text": "研修を次期の初めに移す",
+      "status": "open",
+      "grounds": [
+        100
+      ]
+    },
+    {
+      "id": "i-adjustp2",
+      "kind": "position",
+      "text": "検証端末を借りる回数を抑える",
+      "status": "open",
+      "grounds": [
+        101
+      ]
+    },
+    {
+      "id": "a-adjust",
+      "kind": "argument",
+      "text": "借用日が遅いと検証結果が枠の締め切りに間に合わない",
+      "status": "open",
+      "grounds": [
+        101
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "p1",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a1",
+      "dst": "p1",
+      "kind": "supports"
+    },
+    {
+      "src": "a2",
+      "dst": "p1",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p2",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a3",
+      "dst": "p2",
+      "kind": "supports"
+    },
+    {
+      "src": "a4",
+      "dst": "p2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a5",
+      "dst": "a4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d1",
+      "dst": "i1",
+      "kind": "resolves"
+    },
+    {
+      "src": "t1",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "t2",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "p3",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a6",
+      "dst": "p3",
+      "kind": "supports"
+    },
+    {
+      "src": "a7",
+      "dst": "p3",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p4",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a8",
+      "dst": "p4",
+      "kind": "supports"
+    },
+    {
+      "src": "a9",
+      "dst": "p4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a10",
+      "dst": "p4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t3",
+      "dst": "i2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p5",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a11",
+      "dst": "p5",
+      "kind": "supports"
+    },
+    {
+      "src": "a12",
+      "dst": "p5",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p6",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a13",
+      "dst": "p6",
+      "kind": "supports"
+    },
+    {
+      "src": "a14",
+      "dst": "p6",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d2",
+      "dst": "i3",
+      "kind": "resolves"
+    },
+    {
+      "src": "t4",
+      "dst": "d2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p7",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p8",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a15",
+      "dst": "p7",
+      "kind": "supports"
+    },
+    {
+      "src": "t5",
+      "dst": "i4",
+      "kind": "assigns"
+    },
+    {
+      "src": "i-metricp1",
+      "dst": "i-metric",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-metricp2",
+      "dst": "i-metric",
+      "kind": "responds_to"
+    },
+    {
+      "src": "t-metric",
+      "dst": "i-metric",
+      "kind": "assigns"
+    },
+    {
+      "src": "i-adjustp1",
+      "dst": "i-adjust",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-adjustp2",
+      "dst": "i-adjust",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a-adjust",
+      "dst": "i-adjustp2",
+      "kind": "objects_to"
+    }
+  ]
+}

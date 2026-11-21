@@ -1,0 +1,595 @@
+{
+  "nodes": [
+    {
+      "id": "i1",
+      "kind": "issue",
+      "text": "定時直前に来る質問をどう扱うか",
+      "status": "open",
+      "grounds": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "p1",
+      "kind": "position",
+      "text": "メッセージを確認する時間を二回に固定する",
+      "status": "open",
+      "grounds": [
+        5,
+        17
+      ]
+    },
+    {
+      "id": "a1",
+      "kind": "argument",
+      "text": "確認の時間を固定すると集中が途切れにくい",
+      "status": "open",
+      "grounds": [
+        6
+      ]
+    },
+    {
+      "id": "a2",
+      "kind": "argument",
+      "text": "確認時間外に急ぐ質問まで止める恐れがある",
+      "status": "open",
+      "grounds": [
+        7
+      ]
+    },
+    {
+      "id": "p2",
+      "kind": "position",
+      "text": "急ぐ質問には別の目印を付ける",
+      "status": "open",
+      "grounds": [
+        8,
+        117,
+        118
+      ]
+    },
+    {
+      "id": "a3",
+      "kind": "argument",
+      "text": "目印を使うには関係者への周知が要る",
+      "status": "open",
+      "grounds": [
+        9
+      ]
+    },
+    {
+      "id": "p3",
+      "kind": "position",
+      "text": "隣の担当と小さく試す",
+      "status": "open",
+      "grounds": [
+        10,
+        11
+      ]
+    },
+    {
+      "id": "d1",
+      "kind": "decision",
+      "text": "隣の担当と一週間、午前と午後に一度ずつ確認し急ぎは従来どおり受ける",
+      "status": "open",
+      "grounds": [
+        17,
+        19
+      ]
+    },
+    {
+      "id": "t1",
+      "kind": "action",
+      "text": "明日の午前に隣の担当に声をかける",
+      "status": "open",
+      "grounds": [
+        18,
+        135
+      ]
+    },
+    {
+      "id": "t2",
+      "kind": "action",
+      "text": "週末に質問件数を記録する",
+      "status": "open",
+      "grounds": [
+        21,
+        121,
+        135
+      ]
+    },
+    {
+      "id": "i2",
+      "kind": "issue",
+      "text": "発表でどこまで説明するか",
+      "status": "open",
+      "grounds": [
+        32,
+        33
+      ]
+    },
+    {
+      "id": "p4",
+      "kind": "position",
+      "text": "目的を冒頭に置き詳細は末尾に回す",
+      "status": "open",
+      "grounds": [
+        35,
+        41,
+        42,
+        45
+      ]
+    },
+    {
+      "id": "a4",
+      "kind": "argument",
+      "text": "目的が先だと話を追いやすい",
+      "status": "open",
+      "grounds": [
+        43
+      ]
+    },
+    {
+      "id": "a5",
+      "kind": "argument",
+      "text": "時間切れで詳細が飛ぶ恐れがある",
+      "status": "open",
+      "grounds": [
+        44
+      ]
+    },
+    {
+      "id": "d2",
+      "kind": "decision",
+      "text": "発表資料は目的を先にして詳細を末尾に置く",
+      "status": "open",
+      "grounds": [
+        51
+      ]
+    },
+    {
+      "id": "t3",
+      "kind": "action",
+      "text": "発表資料の最初と最後のページを書く",
+      "status": "open",
+      "grounds": [
+        52,
+        124,
+        136
+      ]
+    },
+    {
+      "id": "i3",
+      "kind": "issue",
+      "text": "発表前の読み合わせを誰に頼めるか",
+      "status": "open",
+      "grounds": [
+        55
+      ]
+    },
+    {
+      "id": "p5",
+      "kind": "position",
+      "text": "相談相手が十分ほど資料を確認する",
+      "status": "open",
+      "grounds": [
+        56,
+        59
+      ]
+    },
+    {
+      "id": "t4",
+      "kind": "action",
+      "text": "発表の読み合わせ枠を用意する",
+      "status": "open",
+      "grounds": [
+        123,
+        125,
+        140
+      ]
+    },
+    {
+      "id": "i4",
+      "kind": "issue",
+      "text": "見積もりのずれに早く気づくにはどうするか",
+      "status": "open",
+      "grounds": [
+        62,
+        63,
+        139
+      ]
+    },
+    {
+      "id": "p6",
+      "kind": "position",
+      "text": "初日に小さな試作を作る",
+      "status": "open",
+      "grounds": [
+        64
+      ]
+    },
+    {
+      "id": "a6",
+      "kind": "argument",
+      "text": "試作で不明点を早く見つけられる",
+      "status": "open",
+      "grounds": [
+        65
+      ]
+    },
+    {
+      "id": "a7",
+      "kind": "argument",
+      "text": "小さな作業まで試作すると工数が増える",
+      "status": "open",
+      "grounds": [
+        66
+      ]
+    },
+    {
+      "id": "p7",
+      "kind": "position",
+      "text": "最初に不明点を一つ書き出す",
+      "status": "open",
+      "grounds": [
+        68
+      ]
+    },
+    {
+      "id": "a8",
+      "kind": "argument",
+      "text": "不明点を書いても確認時間は分からない",
+      "status": "open",
+      "grounds": [
+        69
+      ]
+    },
+    {
+      "id": "p8",
+      "kind": "position",
+      "text": "確認先を先に押さえる",
+      "status": "open",
+      "grounds": [
+        84
+      ]
+    },
+    {
+      "id": "a9",
+      "kind": "argument",
+      "text": "確認先全員とは枠を取れない",
+      "status": "open",
+      "grounds": [
+        85
+      ]
+    },
+    {
+      "id": "t5",
+      "kind": "action",
+      "text": "最近の確認待ち時間を調べて次回の相談に持参する",
+      "status": "open",
+      "grounds": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        79,
+        137
+      ]
+    },
+    {
+      "id": "i5",
+      "kind": "issue",
+      "text": "短い休憩をいつ取るか",
+      "status": "open",
+      "grounds": [
+        88,
+        89
+      ]
+    },
+    {
+      "id": "p9",
+      "kind": "position",
+      "text": "午後の中間に短く休む",
+      "status": "open",
+      "grounds": [
+        91
+      ]
+    },
+    {
+      "id": "a10",
+      "kind": "argument",
+      "text": "午後の休憩で作業の区切りが作れる",
+      "status": "open",
+      "grounds": [
+        92
+      ]
+    },
+    {
+      "id": "a11",
+      "kind": "argument",
+      "text": "午後の固定休憩は会議に重なる",
+      "status": "open",
+      "grounds": [
+        93
+      ]
+    },
+    {
+      "id": "p10",
+      "kind": "position",
+      "text": "会議直後を休憩の区切りにする",
+      "status": "open",
+      "grounds": [
+        94,
+        96
+      ]
+    },
+    {
+      "id": "t6",
+      "kind": "action",
+      "text": "会議の直後に休憩を取る方法を試す",
+      "status": "open",
+      "grounds": [
+        97
+      ]
+    },
+    {
+      "id": "i6",
+      "kind": "issue",
+      "text": "午後のメッセージ確認は何時に始めるか",
+      "status": "open",
+      "grounds": [
+        23,
+        26,
+        113,
+        114
+      ]
+    },
+    {
+      "id": "t7",
+      "kind": "action",
+      "text": "午後のメッセージ確認時刻を隣の担当と決める",
+      "status": "open",
+      "grounds": [
+        27,
+        28,
+        115
+      ]
+    },
+    {
+      "id": "p-afternoon1",
+      "kind": "position",
+      "text": "昼休みの直後にまとめて読む",
+      "status": "open",
+      "grounds": [
+        24
+      ]
+    },
+    {
+      "id": "p-afternoon2",
+      "kind": "position",
+      "text": "予定表で最後の会議が終わってから読む",
+      "status": "open",
+      "grounds": [
+        25
+      ]
+    },
+    {
+      "id": "i-break",
+      "kind": "issue",
+      "text": "休憩中に仕事の通知を見続けないためにどうするか",
+      "status": "open",
+      "grounds": [
+        105
+      ]
+    },
+    {
+      "id": "i-breakp1",
+      "kind": "position",
+      "text": "休憩の十分だけ携帯の通知を止める",
+      "status": "open",
+      "grounds": [
+        106
+      ]
+    },
+    {
+      "id": "i-breakp2",
+      "kind": "position",
+      "text": "端末を席に置いて歩く",
+      "status": "open",
+      "grounds": [
+        107
+      ]
+    },
+    {
+      "id": "t-review",
+      "kind": "action",
+      "text": "木曜の下書きに読み合わせる二枚の番号を添える",
+      "status": "open",
+      "grounds": [
+        132,
+        149
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "p1",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a1",
+      "dst": "p1",
+      "kind": "supports"
+    },
+    {
+      "src": "a2",
+      "dst": "p1",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p2",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a3",
+      "dst": "p2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p3",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "d1",
+      "dst": "i1",
+      "kind": "resolves"
+    },
+    {
+      "src": "t1",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "t2",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "p4",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a4",
+      "dst": "p4",
+      "kind": "supports"
+    },
+    {
+      "src": "a5",
+      "dst": "p4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d2",
+      "dst": "i2",
+      "kind": "resolves"
+    },
+    {
+      "src": "t3",
+      "dst": "d2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p5",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "t4",
+      "dst": "i3",
+      "kind": "assigns"
+    },
+    {
+      "src": "p6",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a6",
+      "dst": "p6",
+      "kind": "supports"
+    },
+    {
+      "src": "a7",
+      "dst": "p6",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p7",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a8",
+      "dst": "p7",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p8",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a9",
+      "dst": "p8",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t5",
+      "dst": "i4",
+      "kind": "assigns"
+    },
+    {
+      "src": "p9",
+      "dst": "i5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a10",
+      "dst": "p9",
+      "kind": "supports"
+    },
+    {
+      "src": "a11",
+      "dst": "p9",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p10",
+      "dst": "i5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "t6",
+      "dst": "i5",
+      "kind": "assigns"
+    },
+    {
+      "src": "t7",
+      "dst": "i6",
+      "kind": "assigns"
+    },
+    {
+      "src": "p-afternoon1",
+      "dst": "i6",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p-afternoon2",
+      "dst": "i6",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-breakp1",
+      "dst": "i-break",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-breakp2",
+      "dst": "i-break",
+      "kind": "responds_to"
+    },
+    {
+      "src": "t-review",
+      "dst": "i2",
+      "kind": "assigns"
+    }
+  ]
+}

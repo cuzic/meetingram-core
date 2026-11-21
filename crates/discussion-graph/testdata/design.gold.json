@@ -1,0 +1,544 @@
+{
+  "nodes": [
+    {
+      "id": "i1",
+      "kind": "issue",
+      "text": "障害時にどの単位まで復旧できるようにするか",
+      "status": "open",
+      "grounds": [
+        2,
+        4
+      ]
+    },
+    {
+      "id": "p1",
+      "kind": "position",
+      "text": "セグメント単位で確定側へ移す",
+      "status": "open",
+      "grounds": [
+        5,
+        8
+      ]
+    },
+    {
+      "id": "a1",
+      "kind": "argument",
+      "text": "中断後も確定分を読み取れる",
+      "status": "open",
+      "grounds": [
+        7
+      ]
+    },
+    {
+      "id": "a2",
+      "kind": "argument",
+      "text": "開いたままのファイルは Windows で移動できない",
+      "status": "open",
+      "grounds": [
+        9,
+        11,
+        15
+      ]
+    },
+    {
+      "id": "a3",
+      "kind": "argument",
+      "text": "読み手は確定側だけを見るため競合を避けられる",
+      "status": "open",
+      "grounds": [
+        16
+      ]
+    },
+    {
+      "id": "d1",
+      "kind": "decision",
+      "text": "ファイルを閉じてから移動しセグメント単位で確定する",
+      "status": "open",
+      "grounds": [
+        14,
+        17
+      ]
+    },
+    {
+      "id": "t1",
+      "kind": "action",
+      "text": "三つの中断箇所を使って復旧試験を書く",
+      "status": "open",
+      "grounds": [
+        18,
+        123
+      ]
+    },
+    {
+      "id": "i2",
+      "kind": "issue",
+      "text": "書き込み待ちが積み上がったらどう対処するか",
+      "status": "open",
+      "grounds": [
+        32,
+        41,
+        52,
+        127
+      ]
+    },
+    {
+      "id": "p2",
+      "kind": "position",
+      "text": "バッファを無制限にする",
+      "status": "open",
+      "grounds": [
+        33,
+        50
+      ]
+    },
+    {
+      "id": "a4",
+      "kind": "argument",
+      "text": "無制限ではメモリが増える",
+      "status": "open",
+      "grounds": [
+        34
+      ]
+    },
+    {
+      "id": "p3",
+      "kind": "position",
+      "text": "固定の上限を付けて手前で待つ",
+      "status": "open",
+      "grounds": [
+        36,
+        39,
+        50
+      ]
+    },
+    {
+      "id": "a5",
+      "kind": "argument",
+      "text": "録音コールバックで待つと録音が途切れる",
+      "status": "open",
+      "grounds": [
+        37,
+        38
+      ]
+    },
+    {
+      "id": "a6",
+      "kind": "argument",
+      "text": "別タスクで待っても受け口があふれる",
+      "status": "open",
+      "grounds": [
+        40
+      ]
+    },
+    {
+      "id": "t2",
+      "kind": "action",
+      "text": "ピークのバッファ量を測る",
+      "status": "open",
+      "grounds": [
+        51,
+        53,
+        58,
+        125
+      ]
+    },
+    {
+      "id": "i3",
+      "kind": "issue",
+      "text": "ヘッダーに版を付けるか",
+      "status": "open",
+      "grounds": [
+        63
+      ]
+    },
+    {
+      "id": "p4",
+      "kind": "position",
+      "text": "先頭に一バイトの版を付ける",
+      "status": "open",
+      "grounds": [
+        64
+      ]
+    },
+    {
+      "id": "a7",
+      "kind": "argument",
+      "text": "版だけでは破損データと区別しにくい",
+      "status": "open",
+      "grounds": [
+        65
+      ]
+    },
+    {
+      "id": "p5",
+      "kind": "position",
+      "text": "目印と版の組を置く",
+      "status": "open",
+      "grounds": [
+        66,
+        67
+      ]
+    },
+    {
+      "id": "d2",
+      "kind": "decision",
+      "text": "最初から目印と版を付ける",
+      "status": "open",
+      "grounds": [
+        72,
+        129
+      ]
+    },
+    {
+      "id": "t3",
+      "kind": "action",
+      "text": "旧形式サンプルを読んだ場合のエラーを確認する",
+      "status": "open",
+      "grounds": [
+        73,
+        81,
+        84,
+        124
+      ]
+    },
+    {
+      "id": "i4",
+      "kind": "issue",
+      "text": "読み手のエラーをどう通知するか",
+      "status": "open",
+      "grounds": [
+        103,
+        109,
+        126
+      ]
+    },
+    {
+      "id": "p6",
+      "kind": "position",
+      "text": "警告を一度だけ出す",
+      "status": "open",
+      "grounds": [
+        104
+      ]
+    },
+    {
+      "id": "a8",
+      "kind": "argument",
+      "text": "一度の警告では気づかない可能性がある",
+      "status": "open",
+      "grounds": [
+        107
+      ]
+    },
+    {
+      "id": "p7",
+      "kind": "position",
+      "text": "繰り返しエラーは件数を付ける",
+      "status": "open",
+      "grounds": [
+        105
+      ]
+    },
+    {
+      "id": "t4",
+      "kind": "action",
+      "text": "警告の文言の長さを確認する",
+      "status": "open",
+      "grounds": [
+        111,
+        112
+      ]
+    },
+    {
+      "id": "i5",
+      "kind": "issue",
+      "text": "どの順番でレビューするか",
+      "status": "open",
+      "grounds": [
+        91
+      ]
+    },
+    {
+      "id": "p8",
+      "kind": "position",
+      "text": "ドキュメントを先に確認する",
+      "status": "open",
+      "grounds": [
+        92
+      ]
+    },
+    {
+      "id": "a9",
+      "kind": "argument",
+      "text": "ドキュメントだけでは形式しか確認できない",
+      "status": "open",
+      "grounds": [
+        93
+      ]
+    },
+    {
+      "id": "t5",
+      "kind": "action",
+      "text": "障害時の図を追加する",
+      "status": "open",
+      "grounds": [
+        94,
+        95
+      ]
+    },
+    {
+      "id": "i-input",
+      "kind": "issue",
+      "text": "復旧試験の合成入力で残った区間をどう見分けるか",
+      "status": "open",
+      "grounds": [
+        24
+      ]
+    },
+    {
+      "id": "i-inputp1",
+      "kind": "position",
+      "text": "区間番号を合成音声で読み上げる",
+      "status": "open",
+      "grounds": [
+        25,
+        26
+      ]
+    },
+    {
+      "id": "i-inputp2",
+      "kind": "position",
+      "text": "区間別の高さの合成音を機械比較する",
+      "status": "open",
+      "grounds": [
+        27
+      ]
+    },
+    {
+      "id": "a-input",
+      "kind": "argument",
+      "text": "周波数照合は声や辞書の変更に影響されない",
+      "status": "open",
+      "grounds": [
+        27
+      ]
+    },
+    {
+      "id": "i-notice",
+      "kind": "issue",
+      "text": "読み手の警告をどこで見せるか",
+      "status": "open",
+      "grounds": [
+        115
+      ]
+    },
+    {
+      "id": "i-noticep1",
+      "kind": "position",
+      "text": "録音画面に短い警告を載せる",
+      "status": "open",
+      "grounds": [
+        116
+      ]
+    },
+    {
+      "id": "i-noticep2",
+      "kind": "position",
+      "text": "診断一覧にだけ警告を載せる",
+      "status": "open",
+      "grounds": [
+        117
+      ]
+    },
+    {
+      "id": "p-review",
+      "kind": "position",
+      "text": "中断試験の実演からレビューを始める",
+      "status": "open",
+      "grounds": [
+        132,
+        133
+      ]
+    },
+    {
+      "id": "a-notice",
+      "kind": "argument",
+      "text": "一覧だけでは録音中に異常に気づけない可能性がある",
+      "status": "open",
+      "grounds": [
+        117
+      ]
+    },
+    {
+      "id": "t-notice",
+      "kind": "action",
+      "text": "画面の担当に普段どこを見るか聞く",
+      "status": "open",
+      "grounds": [
+        120
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "p1",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a1",
+      "dst": "p1",
+      "kind": "supports"
+    },
+    {
+      "src": "a2",
+      "dst": "p1",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a3",
+      "dst": "a2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d1",
+      "dst": "i1",
+      "kind": "resolves"
+    },
+    {
+      "src": "t1",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "p2",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p3",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a4",
+      "dst": "p2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a5",
+      "dst": "p3",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a6",
+      "dst": "p3",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t2",
+      "dst": "i2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p4",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p5",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a7",
+      "dst": "p4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d2",
+      "dst": "i3",
+      "kind": "resolves"
+    },
+    {
+      "src": "t3",
+      "dst": "d2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p6",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p7",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a8",
+      "dst": "p6",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t4",
+      "dst": "i4",
+      "kind": "assigns"
+    },
+    {
+      "src": "p8",
+      "dst": "i5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a9",
+      "dst": "p8",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t5",
+      "dst": "i5",
+      "kind": "assigns"
+    },
+    {
+      "src": "i-inputp1",
+      "dst": "i-input",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-inputp2",
+      "dst": "i-input",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a-input",
+      "dst": "i-inputp2",
+      "kind": "supports"
+    },
+    {
+      "src": "i-noticep1",
+      "dst": "i-notice",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-noticep2",
+      "dst": "i-notice",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p-review",
+      "dst": "i5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a-notice",
+      "dst": "i-noticep2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t-notice",
+      "dst": "i-notice",
+      "kind": "assigns"
+    }
+  ]
+}
