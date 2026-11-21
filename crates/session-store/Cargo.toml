@@ -9,7 +9,7 @@ description = "SQLite-backed ledger of sessions, tracks, segments, upload status
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
 recorder-domain = { path = "../recorder-domain" }
-rusqlite = { version = "0.31", features = ["bundled"] }
+rusqlite = { version = "0.43", features = ["bundled", "fallible_uint"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 

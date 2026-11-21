@@ -106,12 +106,12 @@ fn build_summarizer(
             .unwrap_or_default();
         let credentials = serde_json::from_str::<summarize::VertexCredentials>(&raw)
             .map_err(|e| format!("Vertex認証情報の読み込みに失敗: {e}"))?;
-        return Ok(Box::new(summarize::GenaiSummarizer(summarize::build_vertex_client(credentials))));
+        return Ok(Box::new(summarize::GenaiSummarizer(summarize::build_vertex_client(credentials).map_err(client_build_error)?)));
     }
 
     if provider_key == "ollama" {
         let base_url = settings.get("ollama_base_url");
-        return Ok(Box::new(summarize::GenaiSummarizer(summarize::build_ollama_client(base_url))));
+        return Ok(Box::new(summarize::GenaiSummarizer(summarize::build_ollama_client(base_url).map_err(client_build_error)?)));
     }
 
     if let Some(account) = provider.api_key_account() {
@@ -119,12 +119,16 @@ fn build_summarizer(
             Arc::clone(credential_store),
             account.to_string(),
         );
-        let client = genai::Client::builder().with_auth_resolver(resolver).build();
+        let client = genai::Client::builder().with_auth_resolver(resolver).build().map_err(client_build_error)?;
         return Ok(Box::new(summarize::GenaiSummarizer(client)));
     }
 
-    let client = genai::Client::builder().build();
+    let client = genai::Client::builder().build().map_err(client_build_error)?;
     Ok(Box::new(summarize::GenaiSummarizer(client)))
+}
+
+fn client_build_error(e: genai::Error) -> String {
+    format!("AIクライアントの作成に失敗: {e}")
 }
 
 fn handle_list_segments(

@@ -9,5 +9,5 @@ description = "Wire types and local-socket naming shared by the desktop app's co
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-dirs = "6"
+dirs = "7"
 interprocess = "2"

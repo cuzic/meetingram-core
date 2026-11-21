@@ -13,7 +13,7 @@ use crate::error::StoreError;
 use crate::CredentialStore;
 use aes_gcm::aead::Aead;
 use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
-use rand::RngCore;
+use rand::TryRng;
 use std::path::{Path, PathBuf};
 
 pub struct EncryptedFileStore {
@@ -55,10 +55,16 @@ impl EncryptedFileStore {
             }
         }
         let mut key = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut key);
+        fill_from_os(&mut key)?;
         write_private_file(&path, &key)?;
         Ok(key)
     }
+}
+
+/// Fills `buf` from the OS random source. A failure here means the OS has no
+/// usable entropy source, which is surfaced as a crypto error rather than a panic.
+fn fill_from_os(buf: &mut [u8]) -> Result<(), StoreError> {
+    rand::rngs::SysRng.try_fill_bytes(buf).map_err(|e| StoreError::Crypto(format!("OS random source failed: {e}")))
 }
 
 fn write_private_file(path: &Path, data: &[u8]) -> Result<(), StoreError> {
@@ -72,14 +78,14 @@ fn write_private_file(path: &Path, data: &[u8]) -> Result<(), StoreError> {
 }
 
 fn encrypt(key: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, StoreError> {
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-    // Generate the nonce via `rand`'s OsRng directly rather than aes-gcm's own
+    let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
+    // Generate the nonce via `rand`'s SysRng directly rather than aes-gcm's own
     // `AeadCore::generate_nonce`, to avoid pinning this crate to whatever rand_core
     // version aes-gcm's `aead` dependency happens to bundle.
     let mut nonce_bytes = [0u8; 12];
-    rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
-    let nonce = Nonce::from_slice(&nonce_bytes);
-    let ciphertext = cipher.encrypt(nonce, plaintext).map_err(|e| StoreError::Crypto(e.to_string()))?;
+    fill_from_os(&mut nonce_bytes)?;
+    let nonce = Nonce::from(nonce_bytes);
+    let ciphertext = cipher.encrypt(&nonce, plaintext).map_err(|e| StoreError::Crypto(e.to_string()))?;
     let mut out = nonce_bytes.to_vec();
     out.extend_from_slice(&ciphertext);
     Ok(out)
@@ -90,9 +96,9 @@ fn decrypt(key: &[u8; 32], data: &[u8]) -> Result<Vec<u8>, StoreError> {
         return Err(StoreError::Crypto("ciphertext too short".to_string()));
     }
     let (nonce_bytes, ciphertext) = data.split_at(12);
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-    let nonce = Nonce::from_slice(nonce_bytes);
-    cipher.decrypt(nonce, ciphertext).map_err(|e| StoreError::Crypto(e.to_string()))
+    let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
+    let nonce = Nonce::try_from(nonce_bytes).map_err(|_| StoreError::Crypto("nonce is not 12 bytes".to_string()))?;
+    cipher.decrypt(&nonce, ciphertext).map_err(|e| StoreError::Crypto(e.to_string()))
 }
 
 impl CredentialStore for EncryptedFileStore {

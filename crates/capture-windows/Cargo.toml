@@ -11,7 +11,7 @@ capture-api = { path = "../capture-api" }
 crossbeam-channel = "0.5"
 thiserror = { workspace = true }
 tracing = "0.1"
-windows = { version = "0.58", features = [
+windows = { version = "0.62", features = [
     "Win32_Media_Audio",
     "Win32_Media_KernelStreaming",
     "Win32_Media_Multimedia",
@@ -24,8 +24,7 @@ windows = { version = "0.58", features = [
     "Win32_Security",                  # CreateEventW is gated behind this feature
     "Win32_UI_Shell_PropertiesSystem", # IMMDevice::OpenPropertyStore/IPropertyStore
     "Win32_Devices_FunctionDiscovery", # PKEY_Device_FriendlyName
-    "implement",
 ] }
 # `#[implement(...)]`-generated code references `windows_core::...` directly, which
 # isn't resolvable through the `windows::core` re-export alone.
-windows-core = "0.58"
+windows-core = "0.62"

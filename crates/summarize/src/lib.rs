@@ -360,7 +360,7 @@ async fn resolve_vertex_token(credentials: &VertexCredentials) -> Result<String,
 /// `"vertex::claude-sonnet-4-5"`-style namespaced string — either way this resolver
 /// is what actually selects the Vertex adapter, not `genai`'s own namespace-based
 /// dispatch).
-pub fn build_vertex_client(credentials: VertexCredentials) -> Client {
+pub fn build_vertex_client(credentials: VertexCredentials) -> Result<Client, genai::Error> {
     let credentials = Arc::new(credentials);
 
     let auth_credentials = credentials.clone();
@@ -431,7 +431,7 @@ fn normalize_ollama_base_url(base_url: &str) -> String {
 /// already sends a dummy bearer token (`"ollama"`) when no API key env var is set, and
 /// a local Ollama server doesn't check it — there's no real credential to pull from
 /// `credential-store` for this provider.
-pub fn build_ollama_client(base_url: Option<String>) -> Client {
+pub fn build_ollama_client(base_url: Option<String>) -> Result<Client, genai::Error> {
     let mut builder = Client::builder().with_adapter_kind(AdapterKind::Ollama);
 
     if let Some(base_url) = base_url {
@@ -532,7 +532,7 @@ async fn resolve_ant_oauth_token() -> Result<String, genai::resolver::Error> {
 /// Uses `AdapterKind::Anthropic` via `with_adapter_kind` — same reasoning as
 /// [`build_ollama_client`]: pins the adapter explicitly rather than relying on
 /// `options.model`'s string prefix to keep sniffing to the right adapter.
-pub fn build_claude_oauth_client() -> Client {
+pub fn build_claude_oauth_client() -> Result<Client, genai::Error> {
     let auth_resolver = AuthResolver::from_resolver_async_fn(move |_model_iden: ModelIden| {
         Box::pin(async move {
             let token = resolve_ant_oauth_token().await?;
@@ -639,7 +639,7 @@ mod tests {
         // `build_vertex_client` only wires up resolvers; nothing in it should call
         // `gcp_auth` or make a network request until an actual `exec_chat` runs.
         let credentials = VertexCredentials::new("my-project", "us-central1");
-        let _client = build_vertex_client(credentials);
+        let _client = build_vertex_client(credentials).expect("client should build");
     }
 
     #[test]
@@ -661,19 +661,19 @@ mod tests {
     fn build_ollama_client_constructs_without_base_url_override() {
         // No `ServiceTargetResolver` branch taken; `genai`'s own Ollama default
         // endpoint applies. Should not touch the network.
-        let _client = build_ollama_client(None);
+        let _client = build_ollama_client(None).expect("client should build");
     }
 
     #[test]
     fn build_ollama_client_constructs_with_base_url_override() {
-        let _client = build_ollama_client(Some("http://localhost:12345".to_string()));
+        let _client = build_ollama_client(Some("http://localhost:12345".to_string())).expect("client should build");
     }
 
     #[test]
     fn build_claude_oauth_client_constructs_without_touching_network() {
         // Only wires up the async resolver; nothing should call `ant` or the
         // network until an actual `exec_chat` runs.
-        let _client = build_claude_oauth_client();
+        let _client = build_claude_oauth_client().expect("client should build");
     }
 
     #[tokio::test]

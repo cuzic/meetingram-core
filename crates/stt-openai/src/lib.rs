@@ -267,13 +267,13 @@ async fn writer_task(
 ) {
     while let Some(cmd) = commands.recv().await {
         let result = match cmd {
-            WsCommand::Json(value) => write.send(Message::Text(value.to_string())).await,
+            WsCommand::Json(value) => write.send(Message::Text(value.to_string().into())).await,
             WsCommand::Audio(bytes) => {
                 let audio = json!({
                     "type": "input_audio_buffer.append",
                     "audio": BASE64.encode(bytes),
                 });
-                write.send(Message::Text(audio.to_string())).await
+                write.send(Message::Text(audio.to_string().into())).await
             }
             WsCommand::Commit => {
                 // Set *before* sending, so the reader task never mistakes an
@@ -283,7 +283,7 @@ async fn writer_task(
                 draining.store(true, Ordering::SeqCst);
                 write
                     .send(Message::Text(
-                        r#"{"type":"input_audio_buffer.commit"}"#.to_string(),
+                        r#"{"type":"input_audio_buffer.commit"}"#.into(),
                     ))
                     .await
             }

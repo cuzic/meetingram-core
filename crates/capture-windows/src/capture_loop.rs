@@ -77,7 +77,7 @@ impl IAudioSessionEvents_Impl for SessionEventsHandler_Impl {
     fn OnSimpleVolumeChanged(
         &self,
         _newvolume: f32,
-        _newmute: windows::Win32::Foundation::BOOL,
+        _newmute: windows::core::BOOL,
         _eventcontext: *const windows::core::GUID,
     ) -> windows::core::Result<()> {
         Ok(())
@@ -157,7 +157,7 @@ fn wait_for_multiple(
     } else {
         if result.0 == windows::Win32::Foundation::WAIT_FAILED.0 {
             tracing::warn!(
-                error = %windows::core::Error::from_win32(),
+                error = %windows::core::Error::from_thread(),
                 "WaitForMultipleObjects failed; treating as timeout"
             );
         }

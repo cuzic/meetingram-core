@@ -11,7 +11,7 @@ async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { workspace = true }
 thiserror = { workspace = true }
-ulid = { version = "1", features = ["serde"] }
+ulid = { version = "3", features = ["serde"] }
 
 [dev-dependencies]
 serde_json = { workspace = true }

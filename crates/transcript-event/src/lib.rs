@@ -114,7 +114,7 @@ pub struct EventEnvelope<T> {
 impl<T> EventEnvelope<T> {
     pub fn new(session_id: SessionId, body: T) -> Self {
         Self {
-            event_id: ulid::Ulid::new().to_string(),
+            event_id: ulid::Ulid::generate().to_string(),
             schema_version: 1,
             producer: "capture-app".to_string(),
             session_id,

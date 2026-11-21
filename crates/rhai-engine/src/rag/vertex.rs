@@ -159,20 +159,7 @@ async fn get_access_token(credentials: &VertexCredentials) -> Result<String, Str
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs();
-    let expiry = now + 3600;
-
-    let jwt = jsonwebtoken::encode(
-        &jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256),
-        &serde_json::json!({
-            "iss": credentials.client_email,
-            "scope": "https://www.googleapis.com/auth/cloud-platform",
-            "aud": "https://oauth2.googleapis.com/token",
-            "exp": expiry,
-            "iat": now,
-        }),
-        &jsonwebtoken::EncodingKey::from_rsa_pem(credentials.private_key.as_bytes())
-            .map_err(|e| format!("invalid private key: {e}"))?,
-    ).map_err(|e| format!("JWT encoding failed: {e}"))?;
+    let jwt = build_token_request_jwt(credentials, now)?;
 
     let client = reqwest::Client::new();
     let resp = client
@@ -189,6 +176,26 @@ async fn get_access_token(credentials: &VertexCredentials) -> Result<String, Str
     json["access_token"].as_str().map(String::from).ok_or("no access_token in response".to_string())
 }
 
+/// Signs the service-account JWT that is exchanged for an OAuth access token
+/// (RS256, valid for one hour from `now`).
+fn build_token_request_jwt(credentials: &VertexCredentials, now: u64) -> Result<String, String> {
+    let expiry = now + 3600;
+
+    jsonwebtoken::encode(
+        &jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256),
+        &serde_json::json!({
+            "iss": credentials.client_email,
+            "scope": "https://www.googleapis.com/auth/cloud-platform",
+            "aud": "https://oauth2.googleapis.com/token",
+            "exp": expiry,
+            "iat": now,
+        }),
+        &jsonwebtoken::EncodingKey::from_rsa_pem(credentials.private_key.as_bytes())
+            .map_err(|e| format!("invalid private key: {e}"))?,
+    )
+    .map_err(|e| format!("JWT encoding failed: {e}"))
+}
+
 fn get_opt_string(map: &rhai::Map, key: &str) -> Option<String> {
     map.get(key).and_then(|v| v.clone().try_cast::<String>())
 }
@@ -196,4 +203,41 @@ fn get_opt_string(map: &rhai::Map, key: &str) -> Option<String> {
 fn base64_encode(s: &str) -> String {
     use base64::Engine;
     base64::engine::general_purpose::STANDARD.encode(s.as_bytes())
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aws_lc_rs::encoding::AsDer;
+    use base64::Engine;
+
+    /// A fresh PKCS#8 PEM, the same shape as a service-account key's
+    /// `private_key`. Generated per run so no key is committed.
+    fn throwaway_rsa_pem() -> String {
+        let key = aws_lc_rs::rsa::KeyPair::generate(aws_lc_rs::rsa::KeySize::Rsa2048).unwrap();
+        let der: aws_lc_rs::encoding::Pkcs8V1Der = key.as_der().unwrap();
+        let b64 = base64::engine::general_purpose::STANDARD.encode(der.as_ref());
+        let body: Vec<&str> = b64.as_bytes().chunks(64).map(|c| std::str::from_utf8(c).unwrap()).collect();
+        format!("-----BEGIN PRIVATE KEY-----\n{}\n-----END PRIVATE KEY-----\n", body.join("\n"))
+    }
+
+    #[test]
+    fn token_request_jwt_is_signed_with_rs256() {
+        let credentials = VertexCredentials {
+            project_id: "p".to_string(),
+            client_email: "sa@p.iam.gserviceaccount.com".to_string(),
+            private_key: throwaway_rsa_pem(),
+        };
+        let jwt = build_token_request_jwt(&credentials, 1_700_000_000).expect("JWT should be signed");
+
+        let parts: Vec<&str> = jwt.split('.').collect();
+        assert_eq!(parts.len(), 3);
+        let header = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(parts[0]).unwrap();
+        let header: serde_json::Value = serde_json::from_slice(&header).unwrap();
+        assert_eq!(header["alg"], "RS256");
+        let claims = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(parts[1]).unwrap();
+        let claims: serde_json::Value = serde_json::from_slice(&claims).unwrap();
+        assert_eq!(claims["iss"], "sa@p.iam.gserviceaccount.com");
+        assert_eq!(claims["exp"], 1_700_003_600);
+        assert!(!parts[2].is_empty());
+    }
 }

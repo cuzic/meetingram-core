@@ -16,7 +16,7 @@ use windows::Win32::Media::Audio::{
     EDataFlow, ERole, MMDeviceEnumerator,
 };
 use windows::Win32::System::Com::{CoCreateInstance, IAgileObject_Impl, CLSCTX_ALL};
-use windows::Win32::UI::Shell::PropertiesSystem::PROPERTYKEY;
+use windows::Win32::Foundation::PROPERTYKEY;
 
 /// A direct transcription of `IMMNotificationClient`'s five callbacks. Deliberately
 /// does not attempt to interpret `DEVICE_STATE_*` etc. here — see the module docs.
