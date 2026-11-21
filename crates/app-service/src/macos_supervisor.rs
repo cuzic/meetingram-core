@@ -726,7 +726,7 @@ fn unfiltered_display_filter(
         .into_iter()
         .next()
         .ok_or_else(|| CaptureError::DeviceNotFound("no display available".into()))?;
-    Ok(capture_macos::app_filter::unfiltered(&display))
+    capture_macos::app_filter::unfiltered(&display)
 }
 
 /// Exponential backoff for `Effect::ScheduleRetry` — identical policy to
