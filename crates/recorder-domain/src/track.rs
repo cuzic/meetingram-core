@@ -47,3 +47,34 @@ impl std::str::FromStr for TrackKind {
         }
     }
 }
+
+/// Format a track and its optional zero-based diarization speaker number.
+pub fn speaker_label(track: Option<TrackKind>, speaker: Option<u32>) -> String {
+    let base = match track {
+        Some(TrackKind::SelfMic) => "自分",
+        Some(TrackKind::RemoteAudio) => "相手",
+        None => "不明",
+    };
+    match speaker {
+        Some(n) => format!("{base} (話者{})", u64::from(n) + 1),
+        None => base.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod speaker_label_tests {
+    use super::*;
+
+    #[test]
+    fn formats_track_and_one_based_speaker() {
+        for (track, label) in [
+            (Some(TrackKind::SelfMic), "自分"),
+            (Some(TrackKind::RemoteAudio), "相手"),
+            (None, "不明"),
+        ] {
+            assert_eq!(speaker_label(track, None), label);
+            assert_eq!(speaker_label(track, Some(0)), format!("{label} (話者1)"));
+            assert_eq!(speaker_label(track, Some(1)), format!("{label} (話者2)"));
+        }
+    }
+}

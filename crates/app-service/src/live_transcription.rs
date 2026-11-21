@@ -34,7 +34,7 @@ use credential_store::CredentialStore;
 // （以前は`stt_wiring`サブモジュール内だけでimportしており、live-transcription
 // feature無効時にstub関数がこの型を解決できずコンパイルエラーになっていた）。
 use local_broker::LocalBroker;
-use recorder_domain::{SessionId, TrackKind};
+use recorder_domain::{speaker_label, SessionId, TrackKind};
 use session_store::SessionStore;
 use tokio::sync::mpsc::Receiver;
 
@@ -100,23 +100,6 @@ fn set_both_status(
     let mut guard = sink.lock().unwrap();
     guard.self_status = status.clone();
     guard.remote_status = status;
-}
-
-/// Same label format as `apps/desktop/src/transcript.rs::speaker_label` and
-/// `rhai-engine`'s dispatcher-local copy — duplicated here rather than shared,
-/// since `app-service` can't depend on the desktop binary crate and pulling in
-/// `rhai-engine` just for this would be backwards (that crate depends on
-/// `recorder-domain`, not the other way around).
-fn speaker_label(track: Option<TrackKind>, speaker: Option<u32>) -> String {
-    let base = match track {
-        Some(TrackKind::SelfMic) => "自分",
-        Some(TrackKind::RemoteAudio) => "相手",
-        None => "不明",
-    };
-    match speaker {
-        Some(n) => format!("{base} (話者{})", n + 1),
-        None => base.to_string(),
-    }
 }
 
 /// Re-exported from `crate::stt_provider_kind` (task #49) so existing

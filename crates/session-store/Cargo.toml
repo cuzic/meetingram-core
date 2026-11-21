@@ -15,3 +15,4 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3"
+discussion-graph = { path = "../discussion-graph" }

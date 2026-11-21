@@ -15,5 +15,5 @@ pub use session::{
     SessionId, SessionManifest,
 };
 pub use state::{CaptureState, UploadState};
-pub use track::{ParseTrackKindError, TrackKind};
+pub use track::{speaker_label, ParseTrackKindError, TrackKind};
 pub use upload::{RemoteSession, SessionSummary, UploadAdapter, UploadError, UploadReceipt};
