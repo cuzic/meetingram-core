@@ -17,13 +17,19 @@ const BASELINE: &str = concat!(
     "新規ノードは原則作らず、提示された根拠の uid を使ってください。\n"
 );
 const UID_ONLY: (usize, usize) = (0, 3);
+const GROUP_EVIDENCE_TIERS: [(usize, usize); 4] = [
+    (usize::MAX, usize::MAX),
+    (200, usize::MAX),
+    (200, 1),
+    UID_ONLY,
+];
 const CONSOLIDATE: &str = include_str!("consolidation.txt");
 const CONSOLIDATE_EDITS: &str = concat!(
     include_str!("consolidation.txt"),
     include_str!("consolidation-edits.txt")
 );
 const ISSUE_MERGES: &str = "\n全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge だけで統合してください。ground_count が多い方を into にしてください。\n";
-const GROUP_OPERATIONS: &str = "\ngraph groups はまとまりごとの nid の一覧です。同じまとまりの中で重複を比較して merge し、不足するエッジを add_edge、状態の訂正を set_status で返してください。\n";
+const GROUP_OPERATIONS: &str = "\ngraph groups はまとまりごとの nid の一覧です。同じまとまりの中で重複を比較して merge し、不足するエッジを add_edge、状態の訂正を set_status で返してください。external のエッジも既に存在するので、add_edge で出し直さないでください。\n";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prompt {
@@ -310,35 +316,23 @@ pub fn build_consolidate_issues(
 }
 
 /// Pack issue groups from the graph after stage one's patch has been applied.
-/// Split oversized groups by node count. A single node that cannot fit with
-/// UID-only evidence still produces an input-limit error.
-pub fn build_consolidate_groups(graph: &Graph, limit: usize) -> Result<Vec<Prompt>, PromptError> {
+/// Split oversized groups by node count. Return the prompts and the number
+/// of nodes omitted because they could not fit even with UID-only evidence.
+pub fn build_consolidate_groups(graph: &Graph, limit: usize) -> (Vec<Prompt>, usize) {
     let renderer = Consolidation::new(graph);
     let all = renderer.nodes.keys().copied().collect();
     let system = format!("{CONSOLIDATE_EDITS}{GROUP_OPERATIONS}");
+    let mut fitted = Vec::new();
+    let mut omitted = 0;
+    for group in renderer.groups(&all) {
+        omitted += renderer.fit_or_split(&system, group, &GROUP_EVIDENCE_TIERS, limit, &mut fitted);
+    }
+
     let mut batches: Vec<GroupBatch<'_>> = Vec::new();
-    let mut split_prompts = Vec::new();
-    let groups = renderer.groups(&all);
-    for group in &groups {
-        let Ok((evidence, prompt)) = renderer.fit_group(
-            &system,
-            group,
-            Layout::Groups,
-            [
-                (usize::MAX, usize::MAX),
-                (200, usize::MAX),
-                (200, 1),
-                UID_ONLY,
-            ],
-            limit,
-        ) else {
-            renderer.split_group(&system, group, limit, &mut split_prompts)?;
-            continue;
-        };
-        let mut packed = false;
+    'groups: for (group, evidence, prompt) in fitted {
         for batch in &mut batches {
-            let mut candidate_groups = batch.groups.clone();
-            candidate_groups.push(group);
+            let candidate_groups: Vec<_> =
+                batch.groups.iter().chain(std::iter::once(&group)).collect();
             let mut candidate_evidence = batch.evidence.clone();
             candidate_evidence.extend(evidence.iter());
             let candidate = renderer.render(
@@ -348,28 +342,22 @@ pub fn build_consolidate_groups(graph: &Graph, limit: usize) -> Result<Vec<Promp
                 Layout::Groups,
             );
             if candidate.fits(limit) {
-                *batch = GroupBatch {
-                    groups: candidate_groups,
-                    evidence: candidate_evidence,
-                    prompt: candidate,
-                };
-                packed = true;
-                break;
+                batch.groups.push(group);
+                batch.evidence = candidate_evidence;
+                batch.prompt = candidate;
+                continue 'groups;
             }
         }
-        if !packed {
-            batches.push(GroupBatch {
-                groups: vec![group],
-                evidence,
-                prompt,
-            });
-        }
+        batches.push(GroupBatch {
+            groups: vec![group],
+            evidence,
+            prompt,
+        });
     }
-    Ok(batches
-        .into_iter()
-        .map(|batch| batch.prompt)
-        .chain(split_prompts)
-        .collect())
+    (
+        batches.into_iter().map(|batch| batch.prompt).collect(),
+        omitted,
+    )
 }
 
 impl Prompt {
@@ -387,8 +375,10 @@ enum Layout {
 
 type EvidenceLimits<'a> = BTreeMap<&'a str, (usize, usize)>;
 
+type FittedGroup<'a> = (BTreeSet<&'a str>, EvidenceLimits<'a>, Prompt);
+
 struct GroupBatch<'a> {
-    groups: Vec<&'a BTreeSet<&'a str>>,
+    groups: Vec<BTreeSet<&'a str>>,
     evidence: EvidenceLimits<'a>,
     prompt: Prompt,
 }
@@ -460,25 +450,28 @@ impl<'a> Consolidation<'a> {
         groups
     }
 
-    fn split_group(
+    fn fit_or_split(
         &self,
         system: &str,
-        group: &BTreeSet<&'a str>,
+        mut group: BTreeSet<&'a str>,
+        tiers: &[(usize, usize)],
         limit: usize,
-        prompts: &mut Vec<Prompt>,
-    ) -> Result<(), PromptError> {
-        if let Ok((_, prompt)) = self.fit_group(system, group, Layout::Groups, [UID_ONLY], limit) {
-            prompts.push(prompt);
-            return Ok(());
+        fitted: &mut Vec<FittedGroup<'a>>,
+    ) -> usize {
+        if let Ok((evidence, prompt)) =
+            self.fit_group(system, &group, Layout::Groups, tiers.iter().copied(), limit)
+        {
+            fitted.push((group, evidence, prompt));
+            return 0;
         }
-        if group.len() <= 1 {
-            return Err(PromptError::InputLimit);
+        if group.len() == 1 {
+            return 1;
         }
         let midpoint = *group.iter().nth(group.len() / 2).unwrap();
-        let mut first = group.clone();
-        let second = first.split_off(midpoint);
-        self.split_group(system, &first, limit, prompts)?;
-        self.split_group(system, &second, limit, prompts)
+        let second = group.split_off(midpoint);
+        let tiers = &GROUP_EVIDENCE_TIERS[1..];
+        self.fit_or_split(system, group, tiers, limit, fitted)
+            + self.fit_or_split(system, second, tiers, limit, fitted)
     }
 
     fn fit_group(
@@ -513,23 +506,22 @@ impl<'a> Consolidation<'a> {
     ) -> Prompt {
         let mut edges = String::from("graph edges\n");
         for edge in &self.edges {
-            let contains_endpoints = |group: &BTreeSet<&str>| {
-                group.contains(edge.src.as_str()) && group.contains(edge.dst.as_str())
-            };
-            let include = match layout {
-                Layout::Baseline => {
-                    evidence.contains_key(edge.src.as_str())
-                        && evidence.contains_key(edge.dst.as_str())
-                }
-                Layout::Issues => false,
-                Layout::Groups => groups.iter().any(|group| contains_endpoints(group)),
-            };
-            if include {
+            let has_src = evidence.contains_key(edge.src.as_str());
+            let has_dst = evidence.contains_key(edge.dst.as_str());
+            if layout != Layout::Issues && has_src && has_dst {
                 push_line(
                     &mut edges,
                     json!({
                         "eid":edge.eid, "src":edge.src, "dst":edge.dst,
                         "kind":edge.kind, "confidence":edge.confidence,
+                    }),
+                );
+            } else if layout == Layout::Groups && (has_src || has_dst) {
+                push_line(
+                    &mut edges,
+                    json!({
+                        "eid":edge.eid, "src":edge.src, "dst":edge.dst,
+                        "kind":edge.kind, "external":true,
                     }),
                 );
             }
