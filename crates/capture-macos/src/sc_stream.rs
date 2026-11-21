@@ -73,6 +73,7 @@ pub struct ScreenCaptureKitStream {
 }
 
 impl ScreenCaptureKitStream {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         filter: SCContentFilter,
         sample_rate: u32,
@@ -251,6 +252,9 @@ impl SCStreamDelegateTrait for StreamErrorDelegate {
 struct FrameForwarder {
     tx: crossbeam_channel::Sender<CaptureEvent>,
     binding: BindingKind,
+    // Not read: frames carry no sample rate of their own, and
+    // `macos_frame_collector` takes it from the `StreamStarted` event instead.
+    #[allow(dead_code)]
     sample_rate: u32,
     /// Needed to turn `samples.len()` (the total f32 count across *all* channels,
     /// interleaved or not — see `audio_buffer_list_to_f32`'s doc comment) back into a
@@ -362,10 +366,8 @@ impl SCStreamOutputTrait for FrameForwarder {
 fn audio_buffer_list_to_f32(buffer_list: &screencapturekit::AudioBufferList) -> Vec<f32> {
     let mut samples = Vec::new();
     for buffer in buffer_list {
-        let chunks = buffer.data().chunks_exact(4);
-        samples.extend(
-            chunks.map(|bytes| f32::from_ne_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])),
-        );
+        let (chunks, _remainder) = buffer.data().as_chunks::<4>();
+        samples.extend(chunks.iter().map(|bytes| f32::from_ne_bytes(*bytes)));
     }
     samples
 }
