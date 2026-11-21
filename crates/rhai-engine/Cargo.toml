@@ -21,7 +21,6 @@ tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "time", "m
 tracing = "0.1"
 thiserror = { workspace = true }
 chrono = "0.4"
-genai = "0.7.5"
 reqwest = { version = "0.13", features = ["json", "form"] }
 # jsonwebtoken 10+ picks its crypto backend from exactly one of these features
 # and panics on the first encode if none is enabled. aws-lc-rs is already in

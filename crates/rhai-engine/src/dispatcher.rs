@@ -8,11 +8,10 @@
 
 use std::sync::Arc;
 
-use credential_store::CredentialStore;
 use local_broker::LocalBroker;
 use recorder_domain::SessionId;
 use session_store::SessionStore;
-use summarize::{Summarizer, TranscriptTurn};
+use summarize::{BuildSummarizerError, TranscriptTurn};
 
 use crate::SettingsProvider;
 
@@ -85,67 +84,32 @@ async fn handle_ai_summarize(
 
     let options = summarize::SummarizeOptions::new(&model).with_system_prompt(system_prompt);
 
-    let summarizer = build_summarizer(&model, credential_store, settings)?;
+    let provider_key = settings.get("summary_provider_key").unwrap_or_default();
+    let ollama_base_url = settings.get("ollama_base_url");
+    let credential_store = Arc::clone(credential_store);
+    let summarizer = tokio::task::spawn_blocking(move || {
+        summarize::build_summarizer(&provider_key, credential_store, ollama_base_url)
+    })
+    .await
+    .map_err(|_| "AIクライアントの作成に失敗")?
+    .map_err(|error| match error {
+        BuildSummarizerError::MissingVertexCredentials => {
+            "設定画面でGoogle Vertex AIの認証情報を設定してください"
+        }
+        BuildSummarizerError::MissingApiKey => "設定画面でAPIキーを設定してください",
+        BuildSummarizerError::InvalidVertexCredentials => "Vertex認証情報の読み込みに失敗",
+        BuildSummarizerError::Client => "AIクライアントの作成に失敗",
+    })?;
     let text = summarizer
         .summarize(&turns, &options)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|error| match error {
+            summarize::SummarizerError::Genai(summarize::SummarizeError::Provider(_)) => {
+                "AIプロバイダの呼び出しに失敗".into()
+            }
+            _ => error.to_string(),
+        })?;
     Ok(rhai::Dynamic::from(text))
-}
-
-fn build_summarizer(
-    _model: &str,
-    credential_store: &Arc<credential_store::FallbackCredentialStore>,
-    settings: &dyn SettingsProvider,
-) -> Result<Box<dyn Summarizer>, String> {
-    let provider_key = settings
-        .get("summary_provider_key")
-        .unwrap_or_else(|| "claude".to_string());
-    let provider = ProviderInfo::from_key(&provider_key);
-
-    if let Some(backend) = provider.cli_backend() {
-        return Ok(Box::new(summarize::CliSummarizer(backend)));
-    }
-
-    if provider.is_vertex() {
-        let account = provider.api_key_account().unwrap_or("");
-        let raw = credential_store
-            .load(summarize::CREDENTIAL_SERVICE, account)
-            .unwrap_or_default();
-        let credentials = serde_json::from_str::<summarize::VertexCredentials>(&raw)
-            .map_err(|e| format!("Vertex認証情報の読み込みに失敗: {e}"))?;
-        return Ok(Box::new(summarize::GenaiSummarizer(
-            summarize::build_vertex_client(credentials).map_err(client_build_error)?,
-        )));
-    }
-
-    if provider_key == "ollama" {
-        let base_url = settings.get("ollama_base_url");
-        return Ok(Box::new(summarize::GenaiSummarizer(
-            summarize::build_ollama_client(base_url).map_err(client_build_error)?,
-        )));
-    }
-
-    if let Some(account) = provider.api_key_account() {
-        let resolver = summarize::credential_store_auth_resolver(
-            Arc::clone(credential_store),
-            account.to_string(),
-        );
-        let client = genai::Client::builder()
-            .with_auth_resolver(resolver)
-            .build()
-            .map_err(client_build_error)?;
-        return Ok(Box::new(summarize::GenaiSummarizer(client)));
-    }
-
-    let client = genai::Client::builder()
-        .build()
-        .map_err(client_build_error)?;
-    Ok(Box::new(summarize::GenaiSummarizer(client)))
-}
-
-fn client_build_error(e: genai::Error) -> String {
-    format!("AIクライアントの作成に失敗: {e}")
 }
 
 fn handle_list_segments(args: &rhai::Map, store: &SessionStore) -> Result<rhai::Dynamic, String> {
@@ -317,72 +281,5 @@ fn rhai_dynamic_to_value(d: &rhai::Dynamic) -> serde_json::Value {
         serde_json::Value::Null
     } else {
         serde_json::Value::String(d.to_string())
-    }
-}
-
-// ── Provider info (duplicated from desktop crate's SummaryProvider) ──
-
-struct ProviderInfo;
-
-impl ProviderInfo {
-    fn from_key(key: &str) -> ProviderVariant {
-        match key {
-            "openai" => ProviderVariant::OpenAi,
-            "gemini" => ProviderVariant::Gemini,
-            "groq" => ProviderVariant::Groq,
-            "deepseek" => ProviderVariant::DeepSeek,
-            "xai" => ProviderVariant::Xai,
-            "claude-vertex" => ProviderVariant::ClaudeVertex,
-            "gemini-vertex" => ProviderVariant::GeminiVertex,
-            "claude-bedrock" => ProviderVariant::ClaudeBedrock,
-            "claude-cli" => ProviderVariant::ClaudeCli,
-            "codex" => ProviderVariant::CodexCli,
-            "ollama" => ProviderVariant::Ollama,
-            _ => ProviderVariant::Claude,
-        }
-    }
-}
-
-enum ProviderVariant {
-    Claude,
-    OpenAi,
-    Gemini,
-    Groq,
-    DeepSeek,
-    Xai,
-    ClaudeVertex,
-    GeminiVertex,
-    ClaudeBedrock,
-    ClaudeCli,
-    CodexCli,
-    Ollama,
-}
-
-impl ProviderVariant {
-    fn api_key_account(&self) -> Option<&str> {
-        match self {
-            Self::Claude => Some(summarize::CLAUDE_API_KEY_ACCOUNT),
-            Self::OpenAi => Some(summarize::OPENAI_API_KEY_ACCOUNT),
-            Self::Gemini => Some(summarize::GEMINI_API_KEY_ACCOUNT),
-            Self::Groq => Some(summarize::GROQ_API_KEY_ACCOUNT),
-            Self::DeepSeek => Some(summarize::DEEPSEEK_API_KEY_ACCOUNT),
-            Self::Xai => Some(summarize::XAI_API_KEY_ACCOUNT),
-            Self::ClaudeVertex => Some(summarize::CLAUDE_VERTEX_CREDENTIALS_ACCOUNT),
-            Self::GeminiVertex => Some(summarize::GEMINI_VERTEX_CREDENTIALS_ACCOUNT),
-            Self::ClaudeBedrock => Some(summarize::BEDROCK_API_KEY_ACCOUNT),
-            Self::ClaudeCli | Self::CodexCli | Self::Ollama => None,
-        }
-    }
-
-    fn cli_backend(&self) -> Option<summarize::cli_backend::CliBackend> {
-        match self {
-            Self::ClaudeCli => Some(summarize::cli_backend::CliBackend::ClaudeCode),
-            Self::CodexCli => Some(summarize::cli_backend::CliBackend::Codex),
-            _ => None,
-        }
-    }
-
-    fn is_vertex(&self) -> bool {
-        matches!(self, Self::ClaudeVertex | Self::GeminiVertex)
     }
 }

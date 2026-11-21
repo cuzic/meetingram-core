@@ -3069,7 +3069,6 @@ dependencies = [
  "chrono",
  "credential-store",
  "dashmap",
- "genai",
  "hmac",
  "jsonwebtoken",
  "local-broker",

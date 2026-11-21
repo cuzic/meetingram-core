@@ -20,7 +20,7 @@ thiserror = { workspace = true }
 tokio = { version = "1", features = ["process", "fs", "io-util", "time"] }
 
 [dev-dependencies]
-tokio = { version = "1", features = ["macros", "rt"] }
+tokio = { version = "1", features = ["macros", "rt", "test-util"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

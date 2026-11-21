@@ -149,7 +149,7 @@ async fn claude_retries_unknown_option_once_and_remembers_compatibility() {
         case "$5" in
             --tools)
                 echo lean >>"$attempt_log"
-                printf "error: unknown option '--tools'\n" >&2
+                printf "synthetic startup notice\nerror: unknown option '--tools'\n" >&2
                 exit 1
                 ;;
             --disallowedTools)
@@ -510,10 +510,22 @@ async fn summarize_via_cli_codex_smoke_test() {
     assert!(!text.trim().is_empty());
 }
 
-#[test]
-fn summary_and_graph_have_separate_default_deadlines() {
-    assert_eq!(DEFAULT_SUMMARY_TIMEOUT, Duration::from_secs(600));
-    assert_eq!(DEFAULT_CLI_TIMEOUT, Duration::from_secs(60));
+#[tokio::test]
+#[ignore]
+async fn complete_via_claude_code_smoke_test() {
+    use crate::{CliSummarizer, Summarizer};
+
+    let request = CompletionRequest::new(
+        "Reply with the supplied line.",
+        "The synthetic project is due Friday.",
+        "sonnet",
+        Duration::from_secs(60),
+    );
+    let text = CliSummarizer(CliBackend::ClaudeCode)
+        .complete(&request)
+        .await
+        .expect("claude CLI completion should succeed");
+    assert!(!text.trim().is_empty());
 }
 
 #[cfg(unix)]
@@ -623,4 +635,81 @@ async fn windows_cleanup_runs_off_the_async_worker() {
         .unwrap()
         .await
         .unwrap();
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn completion_delivers_prompts_without_putting_them_in_arguments() {
+    let base = tempfile::tempdir().unwrap();
+    let cli = script(
+        base.path(),
+        r#"
+        test "$#" -eq 9 || exit 2
+        test "$8" = '--system-prompt-file' || exit 3
+        test "$(cat "$9")" = 'synthetic system' || exit 4
+        test "$(cat)" = 'synthetic user' || exit 5
+        for arg do
+            case "$arg" in *synthetic*) exit 6 ;; esac
+        done
+        printf '{"result":"synthetic response"}\n'
+    "#,
+    );
+    let request = CompletionRequest::new(
+        "synthetic system",
+        "synthetic user",
+        "",
+        Duration::from_secs(5),
+    );
+    assert_eq!(
+        complete_with_binary(CliBackend::ClaudeCode, cli.as_os_str(), &request)
+            .await
+            .unwrap(),
+        "synthetic response",
+    );
+
+    let cli = script(base.path(), "exec sleep 30");
+    let request = CompletionRequest::new("", "", "", Duration::from_millis(50));
+    assert_eq!(
+        complete_with_binary(CliBackend::ClaudeCode, cli.as_os_str(), &request)
+            .await
+            .unwrap_err()
+            .kind(),
+        "timeout",
+    );
+}
+
+#[cfg(unix)]
+#[tokio::test(start_paused = true)]
+async fn summarize_enforces_its_default_and_explicit_deadlines() {
+    use std::future::poll_fn;
+    use std::task::Poll;
+
+    let base = tempfile::tempdir().unwrap();
+    let cli = script(base.path(), "exec sleep 30");
+    for (options, seconds) in [
+        (SummarizeOptions::new(""), 600),
+        (
+            SummarizeOptions::new("").with_cli_timeout(Duration::from_secs(3)),
+            3,
+        ),
+    ] {
+        let mut response = std::pin::pin!(summarize_with_binary(
+            CliBackend::ClaudeCode,
+            cli.as_os_str(),
+            &[],
+            &options,
+        ));
+        assert!(poll_fn(|cx| Poll::Ready(response.as_mut().poll(cx)))
+            .await
+            .is_pending());
+        tokio::time::advance(Duration::from_secs(seconds - 1)).await;
+        assert!(poll_fn(|cx| Poll::Ready(response.as_mut().poll(cx)))
+            .await
+            .is_pending());
+        tokio::time::advance(Duration::from_secs(1) + Duration::from_millis(1)).await;
+        assert!(matches!(
+            poll_fn(|cx| Poll::Ready(response.as_mut().poll(cx))).await,
+            Poll::Ready(Err(CliSummarizeError::Timeout(CliBackend::ClaudeCode)))
+        ));
+    }
 }
