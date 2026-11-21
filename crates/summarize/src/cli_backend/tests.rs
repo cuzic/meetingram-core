@@ -292,9 +292,35 @@ async fn timeout_and_drop_stop_grandchild_and_remove_work_directory() {
             unsafe { libc::kill(pid as libc::pid_t, libc::SIGKILL) };
         }
         stopped.expect("grandchild survived process cleanup");
-        assert_eq!(work.path().read_dir().unwrap().count(), 0);
+        wait_for_cleanup(work.path()).await;
         std::fs::remove_file(&pid_file).unwrap();
     }
+}
+
+async fn wait_for_cleanup(work: &Path) {
+    tokio::time::timeout(Duration::from_secs(2), async {
+        while work.read_dir().unwrap().next().is_some() {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    })
+    .await
+    .expect("CLI working directory survived cleanup");
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_path_search_uses_absolute_directories_in_order() {
+    let name = OsStr::new("fixture");
+    let first = tempfile::tempdir().unwrap();
+    let second = tempfile::tempdir().unwrap();
+    let first_cmd = first.path().join("fixture.cmd");
+    let first_exe = first.path().join("fixture.exe");
+    std::fs::write(&first_cmd, "").unwrap();
+    std::fs::write(second.path().join("fixture.exe"), "").unwrap();
+    let path = std::env::join_paths([first.path(), second.path()]).unwrap();
+    assert_eq!(platform::resolve_in_path(name, &path).unwrap(), first_cmd);
+    std::fs::write(&first_exe, "").unwrap();
+    assert_eq!(platform::resolve_in_path(name, &path).unwrap(), first_exe);
 }
 
 async fn wait_for_pid(path: &Path) -> u32 {
@@ -379,6 +405,23 @@ async fn windows_fixture_subprocess() {
     };
     let work = PathBuf::from(std::env::var_os("MEETINGRAM_TEST_CLI_WORK").unwrap());
     let name = OsStr::new("claude");
+    let original_dir = std::env::current_dir().unwrap();
+    std::env::set_current_dir(bin.parent().unwrap()).unwrap();
+    let relative = Path::new(bin.file_name().unwrap());
+    let relative_only = std::env::join_paths([relative]).unwrap();
+    assert_eq!(
+        platform::resolve_in_path(name, &relative_only)
+            .unwrap_err()
+            .kind(),
+        io::ErrorKind::NotFound
+    );
+    let empty_first = std::env::join_paths([Path::new(""), bin.as_path()]).unwrap();
+    std::fs::write("claude.exe", "").unwrap();
+    assert_eq!(
+        platform::resolve_in_path(name, &empty_first).unwrap(),
+        bin.join("claude.cmd")
+    );
+    std::env::set_current_dir(original_dir).unwrap();
     let cli = platform::resolve(name).unwrap();
     assert_eq!(cli, bin.join("claude.cmd"));
     assert!(CliBackend::ClaudeCode.is_available().await);
@@ -396,7 +439,7 @@ async fn windows_fixture_subprocess() {
         .await
         .unwrap_or_else(|error| panic!("{backend}: {error}"));
         assert_eq!(response, "synthetic summary");
-        assert_eq!(work.read_dir().unwrap().count(), 0);
+        wait_for_cleanup(&work).await;
     }
 
     std::fs::write(bin.join("sleep"), "").unwrap();
@@ -434,7 +477,7 @@ async fn windows_fixture_subprocess() {
         // SAFETY: process keeps the handle alive.
         assert_eq!(unsafe { WaitForSingleObject(handle, 1000) }, WAIT_OBJECT_0);
         drop(process);
-        assert_eq!(work.read_dir().unwrap().count(), 0, "cancel = {cancel}");
+        wait_for_cleanup(&work).await;
         std::fs::remove_file(&pid_file).unwrap();
     }
 }
@@ -465,4 +508,119 @@ async fn summarize_via_cli_codex_smoke_test() {
     let result = summarize_via_cli(CliBackend::Codex, &turns, &options).await;
     let text = result.expect("codex CLI summarize should succeed");
     assert!(!text.trim().is_empty());
+}
+
+#[test]
+fn summary_and_graph_have_separate_default_deadlines() {
+    assert_eq!(DEFAULT_SUMMARY_TIMEOUT, Duration::from_secs(600));
+    assert_eq!(DEFAULT_CLI_TIMEOUT, Duration::from_secs(60));
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn codex_allows_code_mode_error_but_requires_a_response() {
+    let base = tempfile::tempdir().unwrap();
+    for has_response in [true, false] {
+        let mut fixture = String::from(
+            r#"printf '%s\n' '{"type":"item.completed","item":{"type":"error","message":"Code Mode is unavailable because code-mode host is disabled."}}'
+"#,
+        );
+        if has_response {
+            fixture.push_str(
+                r#"printf '%s\n' '{"type":"item.completed","item":{"type":"agent_message","text":"synthetic summary"}}'
+printf 'synthetic summary' >out.txt
+"#,
+            );
+        }
+        let cli = script(base.path(), &fixture);
+        let output = run_fixture(
+            CliBackend::Codex,
+            &cli,
+            "synthetic transcript",
+            base.path(),
+            Duration::from_secs(5),
+            &AtomicBool::new(false),
+        )
+        .await;
+        if has_response {
+            assert_eq!(output.unwrap(), "synthetic summary");
+        } else {
+            assert!(
+                matches!(output, Err(CliSummarizeError::ReadOutput(_, error)) if error.kind() == io::ErrorKind::NotFound)
+            );
+        }
+    }
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn claude_retries_only_after_failure_with_a_line_prefix() {
+    let base = tempfile::tempdir().unwrap();
+    for (diagnostic_prefix, status) in [("", 0), ("embedded ", 1)] {
+        let cli = script(
+            base.path(),
+            &format!(
+                r#"
+            test "$5" = --tools || exit 99
+            printf "%serror: unknown option '--tools'\n" '{diagnostic_prefix}' >&2
+            printf '{{"result":"synthetic summary"}}\n'
+            exit {status}
+            "#,
+            ),
+        );
+        let compat = AtomicBool::new(false);
+        let output = run_fixture(
+            CliBackend::ClaudeCode,
+            &cli,
+            "synthetic transcript",
+            base.path(),
+            Duration::from_secs(5),
+            &compat,
+        )
+        .await;
+        assert!(!compat.load(Ordering::Relaxed));
+        if status == 0 {
+            assert_eq!(output.unwrap(), "synthetic summary");
+        } else {
+            assert!(
+                matches!(output, Err(CliSummarizeError::NonZeroExit(_, status)) if status.code() == Some(1))
+            );
+        }
+    }
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn unix_stops_descendants_when_the_leader_exits() {
+    let base = tempfile::tempdir().unwrap();
+    let work = tempfile::tempdir().unwrap();
+    let cli = script(
+        base.path(),
+        r#"
+        sleep 30 &
+        printf '{"result":"synthetic summary"}\n'
+        "#,
+    );
+    let output = run_fixture(
+        CliBackend::ClaudeCode,
+        &cli,
+        "synthetic transcript",
+        work.path(),
+        Duration::from_secs(2),
+        &AtomicBool::new(false),
+    )
+    .await
+    .unwrap();
+    assert_eq!(output, "synthetic summary");
+    assert_eq!(work.path().read_dir().unwrap().count(), 0);
+}
+
+#[cfg(windows)]
+#[tokio::test]
+async fn windows_cleanup_runs_off_the_async_worker() {
+    let worker = std::thread::current().id();
+    spawn_cleanup(move || assert_ne!(std::thread::current().id(), worker))
+        .unwrap()
+        .await
+        .unwrap();
 }

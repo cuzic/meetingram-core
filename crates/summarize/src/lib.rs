@@ -94,6 +94,7 @@ pub struct SummarizeOptions {
     pub model: String,
     /// Overrides [`DEFAULT_SYSTEM_PROMPT`] when set.
     pub system_prompt: Option<String>,
+    cli_timeout: Option<std::time::Duration>,
 }
 
 impl SummarizeOptions {
@@ -101,7 +102,14 @@ impl SummarizeOptions {
         Self {
             model: model.into(),
             system_prompt: None,
+            cli_timeout: None,
         }
+    }
+
+    /// Overrides the CLI time limit, including a possible compatibility retry.
+    pub fn with_cli_timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.cli_timeout = Some(timeout);
+        self
     }
 
     pub fn with_system_prompt(mut self, system_prompt: impl Into<String>) -> Self {

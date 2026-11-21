@@ -9,6 +9,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::ExitStatus;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader};
@@ -44,8 +45,9 @@ const CODEX_DISABLED_FEATURES: &[&str] = &[
 ];
 static CLAUDE_COMPAT: AtomicBool = AtomicBool::new(false);
 
-/// Default time limit for a CLI summary, including a possible compatibility retry.
+/// Default CLI time limit for incremental graph updates.
 pub const DEFAULT_CLI_TIMEOUT: Duration = Duration::from_secs(60);
+pub(crate) const DEFAULT_SUMMARY_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Whether Claude has switched to legacy flags in this process.
 pub fn claude_compatibility_mode() -> bool {
@@ -152,7 +154,14 @@ pub async fn summarize_via_cli(
     turns: &[TranscriptTurn],
     options: &SummarizeOptions,
 ) -> Result<String, CliSummarizeError> {
-    summarize_via_cli_with_limits(backend, turns, options, None, DEFAULT_CLI_TIMEOUT).await
+    summarize_via_cli_with_limits(
+        backend,
+        turns,
+        options,
+        None,
+        options.cli_timeout.unwrap_or(DEFAULT_SUMMARY_TIMEOUT),
+    )
+    .await
 }
 
 /// Summarizes a transcript with a caller-selected temp base and time limit.
@@ -185,34 +194,49 @@ fn launch_error(backend: CliBackend, error: io::Error) -> CliSummarizeError {
     }
 }
 
-struct WorkingDir(tempfile::TempDir);
+struct WorkingDir(Option<tempfile::TempDir>);
 
 impl WorkingDir {
     fn path(&self) -> &Path {
-        self.0.path()
+        self.0.as_ref().expect("working directory is live").path()
     }
 }
 
 #[cfg(windows)]
+fn remove_working_dir(dir: tempfile::TempDir) {
+    // A terminated process can briefly retain its working directory.
+    for _ in 0..20 {
+        match std::fs::remove_dir_all(dir.path()) {
+            Ok(()) => return,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    io::ErrorKind::PermissionDenied | io::ErrorKind::DirectoryNotEmpty
+                ) || error.raw_os_error() == Some(32) =>
+            {
+                std::thread::sleep(Duration::from_millis(5));
+            }
+            Err(_) => return,
+        }
+    }
+}
+
 impl Drop for WorkingDir {
     fn drop(&mut self) {
-        // Windows can briefly keep a terminated process's working directory
-        // open. TempDir alone makes only one attempt and suppresses the error.
-        for _ in 0..20 {
-            match std::fs::remove_dir_all(self.path()) {
-                Ok(()) => return,
-                Err(error) if error.kind() == io::ErrorKind::NotFound => return,
-                Err(error)
-                    if matches!(
-                        error.kind(),
-                        io::ErrorKind::PermissionDenied | io::ErrorKind::DirectoryNotEmpty
-                    ) || error.raw_os_error() == Some(32) =>
-                {
-                    std::thread::sleep(Duration::from_millis(5));
-                }
-                Err(_) => return,
-            }
+        #[cfg(windows)]
+        if let Some(dir) = self.0.take() {
+            spawn_cleanup(move || remove_working_dir(dir));
         }
+    }
+}
+
+fn spawn_cleanup(cleanup: impl FnOnce() + Send + 'static) -> Option<tokio::task::JoinHandle<()>> {
+    if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+        Some(runtime.spawn_blocking(cleanup))
+    } else {
+        std::thread::spawn(cleanup);
+        None
     }
 }
 
@@ -238,20 +262,20 @@ async fn run_cli(
                 .prefix(DIR_PREFIX)
                 .tempdir_in(base)?;
             std::fs::write(dir.path().join(SYSTEM_FILE), system)?;
-            Ok::<_, io::Error>(WorkingDir(dir))
+            Ok::<_, io::Error>(Arc::new(WorkingDir(Some(dir))))
         })
         .await
         .map_err(|error| CliSummarizeError::TempDir(io::Error::other(error)))?
         .map_err(CliSummarizeError::TempDir)?;
         let compat = backend == CliBackend::ClaudeCode && compatibility.load(Ordering::Relaxed);
-        let mut result = run_attempt(backend, binary, &input, dir.path(), compat).await?;
+        let mut result = run_attempt(backend, binary, &input, &dir, compat).await?;
         if backend == CliBackend::ClaudeCode
             && !compat
             && !result.status.success()
             && result.unknown_option
         {
             compatibility.store(true, Ordering::Relaxed);
-            result = run_attempt(backend, binary, &input, dir.path(), true).await?;
+            result = run_attempt(backend, binary, &input, &dir, true).await?;
         }
         if !result.status.success() {
             return Err(CliSummarizeError::NonZeroExit(backend, result.status));
@@ -377,15 +401,15 @@ async fn run_attempt(
     backend: CliBackend,
     binary: &Path,
     input: &CliInput<'_>,
-    dir: &Path,
+    dir: &Arc<WorkingDir>,
     compat: bool,
 ) -> Result<AttemptOutput, CliSummarizeError> {
-    let args = cli_args(backend, dir, input.model, compat);
+    let args = cli_args(backend, dir.path(), input.model, compat);
     let mut process =
         platform::Process::spawn(binary, &args, Some(dir)).map_err(|e| launch_error(backend, e))?;
     let mut stdin = process.stdin.take().expect("CLI stdin is piped");
     let read_error = |error| CliSummarizeError::ReadOutput(backend, error);
-    let (status, write_result, stdout, unknown_option) = tokio::try_join!(
+    let result = tokio::try_join!(
         async { process.group.wait().await.map_err(read_error) },
         async move {
             let result = async {
@@ -408,7 +432,11 @@ async fn run_attempt(
             .await
             .map_err(read_error)
         },
-    )?;
+    );
+    if let Some(cleanup) = process.group.stop() {
+        let _ = cleanup.await;
+    }
+    let (status, write_result, stdout, unknown_option) = result?;
     if let Err(error) = write_result {
         if status.success() && error.kind() != io::ErrorKind::BrokenPipe {
             return Err(read_error(error));
@@ -453,7 +481,7 @@ async fn read_stdout(
             {
                 if !matches!(
                     event.pointer("/item/type").and_then(|v| v.as_str()),
-                    Some("agent_message" | "reasoning")
+                    Some("agent_message" | "reasoning" | "error")
                 ) {
                     return Err(CliSummarizeError::ToolUse(backend));
                 }
