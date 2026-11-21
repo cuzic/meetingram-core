@@ -321,34 +321,25 @@ fn windows_resolves_batch_shim_and_stops_its_descendants() {
         bin.join("claude.cmd"),
         r#"@echo off
 if "%~1"=="--version" exit /b 0
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0fixture.ps1" %*
+"%~dp0fixture.exe" %*
 exit /b %errorlevel%
 "#
         .replace('\n', "\r\n"),
     )
     .unwrap();
-    std::fs::write(bin.join("fixture.ps1"), r#"
-$ErrorActionPreference = 'Stop'
-if ($args[0] -eq 'exec') {
-    if ($args[8] -cne (Get-Location).Path) { exit 21 }
-    if ($args[10] -cne (Join-Path (Get-Location).Path 'out.txt')) { exit 22 }
-    if ($args[12] -cne 'model_instructions_file="system.txt"') { exit 23 }
-    if ($args[18] -cne 'web_search="disabled"') { exit 24 }
-    [IO.File]::WriteAllText($args[10], 'synthetic summary')
-    '{"type":"item.completed","item":{"type":"agent_message"}}'
-    exit 0
-}
-if ($args[4] -cne '--tools' -or $args[5] -cne '' -or $args[6] -cne '--strict-mcp-config') { exit 31 }
-if ((Get-Content -Raw -LiteralPath $args[8]) -cne 'synthetic instruction') { exit 32 }
-if ([Console]::In.ReadToEnd() -cne ("abcdefghij`n" * 3000)) { exit 33 }
-$pidFile = Join-Path $PSScriptRoot 'grandchild'
-if (Test-Path (Join-Path $PSScriptRoot 'sleep')) {
-    $child = Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 30' -PassThru
-    [IO.File]::WriteAllText($pidFile, [string]$child.Id)
-    $child.WaitForExit()
-}
-'{"result":"synthetic summary"}'
-"#).unwrap();
+    let source = bin.join("fixture.rs");
+    std::fs::write(&source, include_str!("windows_fixture.rs")).unwrap();
+    let build = std::process::Command::new("rustc")
+        .arg(&source)
+        .arg("-o")
+        .arg(bin.join("fixture.exe"))
+        .output()
+        .unwrap();
+    assert!(
+        build.status.success(),
+        "fixture compilation failed: {}",
+        String::from_utf8_lossy(&build.stderr)
+    );
     let paths = std::env::join_paths(std::iter::once(bin.clone()).chain(std::env::split_paths(
         &std::env::var_os("PATH").unwrap_or_default(),
     )))
@@ -367,8 +358,9 @@ if (Test-Path (Join-Path $PSScriptRoot 'sleep')) {
         .unwrap();
     assert!(
         output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stdout)
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
     );
 }
 
@@ -402,7 +394,7 @@ async fn windows_fixture_subprocess() {
             &compat,
         )
         .await
-        .unwrap();
+        .unwrap_or_else(|error| panic!("{backend}: {error}"));
         assert_eq!(response, "synthetic summary");
         assert_eq!(work.read_dir().unwrap().count(), 0);
     }
