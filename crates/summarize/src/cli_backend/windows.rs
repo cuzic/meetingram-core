@@ -12,6 +12,54 @@ use windows_sys::Win32::System::Pipes::CreatePipe;
 use windows_sys::Win32::System::SystemInformation::GetSystemDirectoryW;
 use windows_sys::Win32::System::Threading::*;
 
+pub(super) fn process_start(pid: u32) -> ProcessStart {
+    // SAFETY: OpenProcess either returns a new owned handle or reports failure.
+    let handle = unsafe {
+        OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_SYNCHRONIZE,
+            0,
+            pid,
+        )
+    };
+    if handle.is_null() {
+        return match io::Error::last_os_error()
+            .raw_os_error()
+            .map(|code| code as u32)
+        {
+            Some(ERROR_INVALID_PARAMETER) => ProcessStart::Dead,
+            Some(ERROR_ACCESS_DENIED) => ProcessStart::Alive,
+            _ => ProcessStart::Unknown,
+        };
+    }
+    // SAFETY: handle is owned by this call, and GetProcessTimes receives
+    // writable FILETIME buffers.
+    unsafe {
+        let process = OwnedHandle::from_raw_handle(handle);
+        match WaitForSingleObject(process.as_raw_handle(), 0) {
+            WAIT_OBJECT_0 => return ProcessStart::Dead,
+            WAIT_TIMEOUT => {}
+            _ => return ProcessStart::Unknown,
+        }
+        let mut created = std::mem::zeroed::<FILETIME>();
+        let mut exited = created;
+        let mut kernel = created;
+        let mut user = created;
+        if GetProcessTimes(
+            process.as_raw_handle(),
+            &mut created,
+            &mut exited,
+            &mut kernel,
+            &mut user,
+        ) == 0
+        {
+            return ProcessStart::Alive;
+        }
+        ProcessStart::Known(
+            u64::from(created.dwHighDateTime) << 32 | u64::from(created.dwLowDateTime),
+        )
+    }
+}
+
 pub(super) fn resolve(name: &OsStr) -> io::Result<PathBuf> {
     let path = std::env::var_os("PATH").unwrap_or_default();
     resolve_in_path(name, &path)
