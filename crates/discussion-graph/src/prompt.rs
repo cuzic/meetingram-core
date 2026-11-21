@@ -7,17 +7,13 @@ use crate::{Edge, Graph, Node, NodeKind, Status, Utterance};
 pub const DEFAULT_INPUT_LIMIT: usize = 24_000;
 
 const EXTRACT: &str = include_str!("extraction.txt");
-const CONSOLIDATE: &str = concat!(
-    include_str!("extraction.txt"),
-    "\n会議は終わりました。今回は graph と根拠の発話を読みます。\n",
-    "重複の merge、抜けたエッジの add_edge、状態の訂正の set_status を返してください。\n",
-    "新規ノードは原則作らず、提示された根拠の uid を使ってください。\n"
+const CONSOLIDATE: &str = include_str!("consolidation.txt");
+const CONSOLIDATE_EDITS: &str = concat!(
+    include_str!("consolidation.txt"),
+    include_str!("consolidation-edits.txt")
 );
-const STRENGTHENED: &str = concat!(
-    "\nまず issue 同士のすべての組を比較してください。次に、同じ issue に属する position 同士のすべての組を比較してください。\n",
-    "同じ問い・同じ案を言い換えたものは必ず merge し、根拠が多い方を into にしてください。\n",
-    "issues があれば、そこにある他のまとまりの issue も比較に含めてください。\n"
-);
+const ISSUE_MERGES: &str = "\n全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge だけで統合してください。ground_count が多い方を into にしてください。\n";
+const GROUP_OPERATIONS: &str = "\ngraph groups はまとまりごとの nid の一覧です。同じまとまりの中で重複を比較して merge し、不足するエッジを add_edge、状態の訂正を set_status で返してください。\n";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prompt {
@@ -27,6 +23,8 @@ pub struct Prompt {
     pub allowed_uids: Vec<String>,
     /// New utterances included in this incremental request, in row order.
     pub new_uids: Vec<String>,
+    /// Number of live issues omitted to fit the issue consolidation prompt.
+    pub omitted_issues: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -138,6 +136,7 @@ pub fn build_incremental(
         user: incremental_user(&context, &ref_lines, &new_lines),
         allowed_uids,
         new_uids,
+        omitted_issues: 0,
     })
 }
 
@@ -229,99 +228,140 @@ fn incremental_user(context: &[String], refs: &[String], new: &[String]) -> Stri
 #[non_exhaustive]
 pub enum ConsolidateStyle {
     Baseline,
-    Strengthened,
 }
 
-/// Build the full consolidation prompt, or one prompt per issue group when
-/// the strengthened prompt exceeds the limit.
+/// Build the single baseline prompt for comparison with two-stage consolidation.
 pub fn build_consolidate(
     graph: &Graph,
     style: ConsolidateStyle,
     limit: usize,
 ) -> Result<Vec<Prompt>, PromptError> {
-    let nodes: BTreeMap<_, _> = graph
-        .nodes
-        .values()
-        .filter(|n| n.is_live())
-        .map(|n| (n.nid.as_str(), n))
-        .collect();
-    let edges: Vec<_> = graph.live_edges().collect();
-    let mut evidence: BTreeMap<&str, Vec<&Utterance>> = BTreeMap::new();
-    for ground in &graph.grounds {
-        if let Some(u) = graph.utterances.get(&ground.uid) {
-            evidence.entry(&ground.target).or_default().push(u);
+    match style {
+        ConsolidateStyle::Baseline => {
+            let renderer = Consolidation::new(graph);
+            let all = renderer.nodes.keys().copied().collect();
+            renderer
+                .fit_group(
+                    CONSOLIDATE_EDITS,
+                    &all,
+                    false,
+                    [(200, 3), (200, 1), (0, 0)],
+                    limit,
+                )
+                .map(|(_, prompt)| vec![prompt])
         }
     }
-    for utterances in evidence.values_mut() {
-        utterances.sort_by_key(|u| (u.row_id, &u.uid));
-        utterances.dedup_by_key(|u| &u.uid);
-    }
-    let renderer = Consolidation {
-        nodes,
-        edges,
-        evidence,
-    };
-    let all = renderer.nodes.keys().copied().collect();
-    if style == ConsolidateStyle::Baseline {
-        let mut prompt = renderer.render(CONSOLIDATE, &all, None, 200, 3);
-        let budget = limit
-            .checked_sub(chars(CONSOLIDATE))
-            .ok_or(PromptError::InputLimit)?;
-        const OMITTED: &str = "（以下省略）\n";
-        if chars(&prompt.user) > budget {
-            let body_budget = budget
-                .checked_sub(chars(OMITTED))
-                .ok_or(PromptError::InputLimit)?;
-            let end = prefix(&prompt.user, body_budget)
-                .rfind('\n')
-                .map_or(0, |end| end + 1);
-            prompt.user.truncate(end);
-            prompt.allowed_uids.retain(|uid| {
-                prompt.user.lines().any(|line| {
-                    serde_json::from_str::<serde_json::Value>(line).is_ok_and(|value| {
-                        value["grounds"].as_array().is_some_and(|grounds| {
-                            grounds
-                                .iter()
-                                .any(|ground| ground["uid"].as_str() == Some(uid))
-                        })
-                    })
-                })
-            });
-            prompt.user.push_str(OMITTED);
-        }
-        return Ok(vec![prompt]);
-    }
+}
 
-    let system = format!("{CONSOLIDATE}{STRENGTHENED}");
-    let full = renderer.render(&system, &all, None, usize::MAX, usize::MAX);
-    if full.fits(limit) {
-        return Ok(vec![full]);
+/// Build one issue-only request. Apply its patch before building stage two.
+/// Skip graphs with fewer than two live issues. Return an input-limit error
+/// when there is no room to compare two issues even without evidence.
+pub fn build_consolidate_issues(
+    graph: &Graph,
+    limit: usize,
+) -> Result<Option<Prompt>, PromptError> {
+    let renderer = Consolidation::new(graph);
+    let mut issues: Vec<_> = renderer.issues().collect();
+    if issues.len() < 2 {
+        return Ok(None);
     }
-    let issues: Vec<_> = renderer
-        .nodes
-        .values()
-        .filter(|node| node.kind == NodeKind::Issue)
-        .copied()
-        .collect();
-    renderer
-        .groups(&issues, &all)
-        .iter()
-        .map(|group| {
-            for (cap, count) in [(usize::MAX, usize::MAX), (200, usize::MAX), (200, 1)] {
-                let prompt = renderer.render(&system, group, Some(&issues), cap, count);
-                if prompt.fits(limit) {
-                    return Ok(prompt);
-                }
+    // Node IDs break ties when a single patch creates multiple issues.
+    issues.sort_by_key(|node| {
+        (
+            node.created_rev,
+            node.nid
+                .strip_prefix('n')
+                .and_then(|id| id.parse::<u64>().ok()),
+            &node.nid,
+        )
+    });
+    let system = format!("{CONSOLIDATE}{ISSUE_MERGES}");
+    let issue_count = issues.len();
+    let render = |issues: &[&Node], evidence| {
+        let nodes = issues
+            .iter()
+            .map(|node| (node.nid.as_str(), evidence))
+            .collect();
+        renderer.render(&system, &nodes, &[], true)
+    };
+    let full = render(&issues, (100, 1));
+    if full.fits(limit) {
+        return Ok(Some(full));
+    }
+    while issues.len() >= 2 {
+        let mut prompt = render(&issues, (0, 0));
+        if prompt.fits(limit) {
+            prompt.omitted_issues = issue_count - issues.len();
+            return Ok(Some(prompt));
+        }
+        issues.pop();
+    }
+    Err(PromptError::InputLimit)
+}
+
+/// Pack issue groups from the graph after stage one's patch has been applied.
+pub fn build_consolidate_groups(graph: &Graph, limit: usize) -> Result<Vec<Prompt>, PromptError> {
+    let renderer = Consolidation::new(graph);
+    let all = renderer.nodes.keys().copied().collect();
+    let system = format!("{CONSOLIDATE_EDITS}{GROUP_OPERATIONS}");
+    let mut batches: Vec<GroupBatch<'_>> = Vec::new();
+    let groups = renderer.groups(&all);
+    for group in &groups {
+        let (evidence, prompt) = renderer.fit_group(
+            &system,
+            group,
+            true,
+            [
+                (usize::MAX, usize::MAX),
+                (200, usize::MAX),
+                (200, 1),
+                (0, 0),
+            ],
+            limit,
+        )?;
+        let mut packed = false;
+        for batch in &mut batches {
+            let mut candidate_groups = batch.groups.clone();
+            candidate_groups.push(group);
+            let mut candidate_evidence = batch.evidence.clone();
+            for (&nid, &limits) in &evidence {
+                let entry = candidate_evidence.entry(nid).or_insert(limits);
+                *entry = (*entry).max(limits);
             }
-            Err(PromptError::InputLimit)
-        })
-        .collect()
+            let candidate = renderer.render(&system, &candidate_evidence, &candidate_groups, false);
+            if candidate.fits(limit) {
+                *batch = GroupBatch {
+                    groups: candidate_groups,
+                    evidence: candidate_evidence,
+                    prompt: candidate,
+                };
+                packed = true;
+                break;
+            }
+        }
+        if !packed {
+            batches.push(GroupBatch {
+                groups: vec![group],
+                evidence,
+                prompt,
+            });
+        }
+    }
+    Ok(batches.into_iter().map(|batch| batch.prompt).collect())
 }
 
 impl Prompt {
     fn fits(&self, limit: usize) -> bool {
         chars(&self.system) + chars(&self.user) <= limit
     }
+}
+
+type EvidenceLimits<'a> = BTreeMap<&'a str, (usize, usize)>;
+
+struct GroupBatch<'a> {
+    groups: Vec<&'a BTreeSet<&'a str>>,
+    evidence: EvidenceLimits<'a>,
+    prompt: Prompt,
 }
 
 struct Consolidation<'a> {
@@ -331,14 +371,46 @@ struct Consolidation<'a> {
 }
 
 impl<'a> Consolidation<'a> {
-    fn groups(&self, issues: &[&'a Node], all: &BTreeSet<&'a str>) -> Vec<BTreeSet<&'a str>> {
+    fn new(graph: &'a Graph) -> Self {
+        let nodes = graph
+            .nodes
+            .values()
+            .filter(|node| node.is_live())
+            .map(|node| (node.nid.as_str(), node))
+            .collect();
+        let edges = graph.live_edges().collect();
+        let mut evidence: BTreeMap<&str, Vec<&Utterance>> = BTreeMap::new();
+        for ground in &graph.grounds {
+            if let Some(utterance) = graph.utterances.get(&ground.uid) {
+                evidence.entry(&ground.target).or_default().push(utterance);
+            }
+        }
+        for utterances in evidence.values_mut() {
+            utterances.sort_by_key(|u| (u.row_id, &u.uid));
+            utterances.dedup_by_key(|u| &u.uid);
+        }
+        Self {
+            nodes,
+            edges,
+            evidence,
+        }
+    }
+
+    fn issues(&self) -> impl Iterator<Item = &'a Node> + '_ {
+        self.nodes
+            .values()
+            .copied()
+            .filter(|node| node.kind == NodeKind::Issue)
+    }
+
+    fn groups(&self, all: &BTreeSet<&'a str>) -> Vec<BTreeSet<&'a str>> {
         let mut incoming: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
         for edge in &self.edges {
             incoming.entry(&edge.dst).or_default().push(&edge.src);
         }
         let mut groups = Vec::new();
         let mut assigned = BTreeSet::new();
-        for issue in issues {
+        for issue in self.issues() {
             let id = issue.nid.as_str();
             let mut group = BTreeSet::new();
             let mut pending = vec![id];
@@ -351,30 +423,67 @@ impl<'a> Consolidation<'a> {
             groups.push(group);
         }
         let unassigned: BTreeSet<_> = all.difference(&assigned).copied().collect();
-        if !unassigned.is_empty() || groups.is_empty() {
+        if !unassigned.is_empty() {
             groups.push(unassigned);
         }
         groups
     }
 
+    fn fit_group(
+        &self,
+        system: &str,
+        group: &BTreeSet<&'a str>,
+        grouped: bool,
+        tiers: impl IntoIterator<Item = (usize, usize)>,
+        limit: usize,
+    ) -> Result<(EvidenceLimits<'a>, Prompt), PromptError> {
+        let groups = if grouped {
+            std::slice::from_ref(&group)
+        } else {
+            &[]
+        };
+        for limits in tiers {
+            let evidence = group.iter().map(|&nid| (nid, limits)).collect();
+            let prompt = self.render(system, &evidence, groups, false);
+            if prompt.fits(limit) {
+                return Ok((evidence, prompt));
+            }
+        }
+        Err(PromptError::InputLimit)
+    }
+
     fn render(
         &self,
         system: &str,
-        group: &BTreeSet<&str>,
-        issues: Option<&[&Node]>,
-        cap: usize,
-        count: usize,
+        evidence: &EvidenceLimits<'_>,
+        groups: &[&BTreeSet<&str>],
+        issues_only: bool,
     ) -> Prompt {
-        let mut user = String::new();
-        let mut allowed = BTreeSet::new();
-        if let Some(issues) = issues {
-            user.push_str("issues\n");
-            for issue in issues {
-                push_line(&mut user, json!({"nid":issue.nid, "text":issue.text}));
+        let mut user = String::from("graph edges\n");
+        for edge in &self.edges {
+            let src = evidence.contains_key(edge.src.as_str());
+            let dst = evidence.contains_key(edge.dst.as_str());
+            // Include cross-group edges in stage two, even if the other
+            // endpoint belongs to a different request.
+            if (src && dst) || (!groups.is_empty() && (src || dst)) {
+                push_line(
+                    &mut user,
+                    json!({
+                        "eid":edge.eid, "src":edge.src, "dst":edge.dst,
+                        "kind":edge.kind, "confidence":edge.confidence,
+                    }),
+                );
+            }
+        }
+        if !groups.is_empty() {
+            user.push_str("graph groups\n");
+            for group in groups {
+                push_line(&mut user, json!({"nids": group}));
             }
         }
         user.push_str("graph nodes\n");
-        for nid in group {
+        let mut allowed = BTreeSet::new();
+        for (&nid, &(cap, count)) in evidence {
             let node = self.nodes[nid];
             let utterances = self
                 .evidence
@@ -385,33 +494,22 @@ impl<'a> Consolidation<'a> {
                 allowed.insert(u.uid.clone());
                 json!({"uid":u.uid, "speaker_label":u.speaker_label, "text":prefix(&u.text, cap)})
             }).collect();
-            push_line(
-                &mut user,
+            let line = if issues_only {
+                json!({"nid":nid, "text":node.text, "ground_count":utterances.len(), "grounds":grounds})
+            } else {
                 json!({
                     "nid":nid, "kind":node.kind, "status":node.status, "text":node.text,
                     "confidence":node.confidence, "ground_count":utterances.len(), "grounds":grounds,
-                }),
-            );
-        }
-        user.push_str("graph edges\n");
-        for edge in self
-            .edges
-            .iter()
-            .filter(|e| group.contains(e.src.as_str()) && group.contains(e.dst.as_str()))
-        {
-            push_line(
-                &mut user,
-                json!({
-                    "eid":edge.eid, "src":edge.src, "dst":edge.dst,
-                    "kind":edge.kind, "confidence":edge.confidence,
-                }),
-            );
+                })
+            };
+            push_line(&mut user, line);
         }
         Prompt {
             system: system.to_owned(),
             user,
             allowed_uids: allowed.into_iter().collect(),
             new_uids: Vec::new(),
+            omitted_issues: 0,
         }
     }
 }

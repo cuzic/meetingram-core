@@ -1,0 +1,3 @@
+重複の merge、抜けたエッジの add_edge、状態の訂正の set_status を返してください。
+{"op":"add_edge","src":"n2","dst":"n1","kind":"responds_to","confidence":0.8,"grounds":[{"uid":"u2"}]}
+{"op":"set_status","nid":"n1","status":"decided","grounds":[{"uid":"u4"}]}

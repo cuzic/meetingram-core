@@ -11,6 +11,6 @@ pub use patch::{
     apply_patch, parse_ops, AppliedOp, GroundRef, Op, ParseError, PatchResult, Rejection,
 };
 pub use prompt::{
-    build_consolidate, build_incremental, ConsolidateStyle, Prompt, PromptError,
-    DEFAULT_INPUT_LIMIT,
+    build_consolidate, build_consolidate_groups, build_consolidate_issues, build_incremental,
+    ConsolidateStyle, Prompt, PromptError, DEFAULT_INPUT_LIMIT,
 };
