@@ -14,12 +14,12 @@ pub fn best_lag(a: &[f32], b: &[f32], max_lag: i64) -> (i64, f64) {
     for lag in -max_lag..=max_lag {
         let mut sum = 0.0f64;
         let mut count = 0u64;
-        for i in 0..a.len() {
+        for (i, &sample) in a.iter().enumerate() {
             let j = i as i64 + lag;
             if j < 0 || j as usize >= b.len() {
                 continue;
             }
-            sum += a[i] as f64 * b[j as usize] as f64;
+            sum += sample as f64 * b[j as usize] as f64;
             count += 1;
         }
         if count == 0 {
@@ -71,10 +71,10 @@ mod tests {
         let signal: Vec<f32> = (0..n).map(|i| ((i as f64) * 0.3).sin() as f32).collect();
         let shift = 7i64;
         let mut shifted = vec![0.0f32; n];
-        for i in 0..n {
+        for (i, sample) in shifted.iter_mut().enumerate() {
             let j = i as i64 - shift;
             if j >= 0 && (j as usize) < n {
-                shifted[i] = signal[j as usize];
+                *sample = signal[j as usize];
             }
         }
         let (lag, _score) = best_lag(&signal, &shifted, 20);

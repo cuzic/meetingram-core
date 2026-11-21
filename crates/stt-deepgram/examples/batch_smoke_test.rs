@@ -19,9 +19,10 @@ async fn main() {
         .expect("usage: batch_smoke_test <pcm-file>");
 
     let raw = fs::read(&pcm_path).expect("read pcm file");
-    let pcm: Vec<f32> = raw
-        .chunks_exact(2)
-        .map(|b| i16::from_le_bytes([b[0], b[1]]) as f32 / i16::MAX as f32)
+    let (sample_bytes, _) = raw.as_chunks::<2>();
+    let pcm: Vec<f32> = sample_bytes
+        .iter()
+        .map(|&b| i16::from_le_bytes(b) as f32 / i16::MAX as f32)
         .collect();
     println!(
         "loaded {} samples ({:.2}s at 16kHz)",
