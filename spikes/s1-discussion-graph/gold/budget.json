@@ -1,0 +1,459 @@
+{
+  "nodes": [
+    {
+      "id": "i1",
+      "kind": "issue",
+      "text": "今期の追加採用枠を開けるか",
+      "grounds": [
+        4,
+        88
+      ]
+    },
+    {
+      "id": "p1",
+      "kind": "position",
+      "text": "週二日の補助を入れる",
+      "grounds": [
+        5,
+        8
+      ]
+    },
+    {
+      "id": "a1",
+      "kind": "argument",
+      "text": "補助が入れば棚卸しが進む",
+      "grounds": [
+        6
+      ]
+    },
+    {
+      "id": "a2",
+      "kind": "argument",
+      "text": "引き継ぎを教える人が空いていない",
+      "grounds": [
+        7,
+        9
+      ]
+    },
+    {
+      "id": "p2",
+      "kind": "position",
+      "text": "棚卸しを金曜午前に小分けにする",
+      "grounds": [
+        11,
+        13,
+        14
+      ]
+    },
+    {
+      "id": "a3",
+      "kind": "argument",
+      "text": "棚卸しを分けると確認待ちが減る",
+      "grounds": [
+        15
+      ]
+    },
+    {
+      "id": "a4",
+      "kind": "argument",
+      "text": "金曜は飛び込み依頼がある",
+      "grounds": [
+        16
+      ]
+    },
+    {
+      "id": "a5",
+      "kind": "argument",
+      "text": "窓口を当番にすれば追加採用を待てる",
+      "grounds": [
+        17,
+        18
+      ]
+    },
+    {
+      "id": "d1",
+      "kind": "decision",
+      "text": "追加採用を今期見送り金曜分割を四週試す",
+      "grounds": [
+        20,
+        21,
+        89
+      ]
+    },
+    {
+      "id": "t1",
+      "kind": "action",
+      "text": "金曜の当番表を作る",
+      "grounds": [
+        22,
+        96
+      ]
+    },
+    {
+      "id": "t2",
+      "kind": "action",
+      "text": "四週目に作業時間を報告する",
+      "grounds": [
+        23,
+        96
+      ]
+    },
+    {
+      "id": "i2",
+      "kind": "issue",
+      "text": "検証端末を購入するか借りるか",
+      "grounds": [
+        25,
+        45,
+        101,
+        102
+      ]
+    },
+    {
+      "id": "p3",
+      "kind": "position",
+      "text": "検証用の予備機を一台買う",
+      "grounds": [
+        26,
+        33
+      ]
+    },
+    {
+      "id": "a6",
+      "kind": "argument",
+      "text": "一台を常時検証に使える",
+      "grounds": [
+        27
+      ]
+    },
+    {
+      "id": "a7",
+      "kind": "argument",
+      "text": "使用日は月に二日しかない",
+      "grounds": [
+        28
+      ]
+    },
+    {
+      "id": "p4",
+      "kind": "position",
+      "text": "検証用端末を借りる",
+      "grounds": [
+        29
+      ]
+    },
+    {
+      "id": "a8",
+      "kind": "argument",
+      "text": "借用日程に試験をまとめられる",
+      "grounds": [
+        30
+      ]
+    },
+    {
+      "id": "a9",
+      "kind": "argument",
+      "text": "借用では機種を毎回そろえにくい",
+      "grounds": [
+        31,
+        32
+      ]
+    },
+    {
+      "id": "a10",
+      "kind": "argument",
+      "text": "借用端末は返却前に初期化が要る",
+      "grounds": [
+        41,
+        42
+      ]
+    },
+    {
+      "id": "t3",
+      "kind": "action",
+      "text": "保守費と作業時間を含めて購入と借用の総費用を比較する",
+      "grounds": [
+        34,
+        43,
+        44,
+        47,
+        97
+      ]
+    },
+    {
+      "id": "i3",
+      "kind": "issue",
+      "text": "残りの研修費をどう使うか",
+      "grounds": [
+        49
+      ]
+    },
+    {
+      "id": "p5",
+      "kind": "position",
+      "text": "内製の短い説明会を開く",
+      "grounds": [
+        51
+      ]
+    },
+    {
+      "id": "a11",
+      "kind": "argument",
+      "text": "説明内容を現在の手順に合わせられる",
+      "grounds": [
+        52
+      ]
+    },
+    {
+      "id": "a12",
+      "kind": "argument",
+      "text": "講師役の工数を見ていない",
+      "grounds": [
+        53,
+        54
+      ]
+    },
+    {
+      "id": "p6",
+      "kind": "position",
+      "text": "外部講座の枠を一席取る",
+      "grounds": [
+        55
+      ]
+    },
+    {
+      "id": "a13",
+      "kind": "argument",
+      "text": "外部から異なる視点が入る",
+      "grounds": [
+        56
+      ]
+    },
+    {
+      "id": "a14",
+      "kind": "argument",
+      "text": "受講後に内容を社内共有する工数が残る",
+      "grounds": [
+        57
+      ]
+    },
+    {
+      "id": "d2",
+      "kind": "decision",
+      "text": "今年は希望者向けの内製説明会を一回開く",
+      "grounds": [
+        59,
+        64,
+        65
+      ]
+    },
+    {
+      "id": "t4",
+      "kind": "action",
+      "text": "二十分の説明資料の下書きを作る",
+      "grounds": [
+        60,
+        62,
+        98
+      ]
+    },
+    {
+      "id": "i4",
+      "kind": "issue",
+      "text": "余剰予算を予備費に移すか来期に回すか",
+      "grounds": [
+        67,
+        68,
+        79
+      ]
+    },
+    {
+      "id": "p7",
+      "kind": "position",
+      "text": "余剰予算を予備費に移す",
+      "grounds": [
+        68,
+        69
+      ]
+    },
+    {
+      "id": "p8",
+      "kind": "position",
+      "text": "余剰予算を来期に回す",
+      "grounds": [
+        68
+      ]
+    },
+    {
+      "id": "a15",
+      "kind": "argument",
+      "text": "予備費に置くと見通しがよい",
+      "grounds": [
+        69
+      ]
+    },
+    {
+      "id": "t5",
+      "kind": "action",
+      "text": "費目の扱いと調整先を事務に確認する",
+      "grounds": [
+        70,
+        76,
+        77,
+        99
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "p1",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a1",
+      "dst": "p1",
+      "kind": "supports"
+    },
+    {
+      "src": "a2",
+      "dst": "p1",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p2",
+      "dst": "i1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a3",
+      "dst": "p2",
+      "kind": "supports"
+    },
+    {
+      "src": "a4",
+      "dst": "p2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a5",
+      "dst": "a4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d1",
+      "dst": "i1",
+      "kind": "resolves"
+    },
+    {
+      "src": "t1",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "t2",
+      "dst": "d1",
+      "kind": "assigns"
+    },
+    {
+      "src": "p3",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a6",
+      "dst": "p3",
+      "kind": "supports"
+    },
+    {
+      "src": "a7",
+      "dst": "p3",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p4",
+      "dst": "i2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a8",
+      "dst": "p4",
+      "kind": "supports"
+    },
+    {
+      "src": "a9",
+      "dst": "p4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "a10",
+      "dst": "p4",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t3",
+      "dst": "i2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p5",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a11",
+      "dst": "p5",
+      "kind": "supports"
+    },
+    {
+      "src": "a12",
+      "dst": "p5",
+      "kind": "objects_to"
+    },
+    {
+      "src": "p6",
+      "dst": "i3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a13",
+      "dst": "p6",
+      "kind": "supports"
+    },
+    {
+      "src": "a14",
+      "dst": "p6",
+      "kind": "objects_to"
+    },
+    {
+      "src": "d2",
+      "dst": "i3",
+      "kind": "resolves"
+    },
+    {
+      "src": "t4",
+      "dst": "d2",
+      "kind": "assigns"
+    },
+    {
+      "src": "p7",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p8",
+      "dst": "i4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a15",
+      "dst": "p7",
+      "kind": "supports"
+    },
+    {
+      "src": "t5",
+      "dst": "i4",
+      "kind": "assigns"
+    }
+  ]
+}

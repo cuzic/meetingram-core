@@ -1,0 +1,57 @@
+name: spike-s1-windows
+on:
+  push:
+    branches: [spike/discussion-graph]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: spikes/s1-discussion-graph
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: cargo build --locked -p argv-probe --bins
+      - name: Measure argv
+        run: |
+          '## 引数の上限' | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          '' | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          ./target/debug/argv-probe.exe | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install npm CLIs and test PATH
+        run: |
+          npm install -g @anthropic-ai/claude-code @openai/codex
+          $install = $LASTEXITCODE
+          $npmBin = (npm prefix -g | Out-String).Trim()
+          $env:PATH = "$npmBin;$env:PATH"
+          $lines = @('', '## npm install', '', "| インストール | 終了コード |", '| --- | --- |', "| npm | $install |", '', '| CLI | 配置された形式 |', '| --- | --- |')
+          foreach ($name in @('claude', 'codex')) {
+            $types = @(Get-ChildItem -LiteralPath $npmBin -Filter "$name.*" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Extension)
+            $lines += "| $name | $($types -join ', ') |"
+          }
+          $lines += @('', '| CLI | Rust Command::new の結果 |', '| --- | --- |')
+          $lines | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          ./target/debug/argv-probe.exe versions | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+      - name: Install native Claude and test PATH
+        run: |
+          $install = '成功'
+          try {
+            irm https://claude.ai/install.ps1 | iex
+            if ($LASTEXITCODE) { $install = "終了コード $LASTEXITCODE" }
+          } catch {
+            $install = '失敗'
+            Write-Host $_
+          }
+          $native = Join-Path $env:USERPROFILE '.local/bin'
+          $env:PATH = "$native;$env:PATH"
+          $types = @(Get-ChildItem -LiteralPath $native -Filter 'claude.*' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Extension)
+          @('', '## ネイティブ Claude', '', '| インストール | 配置された形式 |', '| --- | --- |', "| $install | $($types -join ', ') |", '', '| CLI | Rust Command::new の結果 |', '| --- | --- |') |
+            Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          ./target/debug/argv-probe.exe versions | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          exit 0

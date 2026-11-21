@@ -1,0 +1,120 @@
+{"row_id":1,"speaker_label":"自分","start_ms":0,"end_ms":1785,"text":"えっと、次の期の支出を決めたいです"}
+{"row_id":2,"speaker_label":"相手","start_ms":2265,"end_ms":4155,"text":"検証の端末代と人の枠が競合しています"}
+{"row_id":3,"speaker_label":"相手 (話者2)","start_ms":4635,"end_ms":5685,"text":"どっちから行きます？"}
+{"row_id":4,"speaker_label":"相手 (話者3)","start_ms":6165,"end_ms":7740,"text":"人の枠を今期開けるかどうかから"}
+{"row_id":5,"speaker_label":"相手","start_ms":8220,"end_ms":9795,"text":"週二の補助を入れる案があります"}
+{"row_id":6,"speaker_label":"相手","start_ms":10275,"end_ms":12060,"text":"そうすると棚卸しが進むのは確かです"}
+{"row_id":7,"speaker_label":"相手 (話者2)","start_ms":12540,"end_ms":14535,"text":"でも引き継ぎを教える人が空いていません"}
+{"row_id":8,"speaker_label":"相手","start_ms":15015,"end_ms":16695,"text":"あの、週二で担当してもらう案です"}
+{"row_id":9,"speaker_label":"自分","start_ms":17175,"end_ms":18855,"text":"短期なら準備に時間を取られますね"}
+{"row_id":10,"speaker_label":"相手","start_ms":19335,"end_ms":19685,"text":"うん"}
+{"row_id":11,"speaker_label":"相手 (話者2)","start_ms":20165,"end_ms":21950,"text":"一方で今の人の時間を組み替える案も"}
+{"row_id":12,"speaker_label":"相手 (話者3)","start_ms":22430,"end_ms":23375,"text":"そこを聞きたいです"}
+{"row_id":13,"speaker_label":"相手 (話者2)","start_ms":24975,"end_ms":26655,"text":"いま棚卸しは月末にまとめています"}
+{"row_id":14,"speaker_label":"相手 (話者2)","start_ms":27135,"end_ms":28710,"text":"それを金曜の午前に小分けにする"}
+{"row_id":15,"speaker_label":"相手 (話者2)","start_ms":29190,"end_ms":30870,"text":"分けると確認待ちの時間が減ります"}
+{"row_id":16,"speaker_label":"相手 (話者3)","start_ms":31350,"end_ms":32925,"text":"でも金曜は依頼が飛び込みますね"}
+{"row_id":17,"speaker_label":"自分","start_ms":33405,"end_ms":35085,"text":"窓口を当番にすれば、あ、受け口を"}
+{"row_id":18,"speaker_label":"相手","start_ms":35565,"end_ms":37560,"text":"そうすると週二をすぐ入れなくて済みます"}
+{"row_id":19,"speaker_label":"相手 (話者2)","start_ms":38040,"end_ms":38390,"text":"はい"}
+{"row_id":20,"speaker_label":"自分","start_ms":38870,"end_ms":40445,"text":"今期は追加採用を見送りましょう"}
+{"row_id":21,"speaker_label":"自分","start_ms":40925,"end_ms":42290,"text":"金曜分割は四週だけ試す、で"}
+{"row_id":22,"speaker_label":"相手 (話者3)","start_ms":42770,"end_ms":44030,"text":"当番表は私が今日作ります"}
+{"row_id":23,"speaker_label":"相手 (話者2)","start_ms":44510,"end_ms":46085,"text":"四週目に作業時間も持ってきます"}
+{"row_id":24,"speaker_label":"相手 (話者3)","start_ms":46565,"end_ms":47195,"text":"分かりました"}
+{"row_id":25,"speaker_label":"自分","start_ms":48795,"end_ms":50580,"text":"端末の支出はどこまで見込んでますか"}
+{"row_id":26,"speaker_label":"相手","start_ms":51060,"end_ms":52530,"text":"候補は予備機を一台買う案です"}
+{"row_id":27,"speaker_label":"相手 (話者2)","start_ms":53010,"end_ms":54585,"text":"常時検証に一台空くのが利点です"}
+{"row_id":28,"speaker_label":"相手 (話者3)","start_ms":55065,"end_ms":56535,"text":"ただ使う日はまだ月に二日です"}
+{"row_id":29,"speaker_label":"自分","start_ms":57015,"end_ms":58485,"text":"借りる案も予算表に入れました"}
+{"row_id":30,"speaker_label":"相手","start_ms":58965,"end_ms":60540,"text":"借りると試験をまとめて組めます"}
+{"row_id":31,"speaker_label":"相手 (話者2)","start_ms":61020,"end_ms":62595,"text":"機種を毎回同じにできませんけど"}
+{"row_id":32,"speaker_label":"相手 (話者3)","start_ms":63075,"end_ms":63705,"text":"あ、再現性か"}
+{"row_id":33,"speaker_label":"自分","start_ms":64185,"end_ms":65655,"text":"一台買う話は保守も込みですか"}
+{"row_id":34,"speaker_label":"相手","start_ms":66135,"end_ms":67500,"text":"まだ見積もりに入れてません"}
+{"row_id":35,"speaker_label":"相手 (話者2)","start_ms":67980,"end_ms":68330,"text":"はい"}
+{"row_id":36,"speaker_label":"相手 (話者3)","start_ms":68810,"end_ms":69965,"text":"維持費を見てからですね"}
+{"row_id":37,"speaker_label":"自分","start_ms":71565,"end_ms":72825,"text":"今の棚に空きありましたか"}
+{"row_id":38,"speaker_label":"相手","start_ms":73305,"end_ms":74565,"text":"小さい箱ならありそうです"}
+{"row_id":39,"speaker_label":"相手 (話者2)","start_ms":75045,"end_ms":76620,"text":"置くのは簡単だけどネットの枠が"}
+{"row_id":40,"speaker_label":"相手 (話者3)","start_ms":77100,"end_ms":77625,"text":"そうですね"}
+{"row_id":41,"speaker_label":"自分","start_ms":78105,"end_ms":79890,"text":"貸し出しだと設定を毎回消すんですか"}
+{"row_id":42,"speaker_label":"相手","start_ms":80370,"end_ms":81630,"text":"返す前に初期化が要ります"}
+{"row_id":43,"speaker_label":"相手 (話者2)","start_ms":82110,"end_ms":83475,"text":"作業時間まで入れたいですね"}
+{"row_id":44,"speaker_label":"相手","start_ms":83955,"end_ms":85845,"text":"私の方で購入と借用の総費用を比べます"}
+{"row_id":45,"speaker_label":"自分","start_ms":86325,"end_ms":87585,"text":"じゃあ今日決めるのは保留"}
+{"row_id":46,"speaker_label":"相手","start_ms":88065,"end_ms":89325,"text":"うん、その金額が出てから"}
+{"row_id":47,"speaker_label":"相手 (話者2)","start_ms":89805,"end_ms":90855,"text":"来週までには取れます"}
+{"row_id":48,"speaker_label":"相手 (話者3)","start_ms":91335,"end_ms":91860,"text":"助かります"}
+{"row_id":49,"speaker_label":"自分","start_ms":93460,"end_ms":94930,"text":"研修費の残りはどうしましょう"}
+{"row_id":50,"speaker_label":"相手","start_ms":95410,"end_ms":96355,"text":"枠が六万円あります"}
+{"row_id":51,"speaker_label":"相手 (話者2)","start_ms":96835,"end_ms":98305,"text":"内製で短い説明会にする案です"}
+{"row_id":52,"speaker_label":"相手 (話者3)","start_ms":98785,"end_ms":100465,"text":"やり方を今の手順に合わせられます"}
+{"row_id":53,"speaker_label":"自分","start_ms":100945,"end_ms":102310,"text":"でも講師役の時間を見てない"}
+{"row_id":54,"speaker_label":"相手","start_ms":102790,"end_ms":104155,"text":"あ、そこで人の枠とまた被る"}
+{"row_id":55,"speaker_label":"相手 (話者2)","start_ms":104635,"end_ms":106525,"text":"外部講座の一席だけ取る方法もあります"}
+{"row_id":56,"speaker_label":"相手 (話者3)","start_ms":107005,"end_ms":108160,"text":"別の視点が入る点は良い"}
+{"row_id":57,"speaker_label":"自分","start_ms":108640,"end_ms":110950,"text":"受講した人が結局共有会をやることにはなります"}
+{"row_id":58,"speaker_label":"相手","start_ms":111430,"end_ms":112060,"text":"そうですよね"}
+{"row_id":59,"speaker_label":"相手 (話者2)","start_ms":112540,"end_ms":114220,"text":"今年は内製の説明会を一回にします"}
+{"row_id":60,"speaker_label":"相手 (話者3)","start_ms":114700,"end_ms":116170,"text":"担当が二十分の資料を作ります"}
+{"row_id":61,"speaker_label":"自分","start_ms":117770,"end_ms":118925,"text":"話す人はあとで決める？"}
+{"row_id":62,"speaker_label":"相手 (話者2)","start_ms":119405,"end_ms":120665,"text":"私がドラフトまでやります"}
+{"row_id":63,"speaker_label":"相手 (話者2)","start_ms":121145,"end_ms":121495,"text":"はい"}
+{"row_id":64,"speaker_label":"相手 (話者3)","start_ms":121975,"end_ms":123130,"text":"対象は全員でいいですか"}
+{"row_id":65,"speaker_label":"自分","start_ms":123610,"end_ms":124240,"text":"希望者からで"}
+{"row_id":66,"speaker_label":"相手","start_ms":124720,"end_ms":125140,"text":"なるほど"}
+{"row_id":67,"speaker_label":"相手 (話者2)","start_ms":125620,"end_ms":127405,"text":"予算表の数字を並べると余りが出ます"}
+{"row_id":68,"speaker_label":"相手 (話者3)","start_ms":127885,"end_ms":129565,"text":"余りを予備費に移すか来期へ回すか"}
+{"row_id":69,"speaker_label":"自分","start_ms":130045,"end_ms":131935,"text":"予備費へ置く方が見通しはよくなります"}
+{"row_id":70,"speaker_label":"相手","start_ms":132415,"end_ms":133990,"text":"期をまたいで戻せるか確認が要る"}
+{"row_id":71,"speaker_label":"相手 (話者2)","start_ms":134470,"end_ms":134995,"text":"そうですね"}
+{"row_id":72,"speaker_label":"相手 (話者3)","start_ms":135475,"end_ms":136735,"text":"規則を私は覚えていません"}
+{"row_id":73,"speaker_label":"自分","start_ms":138335,"end_ms":139805,"text":"前回は月末に戻した気がします"}
+{"row_id":74,"speaker_label":"相手","start_ms":140285,"end_ms":141965,"text":"それは別の費目じゃなかったですか"}
+{"row_id":75,"speaker_label":"相手 (話者2)","start_ms":142445,"end_ms":143075,"text":"たぶん、はい"}
+{"row_id":76,"speaker_label":"相手 (話者3)","start_ms":143555,"end_ms":145025,"text":"費目の扱いを事務に確認します"}
+{"row_id":77,"speaker_label":"自分","start_ms":145505,"end_ms":147290,"text":"金額が合わないときの調整先も聞いて"}
+{"row_id":78,"speaker_label":"相手","start_ms":147770,"end_ms":148190,"text":"了解です"}
+{"row_id":79,"speaker_label":"相手 (話者2)","start_ms":148670,"end_ms":149825,"text":"今日はそこを決めません"}
+{"row_id":80,"speaker_label":"相手 (話者3)","start_ms":150305,"end_ms":150655,"text":"はい"}
+{"row_id":81,"speaker_label":"自分","start_ms":151135,"end_ms":151870,"text":"あとは日付だけ"}
+{"row_id":82,"speaker_label":"相手","start_ms":152350,"end_ms":153085,"text":"次回は四週後？"}
+{"row_id":83,"speaker_label":"相手 (話者2)","start_ms":153565,"end_ms":155350,"text":"端末の見積もりは来週先に見ましょう"}
+{"row_id":84,"speaker_label":"相手 (話者3)","start_ms":155830,"end_ms":157510,"text":"全員そろわなくても確認はできます"}
+{"row_id":85,"speaker_label":"自分","start_ms":159110,"end_ms":160265,"text":"あ、私は午前ならいます"}
+{"row_id":86,"speaker_label":"相手","start_ms":160745,"end_ms":161900,"text":"夕方でも共有はできます"}
+{"row_id":87,"speaker_label":"相手 (話者2)","start_ms":162380,"end_ms":162730,"text":"了解"}
+{"row_id":88,"speaker_label":"相手 (話者3)","start_ms":163210,"end_ms":164890,"text":"採用見送りは期限付きという理解で"}
+{"row_id":89,"speaker_label":"自分","start_ms":165370,"end_ms":167365,"text":"今期は見送り、次期は四週の結果を見ます"}
+{"row_id":90,"speaker_label":"相手","start_ms":167845,"end_ms":168475,"text":"分かりました"}
+{"row_id":91,"speaker_label":"相手 (話者2)","start_ms":168955,"end_ms":170215,"text":"外に伝えるのはいつです？"}
+{"row_id":92,"speaker_label":"相手 (話者3)","start_ms":170695,"end_ms":171640,"text":"話はまだ部署の中で"}
+{"row_id":93,"speaker_label":"自分","start_ms":172120,"end_ms":173695,"text":"はい、予算コードも確認中なので"}
+{"row_id":94,"speaker_label":"相手","start_ms":174175,"end_ms":175540,"text":"メモには仮の金額で書きます"}
+{"row_id":95,"speaker_label":"相手 (話者2)","start_ms":176020,"end_ms":177280,"text":"次は決まった話の確認です"}
+{"row_id":96,"speaker_label":"相手 (話者3)","start_ms":177760,"end_ms":178915,"text":"当番表と作業時間の記録"}
+{"row_id":97,"speaker_label":"自分","start_ms":180515,"end_ms":181460,"text":"見積もり二つの比較"}
+{"row_id":98,"speaker_label":"相手","start_ms":181940,"end_ms":182780,"text":"研修資料の下書き"}
+{"row_id":99,"speaker_label":"相手 (話者2)","start_ms":183260,"end_ms":184205,"text":"費目を確認、ですね"}
+{"row_id":100,"speaker_label":"相手 (話者3)","start_ms":184685,"end_ms":185035,"text":"はい"}
+{"row_id":101,"speaker_label":"自分","start_ms":185515,"end_ms":186775,"text":"端末の判断はまだ、えっと"}
+{"row_id":102,"speaker_label":"相手","start_ms":187255,"end_ms":188095,"text":"見積もり待ちです"}
+{"row_id":103,"speaker_label":"相手 (話者2)","start_ms":188575,"end_ms":189625,"text":"役割分担は以上ですか"}
+{"row_id":104,"speaker_label":"相手 (話者3)","start_ms":190105,"end_ms":190840,"text":"いったん以上で"}
+{"row_id":105,"speaker_label":"自分","start_ms":191320,"end_ms":192370,"text":"ありがとうございます"}
+{"row_id":106,"speaker_label":"相手","start_ms":192850,"end_ms":195055,"text":"端末の話、借りる日もいちおう候補を出します"}
+{"row_id":107,"speaker_label":"相手 (話者2)","start_ms":195535,"end_ms":197425,"text":"来週の見積もりと一緒に送れそうですか"}
+{"row_id":108,"speaker_label":"相手 (話者3)","start_ms":197905,"end_ms":199165,"text":"はい、先方が空きを返せば"}
+{"row_id":109,"speaker_label":"自分","start_ms":200765,"end_ms":202760,"text":"空いてない場合は、それだけ表に入れます"}
+{"row_id":110,"speaker_label":"相手","start_ms":203240,"end_ms":205130,"text":"入れる金額の単位は円で統一しましょう"}
+{"row_id":111,"speaker_label":"相手 (話者2)","start_ms":205610,"end_ms":207290,"text":"あ、表の列は税を含めた数字ですね"}
+{"row_id":112,"speaker_label":"相手 (話者3)","start_ms":207770,"end_ms":208295,"text":"そうですね"}
+{"row_id":113,"speaker_label":"自分","start_ms":208775,"end_ms":210980,"text":"研修の説明会は月の前半であれば空きそうです"}
+{"row_id":114,"speaker_label":"相手","start_ms":211460,"end_ms":213035,"text":"資料ができてから日付を決めます"}
+{"row_id":115,"speaker_label":"相手 (話者2)","start_ms":213515,"end_ms":214145,"text":"わかりました"}
+{"row_id":116,"speaker_label":"相手 (話者3)","start_ms":214625,"end_ms":216305,"text":"金曜当番は固定にするんでしたっけ"}
+{"row_id":117,"speaker_label":"自分","start_ms":216785,"end_ms":218675,"text":"週ごとに交代する表をまず作ってみます"}
+{"row_id":118,"speaker_label":"相手","start_ms":219155,"end_ms":220310,"text":"連休の週が一つあります"}
+{"row_id":119,"speaker_label":"相手 (話者2)","start_ms":220790,"end_ms":222365,"text":"そこだけ欄をあけて持ってきます"}
+{"row_id":120,"speaker_label":"相手 (話者3)","start_ms":222845,"end_ms":223475,"text":"では閉じます"}
