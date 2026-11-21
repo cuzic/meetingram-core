@@ -7,4 +7,3 @@
 {"op":"set_status","nid":"n2","status":"decided","grounds":[{"uid":"u4"}]}
 既存ノードは nid、新規ノードは同じ応答で先に定義した一意の tmp で参照してください。既存のノードと同じ内容の言い直しを見つけたら、同種のノードを merge して根拠を統合してください。統合済みのノードは再利用しないでください。decided と resolved は issue に、retracted は position と argument に限ります。
 各操作の grounds は必須で、new または reference に実在する uid を指定してください。act を付けるときは asserts、asks、challenges、agrees、retracts、rephrases のいずれかです。confidence は 0 から 1 までです。抽出することがなければ {"ops":[]} を返してください。
-案が context の open の issue に当てはまる場合は、新しい issue を作らず、その issue に responds_to を付けてください。新しい issue は context のどの問いとも異なる問いに限ります。action は、誰かが引き受けた作業や誰かに頼まれた作業が発話にある場合だけ作ってください。
