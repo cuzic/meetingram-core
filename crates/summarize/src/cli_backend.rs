@@ -14,7 +14,10 @@ use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader};
 
-use crate::{render_transcript, SummarizeOptions, TranscriptTurn, DEFAULT_SYSTEM_PROMPT};
+use crate::{
+    render_transcript, CompletionRequest, SummarizeOptions, SummarizerError, TranscriptTurn,
+    DEFAULT_SYSTEM_PROMPT,
+};
 
 #[cfg(unix)]
 #[path = "cli_backend/unix.rs"]
@@ -47,7 +50,7 @@ static CLAUDE_COMPAT: AtomicBool = AtomicBool::new(false);
 
 /// Default CLI time limit for incremental graph updates.
 pub const DEFAULT_CLI_TIMEOUT: Duration = Duration::from_secs(60);
-pub(crate) const DEFAULT_SUMMARY_TIMEOUT: Duration = Duration::from_secs(600);
+const DEFAULT_SUMMARY_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Whether Claude has switched to legacy flags in this process.
 pub fn claude_compatibility_mode() -> bool {
@@ -55,7 +58,8 @@ pub fn claude_compatibility_mode() -> bool {
 }
 
 /// Removes leftover CLI working directories from a dedicated base directory.
-/// Call at startup, before starting CLI requests using this base.
+/// Call only for an application-specific base directory, at startup before
+/// beginning CLI requests that use it.
 pub fn cleanup_stale_cli_dirs(base: &Path) -> io::Result<()> {
     let entries = match std::fs::read_dir(base) {
         Ok(entries) => entries,
@@ -154,11 +158,31 @@ pub async fn summarize_via_cli(
     turns: &[TranscriptTurn],
     options: &SummarizeOptions,
 ) -> Result<String, CliSummarizeError> {
-    summarize_via_cli_with_limits(
+    summarize_via_cli_with_base(backend, turns, options, None).await
+}
+
+pub(crate) async fn summarize_via_cli_with_base(
+    backend: CliBackend,
+    turns: &[TranscriptTurn],
+    options: &SummarizeOptions,
+    base: Option<&Path>,
+) -> Result<String, CliSummarizeError> {
+    summarize_with_binary(backend, OsStr::new(backend.binary()), turns, options, base).await
+}
+
+async fn summarize_with_binary(
+    backend: CliBackend,
+    name: &OsStr,
+    turns: &[TranscriptTurn],
+    options: &SummarizeOptions,
+    base: Option<&Path>,
+) -> Result<String, CliSummarizeError> {
+    summarize_with_limits_and_binary(
         backend,
+        name,
         turns,
         options,
-        None,
+        base,
         options.cli_timeout.unwrap_or(DEFAULT_SUMMARY_TIMEOUT),
     )
     .await
@@ -173,8 +197,25 @@ pub async fn summarize_via_cli_with_limits(
     base: Option<&Path>,
     timeout: Duration,
 ) -> Result<String, CliSummarizeError> {
-    let binary = platform::resolve(OsStr::new(backend.binary()))
-        .map_err(|error| launch_error(backend, error))?;
+    summarize_with_limits_and_binary(
+        backend,
+        OsStr::new(backend.binary()),
+        turns,
+        options,
+        base,
+        timeout,
+    )
+    .await
+}
+
+async fn summarize_with_limits_and_binary(
+    backend: CliBackend,
+    name: &OsStr,
+    turns: &[TranscriptTurn],
+    options: &SummarizeOptions,
+    base: Option<&Path>,
+    timeout: Duration,
+) -> Result<String, CliSummarizeError> {
     let input = CliInput {
         system: options
             .system_prompt
@@ -183,6 +224,40 @@ pub async fn summarize_via_cli_with_limits(
         user: &render_transcript(turns),
         model: (!options.model.trim().is_empty()).then_some(options.model.as_str()),
     };
+    run_named_cli(backend, name, input, base, timeout).await
+}
+
+pub(crate) async fn complete_via_cli(
+    backend: CliBackend,
+    req: &CompletionRequest,
+    base: Option<&Path>,
+) -> Result<String, SummarizerError> {
+    complete_with_binary(backend, OsStr::new(backend.binary()), req, base).await
+}
+
+async fn complete_with_binary(
+    backend: CliBackend,
+    name: &OsStr,
+    req: &CompletionRequest,
+    base: Option<&Path>,
+) -> Result<String, SummarizerError> {
+    req.validate()?;
+    let input = CliInput {
+        system: &req.system,
+        user: &req.user,
+        model: (!req.model.trim().is_empty()).then_some(req.model.as_str()),
+    };
+    Ok(run_named_cli(backend, name, input, base, req.timeout).await?)
+}
+
+async fn run_named_cli(
+    backend: CliBackend,
+    name: &OsStr,
+    input: CliInput<'_>,
+    base: Option<&Path>,
+    timeout: Duration,
+) -> Result<String, CliSummarizeError> {
+    let binary = platform::resolve(name).map_err(|error| launch_error(backend, error))?;
     run_cli(backend, &binary, input, base, timeout, &CLAUDE_COMPAT).await
 }
 

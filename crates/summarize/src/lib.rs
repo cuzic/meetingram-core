@@ -12,9 +12,11 @@
 //! transcript type into it is the caller's job.
 
 use std::future::Future;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::process::Stdio;
 use std::sync::Arc;
+use std::time::Duration;
 
 use credential_store::CredentialStore;
 use genai::adapter::AdapterKind;
@@ -24,6 +26,8 @@ use genai::{Client, Headers, ModelIden, ServiceTarget};
 use serde::{Deserialize, Serialize};
 
 pub mod cli_backend;
+mod provider;
+pub use provider::{build_summarizer, resolve_model, BuildSummarizerError, SummaryProvider};
 
 /// OS keyring service name under which all provider API keys used by this crate are
 /// stored (design.md §12.4). Account names are per-provider, e.g. [`CLAUDE_API_KEY_ACCOUNT`].
@@ -118,6 +122,46 @@ impl SummarizeOptions {
     }
 }
 
+/// Prompts and execution limits for a single completion.
+#[non_exhaustive]
+pub struct CompletionRequest {
+    pub system: String,
+    pub user: String,
+    /// An empty model leaves selection to the CLI.
+    pub model: String,
+    pub timeout: Duration,
+}
+
+impl CompletionRequest {
+    pub fn new(
+        system: impl Into<String>,
+        user: impl Into<String>,
+        model: impl Into<String>,
+        timeout: Duration,
+    ) -> Self {
+        Self {
+            system: system.into(),
+            user: user.into(),
+            model: model.into(),
+            timeout,
+        }
+    }
+
+    fn validate(&self) -> Result<(), SummarizerError> {
+        const MAX_CHARS: usize = 24_000;
+        if self
+            .system
+            .chars()
+            .chain(self.user.chars())
+            .nth(MAX_CHARS)
+            .is_some()
+        {
+            return Err(SummarizerError::InputTooLong);
+        }
+        Ok(())
+    }
+}
+
 pub const DEFAULT_SYSTEM_PROMPT: &str =
     "You summarize 1-on-1 meeting transcripts. Produce a concise summary covering key discussion points, decisions, and action items.";
 
@@ -156,6 +200,12 @@ pub enum SummarizerError {
     Genai(#[from] SummarizeError),
     #[error(transparent)]
     Cli(#[from] cli_backend::CliSummarizeError),
+    #[error("completion input exceeds 24,000 characters")]
+    InputTooLong,
+    #[error("completion timed out")]
+    Timeout,
+    #[error("completion provider request failed")]
+    CompletionProvider,
 }
 
 impl SummarizerError {
@@ -163,12 +213,15 @@ impl SummarizerError {
     pub fn kind(&self) -> &'static str {
         use cli_backend::CliSummarizeError::*;
         match self {
-            Self::Cli(Timeout(_)) => "timeout",
+            Self::Timeout | Self::Cli(Timeout(_)) => "timeout",
+            Self::InputTooLong => "input_too_long",
             Self::Cli(NotFound(_)) => "not_found",
             Self::Cli(NonZeroExit(..)) => "non_zero_exit",
             Self::Cli(ParseOutput(..) | EmptyResponse(_)) => "parse",
             Self::Cli(ToolUse(_)) => "tool_use",
-            Self::Genai(_) | Self::Cli(TempDir(_) | Spawn(..) | ReadOutput(..)) => "provider",
+            Self::Genai(_)
+            | Self::CompletionProvider
+            | Self::Cli(TempDir(_) | Spawn(..) | ReadOutput(..)) => "provider",
         }
     }
 }
@@ -184,6 +237,10 @@ pub trait Summarizer: Send + Sync {
         turns: &[TranscriptTurn],
         options: &SummarizeOptions,
     ) -> Result<String, SummarizerError>;
+
+    /// Completes a prompt with the supplied model and deadline.
+    /// The system and user prompts may contain up to 24,000 characters combined.
+    async fn complete(&self, req: &CompletionRequest) -> Result<String, SummarizerError>;
 }
 
 /// [`Summarizer`] backed by a `genai::Client` — covers both plain API-key providers
@@ -200,10 +257,37 @@ impl Summarizer for GenaiSummarizer {
     ) -> Result<String, SummarizerError> {
         Ok(summarize(&self.0, turns, options).await?)
     }
+
+    async fn complete(&self, req: &CompletionRequest) -> Result<String, SummarizerError> {
+        req.validate()?;
+        let response = tokio::time::timeout(req.timeout, async {
+            let chat = prompt_chat_request(&req.system, &req.user);
+            self.0.exec_chat(req.model.as_str(), chat, None).await
+        })
+        .await
+        .map_err(|_| SummarizerError::Timeout)?
+        .map_err(|_| SummarizerError::CompletionProvider)?;
+        response
+            .first_text()
+            .filter(|text| !text.trim().is_empty())
+            .map(str::to_owned)
+            .ok_or_else(|| SummarizeError::EmptyResponse.into())
+    }
 }
 
 /// [`Summarizer`] backed by a `claude`/`codex` CLI subprocess (#59).
-pub struct CliSummarizer(pub cli_backend::CliBackend);
+pub struct CliSummarizer {
+    backend: cli_backend::CliBackend,
+    temp_base: Option<PathBuf>,
+}
+
+impl CliSummarizer {
+    /// Uses an existing directory as the base for per-request working directories.
+    /// Pass `None` to use the OS temporary directory.
+    pub fn new(backend: cli_backend::CliBackend, temp_base: Option<PathBuf>) -> Self {
+        Self { backend, temp_base }
+    }
+}
 
 #[async_trait::async_trait]
 impl Summarizer for CliSummarizer {
@@ -212,7 +296,17 @@ impl Summarizer for CliSummarizer {
         turns: &[TranscriptTurn],
         options: &SummarizeOptions,
     ) -> Result<String, SummarizerError> {
-        Ok(cli_backend::summarize_via_cli(self.0, turns, options).await?)
+        Ok(cli_backend::summarize_via_cli_with_base(
+            self.backend,
+            turns,
+            options,
+            self.temp_base.as_deref(),
+        )
+        .await?)
+    }
+
+    async fn complete(&self, req: &CompletionRequest) -> Result<String, SummarizerError> {
+        cli_backend::complete_via_cli(self.backend, req, self.temp_base.as_deref()).await
     }
 }
 
@@ -221,10 +315,11 @@ fn build_chat_request(turns: &[TranscriptTurn], options: &SummarizeOptions) -> C
         .system_prompt
         .as_deref()
         .unwrap_or(DEFAULT_SYSTEM_PROMPT);
-    ChatRequest::new(vec![
-        ChatMessage::system(system),
-        ChatMessage::user(render_transcript(turns)),
-    ])
+    prompt_chat_request(system, render_transcript(turns))
+}
+
+fn prompt_chat_request(system: &str, user: impl Into<genai::chat::MessageContent>) -> ChatRequest {
+    ChatRequest::new(vec![ChatMessage::system(system), ChatMessage::user(user)])
 }
 
 fn render_transcript(turns: &[TranscriptTurn]) -> String {
@@ -250,11 +345,22 @@ where
     S: CredentialStore + Send + Sync + 'static,
 {
     let account = account.into();
-    AuthResolver::from_resolver_fn(move |_model_iden: ModelIden| {
-        let secret = store
-            .load(CREDENTIAL_SERVICE, &account)
-            .map_err(|e| genai::resolver::Error::Custom(format!("credential store: {e}")))?;
-        Ok(Some(AuthData::from_single(secret)))
+    AuthResolver::from_resolver_async_fn(move |_model_iden: ModelIden| {
+        let store = Arc::clone(&store);
+        let account = account.clone();
+        Box::pin(async move {
+            let load_error =
+                || genai::resolver::Error::Custom("credential store load failed".into());
+            let secret =
+                tokio::task::spawn_blocking(move || store.load(CREDENTIAL_SERVICE, &account))
+                    .await
+                    .map_err(|_| load_error())?
+                    .map_err(|_| load_error())?;
+            Ok(Some(AuthData::from_single(secret)))
+        })
+            as Pin<
+                Box<dyn Future<Output = Result<Option<AuthData>, genai::resolver::Error>> + Send>,
+            >
     })
 }
 
@@ -525,7 +631,9 @@ pub async fn ant_cli_is_available() -> bool {
 async fn resolve_ant_oauth_token() -> Result<String, genai::resolver::Error> {
     let output = tokio::process::Command::new(ANT_CLI_BINARY)
         .args(["auth", "print-credentials", "--access-token"])
+        .kill_on_drop(true)
         .stdin(Stdio::null())
+        .stderr(Stdio::null())
         .output()
         .await
         .map_err(|e| {
@@ -534,8 +642,8 @@ async fn resolve_ant_oauth_token() -> Result<String, genai::resolver::Error> {
 
     if !output.status.success() {
         return Err(genai::resolver::Error::Custom(format!(
-            "`{ANT_CLI_BINARY} auth print-credentials` failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
+            "`{ANT_CLI_BINARY} auth print-credentials` failed with {}",
+            output.status
         )));
     }
 
@@ -739,5 +847,49 @@ mod tests {
         // (CI, other contributors' machines) — same rationale as
         // `cli_backend`'s `is_available_is_false_for_a_nonexistent_binary_by_construction`.
         let _ = ant_cli_is_available().await;
+    }
+}
+
+#[cfg(test)]
+mod completion_tests {
+    use super::*;
+    use genai::chat::ChatRole;
+
+    #[test]
+    fn completion_chat_request_preserves_system_and_user_messages() {
+        let request = CompletionRequest::new(
+            "synthetic system",
+            "synthetic user",
+            "gpt-4o-mini",
+            Duration::from_secs(1),
+        );
+        let chat = prompt_chat_request(&request.system, &request.user);
+        assert_eq!(chat.messages.len(), 2);
+        assert_eq!(chat.messages[0].role, ChatRole::System);
+        assert_eq!(
+            chat.messages[0].content.first_text(),
+            Some("synthetic system")
+        );
+        assert_eq!(chat.messages[1].role, ChatRole::User);
+        assert_eq!(
+            chat.messages[1].content.first_text(),
+            Some("synthetic user")
+        );
+    }
+
+    #[tokio::test]
+    async fn completion_rejects_oversized_input_before_calling_either_backend() {
+        let request =
+            CompletionRequest::new("界".repeat(23_999), "🙂🙂", "invalid-model", Duration::ZERO);
+        let genai = GenaiSummarizer(Client::builder().build().unwrap());
+        let cli = CliSummarizer::new(cli_backend::CliBackend::ClaudeCode, None);
+        for backend in [&genai as &dyn Summarizer, &cli] {
+            assert!(matches!(
+                backend.complete(&request).await,
+                Err(SummarizerError::InputTooLong)
+            ));
+        }
+        let at_limit = CompletionRequest::new(request.system, "🙂", "", Duration::ZERO);
+        assert!(at_limit.validate().is_ok());
     }
 }
