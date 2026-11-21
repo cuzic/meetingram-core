@@ -7,7 +7,7 @@ max_calls="${MAX_CALLS:-700}"
 cargo build --locked
 binary=(cargo run --locked --quiet --)
 common=(--backend claude-cli --max-calls "$max_calls")
-wide=(--window 12/90 --short-only --strengthened-only --repeats 1)
+wide=(--window 12/90 --short-only --two-stage-only --repeats 1)
 
 echo 'Call estimates for the three runs'
 "${binary[@]}" estimate "${common[@]}" --model sonnet
@@ -27,11 +27,13 @@ run_and_report() {
     local status=0
     "${binary[@]}" run "${common[@]}" --out "$destination" "$@" || status=$?
     if [[ -f "$destination/config.json" ]]; then
-        "${binary[@]}" report --out "$destination"
+        "${binary[@]}" report --out "$destination" || status=$?
     fi
     return "$status"
 }
 
-run_and_report "$out/sonnet" --model sonnet
-run_and_report "$out/haiku" --model haiku
-run_and_report "$out/sonnet-wide" --model sonnet "${wide[@]}"
+status=0
+run_and_report "$out/sonnet" --model sonnet || status=$?
+run_and_report "$out/haiku" --model haiku || status=$?
+run_and_report "$out/sonnet-wide" --model sonnet "${wide[@]}" || status=$?
+exit "$status"

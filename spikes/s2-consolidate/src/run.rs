@@ -9,7 +9,8 @@ use std::{
 use anyhow::{Result, bail, ensure};
 use discussion_graph::{
     AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, Graph, PatchResult, Prompt, Utterance,
-    apply_patch, build_consolidate, build_incremental, eval::GoldGraph, parse_ops,
+    apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
+    build_incremental, eval::GoldGraph, parse_ops,
 };
 use serde::{Deserialize, Serialize};
 use summarize::{CliSummarizer, CompletionRequest, Summarizer, cli_backend::CliBackend};
@@ -39,7 +40,9 @@ pub(crate) struct Trial {
     pub applied: Vec<AppliedOp>,
     pub elapsed_ms: u128,
     pub timeouts: usize,
-    pub groups: usize,
+    pub calls: usize,
+    pub omitted_issues: usize,
+    pub omitted_group_nodes: usize,
     pub complete: bool,
 }
 
@@ -176,19 +179,24 @@ impl Runner<'_> {
         repeat: u16,
     ) -> Result<Trial> {
         let start = Instant::now();
-        let core_style = match style {
-            Style::Baseline => ConsolidateStyle::Baseline,
-            Style::Strengthened => ConsolidateStyle::Strengthened,
-        };
         let mut trial = Trial {
             graph: before.clone(),
             applied: Vec::new(),
             elapsed_ms: 0,
             timeouts: 0,
-            groups: 0,
+            calls: 0,
+            omitted_issues: 0,
+            omitted_group_nodes: 0,
             complete: false,
         };
-        let Ok(prompts) = build_consolidate(before, core_style, DEFAULT_INPUT_LIMIT) else {
+        let first = match style {
+            Style::Baseline => {
+                build_consolidate(before, ConsolidateStyle::Baseline, DEFAULT_INPUT_LIMIT)
+            }
+            Style::TwoStage => build_consolidate_issues(before, DEFAULT_INPUT_LIMIT)
+                .map(|prompt| prompt.into_iter().collect()),
+        };
+        let Ok(first) = first else {
             eprintln!(
                 "{meeting}: {} trial {repeat} could not fit consolidation input",
                 style.label()
@@ -196,25 +204,61 @@ impl Runner<'_> {
             trial.elapsed_ms = start.elapsed().as_millis();
             return Ok(trial);
         };
-        trial.groups = prompts.len();
-        for prompt in prompts {
-            let call = self
-                .call(meeting, Some((style, repeat)), &trial.graph, gold, prompt)
-                .await?;
-            let Some(patch) = call.patch else {
-                trial.timeouts += usize::from(call.timed_out);
-                trial.graph = before.clone();
-                trial.applied.clear();
-                trial.elapsed_ms = start.elapsed().as_millis();
-                return Ok(trial);
-            };
-            trial.applied.extend(patch.applied);
-            trial.graph = patch.graph;
+
+        for prompt in first {
+            trial.omitted_issues += prompt.omitted_issues;
+            if !self
+                .consolidation_call(meeting, style, repeat, &mut trial, gold, prompt)
+                .await?
+            {
+                return Ok(incomplete_trial(trial, before, start));
+            }
+        }
+        if style == Style::TwoStage {
+            let (prompts, omitted) = build_consolidate_groups(&trial.graph, DEFAULT_INPUT_LIMIT);
+            trial.omitted_group_nodes = omitted;
+            for prompt in prompts {
+                if !self
+                    .consolidation_call(meeting, style, repeat, &mut trial, gold, prompt)
+                    .await?
+                {
+                    return Ok(incomplete_trial(trial, before, start));
+                }
+            }
         }
         trial.complete = true;
         trial.elapsed_ms = start.elapsed().as_millis();
         Ok(trial)
     }
+
+    async fn consolidation_call(
+        &mut self,
+        meeting: &'static str,
+        style: Style,
+        repeat: u16,
+        trial: &mut Trial,
+        gold: &GoldGraph,
+        prompt: Prompt,
+    ) -> Result<bool> {
+        let call = self
+            .call(meeting, Some((style, repeat)), &trial.graph, gold, prompt)
+            .await?;
+        trial.calls += 1;
+        let Some(patch) = call.patch else {
+            trial.timeouts += usize::from(call.timed_out);
+            return Ok(false);
+        };
+        trial.applied.extend(patch.applied);
+        trial.graph = patch.graph;
+        Ok(true)
+    }
+}
+
+fn incomplete_trial(mut trial: Trial, before: &Graph, start: Instant) -> Trial {
+    trial.graph = before.clone();
+    trial.applied.clear();
+    trial.elapsed_ms = start.elapsed().as_millis();
+    trial
 }
 
 pub(crate) async fn run(config: &Config, out: &Path) -> Result<()> {
@@ -304,8 +348,16 @@ pub(crate) fn estimate(config: &Config) -> Result<()> {
         println!("{meeting}: {count} extraction windows");
         flush += count;
     }
-    let consolidation =
-        config.meetings().len() * config.styles().len() * usize::from(config.repeats);
+    let consolidation = config.meetings().len()
+        * config
+            .styles()
+            .iter()
+            .map(|style| match style {
+                Style::Baseline => 1,
+                Style::TwoStage => 2,
+            })
+            .sum::<usize>()
+        * usize::from(config.repeats);
     println!(
         "Estimated calls without splits or retries: {} ({flush} extraction + {consolidation} consolidation)",
         flush + consolidation

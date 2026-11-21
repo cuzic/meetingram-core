@@ -2159,6 +2159,546 @@
       "grounds": [
         597
       ]
+    },
+    {
+      "id": "g241",
+      "kind": "action",
+      "text": "記録係が入口の待機列の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        8
+      ]
+    },
+    {
+      "id": "g242",
+      "kind": "action",
+      "text": "記録係が夜間の誘導灯の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        18
+      ]
+    },
+    {
+      "id": "g243",
+      "kind": "action",
+      "text": "記録係が試作品の搬入の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        28
+      ]
+    },
+    {
+      "id": "g244",
+      "kind": "action",
+      "text": "記録係が受付の名札の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        38
+      ]
+    },
+    {
+      "id": "g245",
+      "kind": "action",
+      "text": "記録係が模型の台座の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        48
+      ]
+    },
+    {
+      "id": "g246",
+      "kind": "action",
+      "text": "記録係が風の計測の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        58
+      ]
+    },
+    {
+      "id": "g247",
+      "kind": "action",
+      "text": "記録係が雨天の置き傘の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        68
+      ]
+    },
+    {
+      "id": "g248",
+      "kind": "action",
+      "text": "記録係が作品解説の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        78
+      ]
+    },
+    {
+      "id": "g249",
+      "kind": "action",
+      "text": "記録係が会場電源の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        88
+      ]
+    },
+    {
+      "id": "g250",
+      "kind": "action",
+      "text": "記録係が投影の焦点の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        98
+      ]
+    },
+    {
+      "id": "g251",
+      "kind": "action",
+      "text": "記録係が予備の布の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        108
+      ]
+    },
+    {
+      "id": "g252",
+      "kind": "action",
+      "text": "記録係が休憩席の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        118
+      ]
+    },
+    {
+      "id": "g253",
+      "kind": "action",
+      "text": "記録係が案内地図の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        128
+      ]
+    },
+    {
+      "id": "g254",
+      "kind": "action",
+      "text": "記録係が子どもの見学の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        138
+      ]
+    },
+    {
+      "id": "g255",
+      "kind": "action",
+      "text": "記録係が無線連絡の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        148
+      ]
+    },
+    {
+      "id": "g256",
+      "kind": "action",
+      "text": "記録係が休憩交代の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        158
+      ]
+    },
+    {
+      "id": "g257",
+      "kind": "action",
+      "text": "記録係が試演の時刻の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        168
+      ]
+    },
+    {
+      "id": "g258",
+      "kind": "action",
+      "text": "記録係が列の人数の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        178
+      ]
+    },
+    {
+      "id": "g259",
+      "kind": "action",
+      "text": "記録係が音量の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        188
+      ]
+    },
+    {
+      "id": "g260",
+      "kind": "action",
+      "text": "記録係が写真の場所の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        198
+      ]
+    },
+    {
+      "id": "g261",
+      "kind": "action",
+      "text": "記録係が貸し出し袋の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        208
+      ]
+    },
+    {
+      "id": "g262",
+      "kind": "action",
+      "text": "記録係が紛失物の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        218
+      ]
+    },
+    {
+      "id": "g263",
+      "kind": "action",
+      "text": "記録係が忘れ物の掲示の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        228
+      ]
+    },
+    {
+      "id": "g264",
+      "kind": "action",
+      "text": "記録係が水分補給の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        238
+      ]
+    },
+    {
+      "id": "g265",
+      "kind": "action",
+      "text": "記録係が作業手袋の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        248
+      ]
+    },
+    {
+      "id": "g266",
+      "kind": "action",
+      "text": "記録係が閉場の合図の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        258
+      ]
+    },
+    {
+      "id": "g267",
+      "kind": "action",
+      "text": "記録係が通路の掃除の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        268
+      ]
+    },
+    {
+      "id": "g268",
+      "kind": "action",
+      "text": "記録係が部品の在庫の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        278
+      ]
+    },
+    {
+      "id": "g269",
+      "kind": "action",
+      "text": "記録係が展示の記録の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        288
+      ]
+    },
+    {
+      "id": "g270",
+      "kind": "action",
+      "text": "記録係が撤収の箱の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        298
+      ]
+    },
+    {
+      "id": "g271",
+      "kind": "action",
+      "text": "記録係が入口の待機列の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        308
+      ]
+    },
+    {
+      "id": "g272",
+      "kind": "action",
+      "text": "記録係が夜間の誘導灯の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        318
+      ]
+    },
+    {
+      "id": "g273",
+      "kind": "action",
+      "text": "記録係が試作品の搬入の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        328
+      ]
+    },
+    {
+      "id": "g274",
+      "kind": "action",
+      "text": "記録係が受付の筆記具の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        338
+      ]
+    },
+    {
+      "id": "g275",
+      "kind": "action",
+      "text": "記録係が模型の名前の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        348
+      ]
+    },
+    {
+      "id": "g276",
+      "kind": "action",
+      "text": "記録係が留め具の点検の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        358
+      ]
+    },
+    {
+      "id": "g277",
+      "kind": "action",
+      "text": "記録係が鉛筆の削りかすの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        368
+      ]
+    },
+    {
+      "id": "g278",
+      "kind": "action",
+      "text": "記録係が進行表の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        378
+      ]
+    },
+    {
+      "id": "g279",
+      "kind": "action",
+      "text": "記録係が見本の交換の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        388
+      ]
+    },
+    {
+      "id": "g280",
+      "kind": "action",
+      "text": "記録係が開場前の待ち合わせの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        398
+      ]
+    },
+    {
+      "id": "g281",
+      "kind": "action",
+      "text": "記録係が降雨の記録の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        408
+      ]
+    },
+    {
+      "id": "g282",
+      "kind": "action",
+      "text": "記録係が屋根に落ちる葉の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        418
+      ]
+    },
+    {
+      "id": "g283",
+      "kind": "action",
+      "text": "記録係が紙の配布の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        428
+      ]
+    },
+    {
+      "id": "g284",
+      "kind": "action",
+      "text": "記録係が停電の案内の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        438
+      ]
+    },
+    {
+      "id": "g285",
+      "kind": "action",
+      "text": "記録係が非常口の札の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        448
+      ]
+    },
+    {
+      "id": "g286",
+      "kind": "action",
+      "text": "記録係が展示番号の読み上げの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        458
+      ]
+    },
+    {
+      "id": "g287",
+      "kind": "action",
+      "text": "記録係が触れる見本の手入れの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        468
+      ]
+    },
+    {
+      "id": "g288",
+      "kind": "action",
+      "text": "記録係が開場時の気温の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        478
+      ]
+    },
+    {
+      "id": "g289",
+      "kind": "action",
+      "text": "記録係が巡回係の靴の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        488
+      ]
+    },
+    {
+      "id": "g290",
+      "kind": "action",
+      "text": "記録係が交換用ラベルの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        498
+      ]
+    },
+    {
+      "id": "g291",
+      "kind": "action",
+      "text": "記録係が補助台の片付けの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        508
+      ]
+    },
+    {
+      "id": "g292",
+      "kind": "action",
+      "text": "記録係が閉場後の明かりの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        518
+      ]
+    },
+    {
+      "id": "g293",
+      "kind": "action",
+      "text": "記録係が連絡用の紙の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        528
+      ]
+    },
+    {
+      "id": "g294",
+      "kind": "action",
+      "text": "記録係が転倒の報告の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        538
+      ]
+    },
+    {
+      "id": "g295",
+      "kind": "action",
+      "text": "記録係が空き時間の試写の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        548
+      ]
+    },
+    {
+      "id": "g296",
+      "kind": "action",
+      "text": "記録係が会場裏の鍵の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        558
+      ]
+    },
+    {
+      "id": "g297",
+      "kind": "action",
+      "text": "記録係が清掃の道具の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        568
+      ]
+    },
+    {
+      "id": "g298",
+      "kind": "action",
+      "text": "記録係が翌日の連絡の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        578
+      ]
+    },
+    {
+      "id": "g299",
+      "kind": "action",
+      "text": "記録係が予備部品の返却の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        588
+      ]
+    },
+    {
+      "id": "g300",
+      "kind": "action",
+      "text": "記録係が手順の振り返りの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        598
+      ]
     }
   ],
   "edges": [
@@ -3061,6 +3601,306 @@
       "src": "g240",
       "dst": "g237",
       "kind": "resolves"
+    },
+    {
+      "src": "g241",
+      "dst": "g4",
+      "kind": "assigns"
+    },
+    {
+      "src": "g242",
+      "dst": "g8",
+      "kind": "assigns"
+    },
+    {
+      "src": "g243",
+      "dst": "g12",
+      "kind": "assigns"
+    },
+    {
+      "src": "g244",
+      "dst": "g16",
+      "kind": "assigns"
+    },
+    {
+      "src": "g245",
+      "dst": "g20",
+      "kind": "assigns"
+    },
+    {
+      "src": "g246",
+      "dst": "g24",
+      "kind": "assigns"
+    },
+    {
+      "src": "g247",
+      "dst": "g28",
+      "kind": "assigns"
+    },
+    {
+      "src": "g248",
+      "dst": "g32",
+      "kind": "assigns"
+    },
+    {
+      "src": "g249",
+      "dst": "g36",
+      "kind": "assigns"
+    },
+    {
+      "src": "g250",
+      "dst": "g40",
+      "kind": "assigns"
+    },
+    {
+      "src": "g251",
+      "dst": "g44",
+      "kind": "assigns"
+    },
+    {
+      "src": "g252",
+      "dst": "g48",
+      "kind": "assigns"
+    },
+    {
+      "src": "g253",
+      "dst": "g52",
+      "kind": "assigns"
+    },
+    {
+      "src": "g254",
+      "dst": "g56",
+      "kind": "assigns"
+    },
+    {
+      "src": "g255",
+      "dst": "g60",
+      "kind": "assigns"
+    },
+    {
+      "src": "g256",
+      "dst": "g64",
+      "kind": "assigns"
+    },
+    {
+      "src": "g257",
+      "dst": "g68",
+      "kind": "assigns"
+    },
+    {
+      "src": "g258",
+      "dst": "g72",
+      "kind": "assigns"
+    },
+    {
+      "src": "g259",
+      "dst": "g76",
+      "kind": "assigns"
+    },
+    {
+      "src": "g260",
+      "dst": "g80",
+      "kind": "assigns"
+    },
+    {
+      "src": "g261",
+      "dst": "g84",
+      "kind": "assigns"
+    },
+    {
+      "src": "g262",
+      "dst": "g88",
+      "kind": "assigns"
+    },
+    {
+      "src": "g263",
+      "dst": "g92",
+      "kind": "assigns"
+    },
+    {
+      "src": "g264",
+      "dst": "g96",
+      "kind": "assigns"
+    },
+    {
+      "src": "g265",
+      "dst": "g100",
+      "kind": "assigns"
+    },
+    {
+      "src": "g266",
+      "dst": "g104",
+      "kind": "assigns"
+    },
+    {
+      "src": "g267",
+      "dst": "g108",
+      "kind": "assigns"
+    },
+    {
+      "src": "g268",
+      "dst": "g112",
+      "kind": "assigns"
+    },
+    {
+      "src": "g269",
+      "dst": "g116",
+      "kind": "assigns"
+    },
+    {
+      "src": "g270",
+      "dst": "g120",
+      "kind": "assigns"
+    },
+    {
+      "src": "g271",
+      "dst": "g124",
+      "kind": "assigns"
+    },
+    {
+      "src": "g272",
+      "dst": "g128",
+      "kind": "assigns"
+    },
+    {
+      "src": "g273",
+      "dst": "g132",
+      "kind": "assigns"
+    },
+    {
+      "src": "g274",
+      "dst": "g136",
+      "kind": "assigns"
+    },
+    {
+      "src": "g275",
+      "dst": "g140",
+      "kind": "assigns"
+    },
+    {
+      "src": "g276",
+      "dst": "g144",
+      "kind": "assigns"
+    },
+    {
+      "src": "g277",
+      "dst": "g148",
+      "kind": "assigns"
+    },
+    {
+      "src": "g278",
+      "dst": "g152",
+      "kind": "assigns"
+    },
+    {
+      "src": "g279",
+      "dst": "g156",
+      "kind": "assigns"
+    },
+    {
+      "src": "g280",
+      "dst": "g160",
+      "kind": "assigns"
+    },
+    {
+      "src": "g281",
+      "dst": "g164",
+      "kind": "assigns"
+    },
+    {
+      "src": "g282",
+      "dst": "g168",
+      "kind": "assigns"
+    },
+    {
+      "src": "g283",
+      "dst": "g172",
+      "kind": "assigns"
+    },
+    {
+      "src": "g284",
+      "dst": "g176",
+      "kind": "assigns"
+    },
+    {
+      "src": "g285",
+      "dst": "g180",
+      "kind": "assigns"
+    },
+    {
+      "src": "g286",
+      "dst": "g184",
+      "kind": "assigns"
+    },
+    {
+      "src": "g287",
+      "dst": "g188",
+      "kind": "assigns"
+    },
+    {
+      "src": "g288",
+      "dst": "g192",
+      "kind": "assigns"
+    },
+    {
+      "src": "g289",
+      "dst": "g196",
+      "kind": "assigns"
+    },
+    {
+      "src": "g290",
+      "dst": "g200",
+      "kind": "assigns"
+    },
+    {
+      "src": "g291",
+      "dst": "g204",
+      "kind": "assigns"
+    },
+    {
+      "src": "g292",
+      "dst": "g208",
+      "kind": "assigns"
+    },
+    {
+      "src": "g293",
+      "dst": "g212",
+      "kind": "assigns"
+    },
+    {
+      "src": "g294",
+      "dst": "g216",
+      "kind": "assigns"
+    },
+    {
+      "src": "g295",
+      "dst": "g220",
+      "kind": "assigns"
+    },
+    {
+      "src": "g296",
+      "dst": "g224",
+      "kind": "assigns"
+    },
+    {
+      "src": "g297",
+      "dst": "g228",
+      "kind": "assigns"
+    },
+    {
+      "src": "g298",
+      "dst": "g232",
+      "kind": "assigns"
+    },
+    {
+      "src": "g299",
+      "dst": "g236",
+      "kind": "assigns"
+    },
+    {
+      "src": "g300",
+      "dst": "g240",
+      "kind": "assigns"
     }
   ],
   "duplicate_issue_pairs": [

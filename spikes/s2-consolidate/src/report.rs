@@ -17,21 +17,28 @@ use crate::{
     run::Trial,
 };
 
+#[derive(Clone)]
 struct Measurement {
     scores: Evaluation,
     pairs: usize,
-    groups: usize,
+    gold_issues: usize,
     complete: bool,
 }
 
 pub(crate) fn report(out: &Path) -> Result<()> {
     let config: Config = data::read_json(&out.join("config.json"))?;
     let mut results = String::from(
-        "# S2 results\n\n         | Meeting | Style | Trial | Live nodes | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Prompt groups | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
+        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold issues | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
     );
     let mut all = BTreeMap::new();
     for &meeting in config.meetings() {
         let (_, gold) = data::load(meeting)?;
+        let gold_issues = gold
+            .graph
+            .nodes
+            .iter()
+            .filter(|node| node.kind == NodeKind::Issue)
+            .count();
         let flush = out.join(meeting).join("flush.json");
         let before: Option<Graph> = read_if_present(&flush)?;
         for &style in config.styles() {
@@ -42,9 +49,10 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     let pairs = merged_pairs(before, &trial.graph, &gold);
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} |",
+                        "| {meeting} | {} | {repeat} | {} | {gold_issues} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} |",
                         style.label(),
-                        scores.live_nodes,
+                        scores.agendas,
+                        scores.sub_questions,
                         scores.node_recall,
                         scores.node_precision,
                         scores.edge_f1,
@@ -53,7 +61,9 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                         gold.duplicate_issue_pairs.len(),
                         trial.elapsed_ms,
                         trial.timeouts,
-                        trial.groups,
+                        trial.calls,
+                        trial.omitted_issues,
+                        trial.omitted_group_nodes,
                         if trial.complete {
                             "complete"
                         } else {
@@ -65,7 +75,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                         .push(Measurement {
                             scores,
                             pairs,
-                            groups: trial.groups,
+                            gold_issues,
                             complete: trial.complete,
                         });
                 } else {
@@ -76,7 +86,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     };
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | — | — | — | — | — | — | — | — | — | {status} |",
+                        "| {meeting} | {} | {repeat} | — | {gold_issues} | — | — | — | — | — | — | — | — | — | — | — | {status} |",
                         style.label()
                     )?;
                 }
@@ -108,54 +118,44 @@ fn write_gate(
     results: &mut String,
     all: &BTreeMap<(&str, &str), Vec<Measurement>>,
 ) -> std::fmt::Result {
-    if all.len() != 14
-        || all
-            .values()
-            .any(|rows| rows.len() != 3 || rows.iter().any(|row| !row.complete))
-    {
-        return writeln!(
-            results,
-            "Inconclusive. At least one required trial did not complete."
-        );
-    }
-    let strengthened = Style::Strengthened.label();
     let baseline = Style::Baseline.label();
-    let mut reductions = Vec::new();
+    let two_stage = Style::TwoStage.label();
+    let complete = |meeting, style| {
+        all.get(&(meeting, style))
+            .filter(|rows| rows.len() == 3 && rows.iter().all(|row| row.complete))
+    };
+    let mut agenda_ratios = Vec::new();
     let mut wrong_merges = 0;
     let mut recall_ok = true;
-    for meeting in ["m1", "m2", "m3", "budget", "design", "one-on-one"] {
-        let base = &all[&(meeting, baseline)];
-        let strong = &all[&(meeting, strengthened)];
-        let base_nodes = median(base, |row| row.scores.live_nodes);
-        let strong_nodes = median(strong, |row| row.scores.live_nodes);
-        if base_nodes > 0 {
-            reductions.push(1.0 - strong_nodes as f64 / base_nodes as f64);
+    for &meeting in crate::SHORT_MEETINGS {
+        let (Some(base), Some(two_stage)) =
+            (complete(meeting, baseline), complete(meeting, two_stage))
+        else {
+            return write_inconclusive(results);
+        };
+        let gold_issues = two_stage[0].gold_issues;
+        if gold_issues == 0 {
+            return writeln!(results, "Inconclusive. {meeting} has no gold issues.");
         }
-        wrong_merges += median(strong, |row| row.scores.wrong_merges);
-        recall_ok &= median(strong, |row| row.scores.node_recall)
+        agenda_ratios.push(median(two_stage, |row| row.scores.agendas) as f64 / gold_issues as f64);
+        wrong_merges += median(two_stage, |row| row.scores.wrong_merges);
+        recall_ok &= median(two_stage, |row| row.scores.node_recall)
             >= median(base, |row| row.scores.node_recall);
     }
-    let reduction = (reductions.len() == 6).then(|| reductions.iter().sum::<f64>() / 6.0);
-    let reduction_ok = reduction.is_some_and(|value| value >= 0.25);
-    let long_ok = median(&all[&("long", strengthened)], |row| {
-        row.groups > 1 && row.pairs > 0
-    });
-    let pass = reduction_ok && wrong_merges <= 2 && recall_ok && long_ok;
+    let Some(long) = complete("long", two_stage) else {
+        return write_inconclusive(results);
+    };
+    let mean_ratio = agenda_ratios.iter().sum::<f64>() / agenda_ratios.len() as f64;
+    let long_ok = median(long, |row| row.pairs) > 0;
+    let pass = mean_ratio <= 1.5 && wrong_merges <= 2 && recall_ok && long_ok;
     writeln!(results, "**{}**\n", if pass { "PASS" } else { "FAIL" })?;
-    match reduction {
-        Some(value) => writeln!(
-            results,
-            "- Mean of the six paired live-node reductions (target ≥25%): {:.2}%.",
-            100.0 * value
-        )?,
-        None => writeln!(
-            results,
-            "- Mean live-node reduction undefined because a baseline median is zero."
-        )?,
-    }
     writeln!(
         results,
-        "- Sum of the six strengthened wrong-merge medians (target ≤2): {wrong_merges}."
+        "- Mean agenda-to-gold-issue ratio across six meetings (target ≤1.5): {mean_ratio:.3}."
+    )?;
+    writeln!(
+        results,
+        "- Sum of the six two-stage wrong-merge medians (target ≤2): {wrong_merges}."
     )?;
     writeln!(
         results,
@@ -163,7 +163,14 @@ fn write_gate(
     )?;
     writeln!(
         results,
-        "- Split path and at least one correct duplicate pair merged in at least two long trials: {long_ok}."
+        "- At least one correct duplicate pair merged in at least two long trials: {long_ok}."
+    )
+}
+
+fn write_inconclusive(results: &mut String) -> std::fmt::Result {
+    writeln!(
+        results,
+        "Inconclusive. At least one required trial did not complete."
     )
 }
 
@@ -242,6 +249,62 @@ mod tests {
     use super::*;
     use discussion_graph::{Op, apply_patch};
     use serde_json::json;
+
+    #[test]
+    fn task_4b_checks_each_condition_using_three_trial_medians() {
+        let style = Style::TwoStage.label();
+        let baseline = Style::Baseline.label();
+        let (_, gold) = data::load("m1").unwrap();
+        let empty = Graph::default();
+        let mut scores = evaluate(&empty, &gold.graph, &empty, &[]);
+        scores.agendas = 3;
+        scores.node_recall = 1.0;
+        let row = Measurement {
+            scores,
+            pairs: 1,
+            gold_issues: 2,
+            complete: true,
+        };
+        let mut all = BTreeMap::new();
+        for &meeting in crate::SHORT_MEETINGS {
+            all.insert((meeting, baseline), vec![row.clone(); 3]);
+            all.insert((meeting, style), vec![row.clone(); 3]);
+        }
+        all.insert(("long", style), vec![row.clone(); 3]);
+        let change =
+            |all: &mut BTreeMap<_, Vec<Measurement>>, meeting, edit: fn(&mut Measurement)| {
+                let rows = all.get_mut(&(meeting, style)).unwrap();
+                for row in &mut rows[..2] {
+                    edit(row);
+                }
+            };
+        let gate = |all: &BTreeMap<_, _>| {
+            let mut result = String::new();
+            write_gate(&mut result, all).unwrap();
+            result
+        };
+
+        // A single high outlier does not move the median. Two wrong merges still pass.
+        all.get_mut(&("m1", style)).unwrap()[2].scores.agendas = 300;
+        change(&mut all, "m1", |row| row.scores.wrong_merges = 2);
+        assert!(gate(&all).contains("**PASS**"));
+
+        type Edit = fn(&mut Measurement);
+        let cases: [(_, Edit); 4] = [
+            ("m1", |row| row.scores.agendas = 4),
+            ("m2", |row| row.scores.wrong_merges = 1),
+            ("m3", |row| row.scores.node_recall = 0.99),
+            ("long", |row| row.pairs = 0),
+        ];
+        for (meeting, edit) in cases {
+            let mut trials = all.clone();
+            change(&mut trials, meeting, edit);
+            assert!(gate(&trials).contains("**FAIL**"), "{meeting}");
+        }
+
+        all.get_mut(&("long", style)).unwrap()[0].complete = false;
+        assert!(gate(&all).contains("Inconclusive."));
+    }
 
     #[test]
     fn counts_a_duplicate_only_if_distinct_extracted_issues_merge_during_consolidation() {

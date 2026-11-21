@@ -3,6 +3,8 @@ mod fake;
 mod report;
 mod run;
 
+const SHORT_MEETINGS: &[&str] = &["m1", "m2", "m3", "budget", "design", "one-on-one"];
+
 use std::{path::PathBuf, str::FromStr};
 
 use anyhow::{Result, bail};
@@ -78,24 +80,23 @@ struct Config {
     #[arg(long)]
     short_only: bool,
     #[arg(long)]
-    strengthened_only: bool,
+    two_stage_only: bool,
 }
 
 impl Config {
     fn meetings(&self) -> &'static [&'static str] {
-        let short = &["m1", "m2", "m3", "budget", "design", "one-on-one"];
         if self.short_only {
-            short
+            SHORT_MEETINGS
         } else {
             &["m1", "m2", "m3", "budget", "design", "one-on-one", "long"]
         }
     }
 
     fn styles(&self) -> &'static [Style] {
-        if self.strengthened_only {
-            &[Style::Strengthened]
+        if self.two_stage_only {
+            &[Style::TwoStage]
         } else {
-            &[Style::Baseline, Style::Strengthened]
+            &[Style::Baseline, Style::TwoStage]
         }
     }
 
@@ -105,21 +106,21 @@ impl Config {
             && self.window.count == 6
             && self.repeats == 3
             && !self.short_only
-            && !self.strengthened_only
+            && !self.two_stage_only
     }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Style {
     Baseline,
-    Strengthened,
+    TwoStage,
 }
 
 impl Style {
     fn label(self) -> &'static str {
         match self {
             Self::Baseline => "baseline",
-            Self::Strengthened => "strengthened",
+            Self::TwoStage => "two-stage",
         }
     }
 }
