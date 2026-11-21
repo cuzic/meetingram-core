@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "crates/**"
+      - "plugins/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".cargo/config.toml"
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - "crates/**"
+      - "plugins/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".cargo/config.toml"
