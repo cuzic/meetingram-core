@@ -84,7 +84,7 @@ jobs:
           cargo test -p capture-windows --target x86_64-pc-windows-msvc
           cargo test -p app-service --features live-transcription --target x86_64-pc-windows-msvc
 
-      - name: Test OS-independent crates (segment-store, session-store, stt-api, stt-deepgram)
+      - name: Test segment-store, session-store, stt-api, stt-deepgram, and summarize
         # These are pure Rust, OS-independent crates with no Windows-specific
         # dependencies — until now they were only ever compiled transitively as
         # app-service's path dependencies (via the Check/Test steps above), never
@@ -100,6 +100,8 @@ jobs:
           cargo check -p segment-store -p session-store -p stt-api -p stt-deepgram --target x86_64-pc-windows-msvc
           cargo clippy -p segment-store -p session-store -p stt-api -p stt-deepgram --target x86_64-pc-windows-msvc --no-deps -- -D warnings
           cargo test -p segment-store -p session-store -p stt-api -p stt-deepgram --target x86_64-pc-windows-msvc
+          cargo clippy -p summarize --target x86_64-pc-windows-msvc --all-targets -- -D warnings
+          cargo test -p summarize --target x86_64-pc-windows-msvc
 
   e2e-best-effort:
     runs-on: windows-latest

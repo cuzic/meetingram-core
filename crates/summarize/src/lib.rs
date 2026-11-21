@@ -94,6 +94,7 @@ pub struct SummarizeOptions {
     pub model: String,
     /// Overrides [`DEFAULT_SYSTEM_PROMPT`] when set.
     pub system_prompt: Option<String>,
+    cli_timeout: Option<std::time::Duration>,
 }
 
 impl SummarizeOptions {
@@ -101,7 +102,14 @@ impl SummarizeOptions {
         Self {
             model: model.into(),
             system_prompt: None,
+            cli_timeout: None,
         }
+    }
+
+    /// Overrides the CLI time limit, including a possible compatibility retry.
+    pub fn with_cli_timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.cli_timeout = Some(timeout);
+        self
     }
 
     pub fn with_system_prompt(mut self, system_prompt: impl Into<String>) -> Self {
@@ -148,6 +156,21 @@ pub enum SummarizerError {
     Genai(#[from] SummarizeError),
     #[error(transparent)]
     Cli(#[from] cli_backend::CliSummarizeError),
+}
+
+impl SummarizerError {
+    /// Error category suitable for logging without including request or response content.
+    pub fn kind(&self) -> &'static str {
+        use cli_backend::CliSummarizeError::*;
+        match self {
+            Self::Cli(Timeout(_)) => "timeout",
+            Self::Cli(NotFound(_)) => "not_found",
+            Self::Cli(NonZeroExit(..)) => "non_zero_exit",
+            Self::Cli(ParseOutput(..) | EmptyResponse(_)) => "parse",
+            Self::Cli(ToolUse(_)) => "tool_use",
+            Self::Genai(_) | Self::Cli(TempDir(_) | Spawn(..) | ReadOutput(..)) => "provider",
+        }
+    }
 }
 
 /// Common interface over the two ways this crate turns a transcript into a summary
@@ -202,19 +225,6 @@ fn build_chat_request(turns: &[TranscriptTurn], options: &SummarizeOptions) -> C
         ChatMessage::system(system),
         ChatMessage::user(render_transcript(turns)),
     ])
-}
-
-/// Builds the single prompt string [`cli_backend::summarize_via_cli`] hands to the
-/// `claude`/`codex` CLIs, which — unlike `genai`'s `ChatRequest` — take one prompt
-/// argument rather than separate system/user messages. Reuses the same system
-/// prompt resolution and transcript rendering as [`build_chat_request`] so the two
-/// execution paths (genai vs. CLI subprocess) produce equivalent input.
-pub(crate) fn build_cli_prompt(turns: &[TranscriptTurn], options: &SummarizeOptions) -> String {
-    let system = options
-        .system_prompt
-        .as_deref()
-        .unwrap_or(DEFAULT_SYSTEM_PROMPT);
-    format!("{system}\n\n{}", render_transcript(turns))
 }
 
 fn render_transcript(turns: &[TranscriptTurn]) -> String {
