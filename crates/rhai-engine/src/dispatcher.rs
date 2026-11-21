@@ -6,6 +6,7 @@
 //! 2. Adding a `match` arm in `async_worker`
 //! 3. Adding a curry wrapper in `std.rhai`
 
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use local_broker::LocalBroker;
@@ -27,9 +28,18 @@ pub async fn async_worker(
     store: Arc<SessionStore>,
     credential_store: Arc<credential_store::FallbackCredentialStore>,
     settings: Arc<dyn SettingsProvider>,
+    cli_temp_base: Option<PathBuf>,
 ) {
     while let Some(cmd) = rx.recv().await {
-        let result = dispatch(&cmd, &broker, &store, &credential_store, &*settings).await;
+        let result = dispatch(
+            &cmd,
+            &broker,
+            &store,
+            &credential_store,
+            &*settings,
+            cli_temp_base.as_deref(),
+        )
+        .await;
         cmd.reply.send(result).ok();
     }
 }
@@ -40,9 +50,12 @@ async fn dispatch(
     store: &SessionStore,
     credential_store: &Arc<credential_store::FallbackCredentialStore>,
     settings: &dyn SettingsProvider,
+    cli_temp_base: Option<&Path>,
 ) -> Result<rhai::Dynamic, String> {
     match cmd.name.as_str() {
-        "ai_summarize" => handle_ai_summarize(&cmd.args, credential_store, settings).await,
+        "ai_summarize" => {
+            handle_ai_summarize(&cmd.args, credential_store, settings, cli_temp_base).await
+        }
         "list_segments" => handle_list_segments(&cmd.args, store),
         "save_summary" => handle_save_summary(&cmd.args, store),
         "publish_event" => handle_publish_event(&cmd.args, broker),
@@ -60,6 +73,7 @@ async fn handle_ai_summarize(
     args: &rhai::Map,
     credential_store: &Arc<credential_store::FallbackCredentialStore>,
     settings: &dyn SettingsProvider,
+    cli_temp_base: Option<&Path>,
 ) -> Result<rhai::Dynamic, String> {
     let model = get_string(args, "model")?;
     let system_prompt = get_string(args, "system_prompt")?;
@@ -87,8 +101,14 @@ async fn handle_ai_summarize(
     let provider_key = settings.get("summary_provider_key").unwrap_or_default();
     let ollama_base_url = settings.get("ollama_base_url");
     let credential_store = Arc::clone(credential_store);
+    let cli_temp_base = cli_temp_base.map(Path::to_path_buf);
     let summarizer = tokio::task::spawn_blocking(move || {
-        summarize::build_summarizer(&provider_key, credential_store, ollama_base_url, None)
+        summarize::build_summarizer(
+            &provider_key,
+            credential_store,
+            ollama_base_url,
+            cli_temp_base,
+        )
     })
     .await
     .map_err(|_| "AIクライアントの作成に失敗")?

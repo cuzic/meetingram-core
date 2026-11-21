@@ -157,8 +157,9 @@ pub enum BuildSummarizerError {
 
 /// Builds the configured backend without making a provider request.
 /// Reading the credential store can block.
-/// For CLI providers, `cli_temp_base` selects an existing base directory for
-/// per-request working directories. Pass `None` to use the OS temporary directory.
+/// For CLI providers, `cli_temp_base` selects an existing, application-specific
+/// base for per-process working directories. Pass `None` to use the OS temporary
+/// directory.
 pub fn build_summarizer<S: CredentialStore + Send + Sync + 'static>(
     provider_key: &str,
     store: Arc<S>,

@@ -6,6 +6,61 @@ pub(super) fn resolve(name: &OsStr) -> io::Result<PathBuf> {
     Ok(PathBuf::from(name))
 }
 
+pub(super) fn process_start(pid: u32) -> ProcessStart {
+    let Ok(pid) = libc::pid_t::try_from(pid) else {
+        return ProcessStart::Unknown;
+    };
+    if pid <= 0 {
+        return ProcessStart::Unknown;
+    }
+    // SAFETY: signal 0 only checks for existence or permission.
+    if unsafe { libc::kill(pid, 0) } == -1 {
+        return match io::Error::last_os_error().raw_os_error() {
+            Some(libc::ESRCH) => ProcessStart::Dead,
+            Some(libc::EPERM) => ProcessStart::Alive,
+            _ => ProcessStart::Unknown,
+        };
+    }
+
+    process_start_time(pid).map_or(ProcessStart::Alive, ProcessStart::Known)
+}
+
+#[cfg(target_os = "linux")]
+fn process_start_time(pid: libc::pid_t) -> Option<u64> {
+    let stat = std::fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
+    // The command name can contain spaces and parentheses. Field 22 (start
+    // ticks since boot) follows the final closing parenthesis by 20 fields.
+    let (_, fields) = stat.rsplit_once(')')?;
+    fields.split_whitespace().nth(19)?.parse().ok()
+}
+
+#[cfg(target_os = "macos")]
+fn process_start_time(pid: libc::pid_t) -> Option<u64> {
+    let mut info = std::mem::MaybeUninit::<libc::proc_bsdinfo>::uninit();
+    let size = std::mem::size_of::<libc::proc_bsdinfo>() as libc::c_int;
+    // SAFETY: info points to a writable buffer of size bytes. A full-size
+    // result means libproc initialized the structure.
+    unsafe {
+        if libc::proc_pidinfo(
+            pid,
+            libc::PROC_PIDTBSDINFO,
+            0,
+            info.as_mut_ptr().cast(),
+            size,
+        ) != size
+        {
+            return None;
+        }
+        let info = info.assume_init();
+        Some(info.pbi_start_tvsec * 1_000_000 + info.pbi_start_tvusec)
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+fn process_start_time(_pid: libc::pid_t) -> Option<u64> {
+    None
+}
+
 pub(super) struct Group {
     child: Option<Child>,
     id: libc::pid_t,

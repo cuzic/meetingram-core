@@ -2,7 +2,7 @@ use super::*;
 use std::future::Future;
 
 #[test]
-fn cleanup_removes_only_cli_directories() {
+fn cleanup_preserves_recent_legacy_and_unrelated_directories() {
     let base = tempfile::tempdir().unwrap();
     let stale = base.path().join("meetingram-cli-abandoned");
     let unrelated = base.path().join("other");
@@ -10,8 +10,75 @@ fn cleanup_removes_only_cli_directories() {
     std::fs::create_dir(&unrelated).unwrap();
     std::fs::write(stale.join("system.txt"), "synthetic instruction").unwrap();
     cleanup_stale_cli_dirs(base.path()).unwrap();
-    assert!(!stale.exists());
+    assert!(stale.exists());
     assert!(unrelated.exists());
+}
+
+#[cfg(unix)]
+#[test]
+fn cleanup_removes_old_legacy_cli_directories() {
+    let base = tempfile::tempdir().unwrap();
+    let old = base.path().join("meetingram-cli-abandoned");
+    std::fs::create_dir(&old).unwrap();
+    std::fs::File::open(&old)
+        .unwrap()
+        .set_modified(SystemTime::now() - STALE_DIR_AGE - Duration::from_secs(1))
+        .unwrap();
+
+    cleanup_stale_cli_dirs(base.path()).unwrap();
+    assert!(!old.exists());
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos", windows))]
+#[test]
+fn cleanup_preserves_live_process_and_removes_its_dir_after_exit() {
+    use std::process::{Command, Stdio};
+
+    let base = tempfile::tempdir().unwrap();
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "cli_backend::tests::wait_for_cleanup_test_parent",
+            "--ignored",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .spawn()
+        .unwrap();
+    let pid = child.id();
+    let start = match platform::process_start(pid) {
+        ProcessStart::Known(start) => start,
+        _ => {
+            child.kill().unwrap();
+            child.wait().unwrap();
+            panic!("fixture process start time unavailable");
+        }
+    };
+    let live = base.path().join(format!("{pid}-{start}"));
+    let own = base.path().join(process_dir_name());
+    let reused = base.path().join(format!("{pid}-{}", start + 1));
+
+    for path in [&live, &own, &reused] {
+        std::fs::create_dir_all(path.join("meetingram-cli-fixture")).unwrap();
+    }
+    let cleanup = cleanup_stale_cli_dirs(base.path());
+    let live_preserved = live.exists();
+    child.kill().unwrap();
+    child.wait().unwrap();
+
+    cleanup.unwrap();
+    assert!(live_preserved);
+    assert!(own.exists());
+    assert!(!reused.exists());
+    cleanup_stale_cli_dirs(base.path()).unwrap();
+    assert!(!live.exists());
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos", windows))]
+#[test]
+#[ignore = "launched as a live process by the startup cleanup test"]
+fn wait_for_cleanup_test_parent() {
+    io::copy(&mut io::stdin().lock(), &mut io::sink()).unwrap();
 }
 
 #[test]
@@ -192,7 +259,7 @@ synthetic transcript' || exit 2
         std::fs::read_to_string(base.path().join("attempts")).unwrap(),
         "lean\ncompat\ncompat\n"
     );
-    assert_eq!(work.path().read_dir().unwrap().count(), 0);
+    assert!(working_dirs_are_gone(work.path()));
 }
 
 #[cfg(unix)]
@@ -221,7 +288,7 @@ async fn codex_rejects_tool_use_before_exit_and_discards_output() {
     .await
     .unwrap_err();
     assert_eq!(crate::SummarizerError::from(error).kind(), "tool_use");
-    assert_eq!(work.path().read_dir().unwrap().count(), 0);
+    assert!(working_dirs_are_gone(work.path()));
 }
 
 #[cfg(unix)]
@@ -247,7 +314,7 @@ async fn early_exit_reports_status_and_drops_stderr() {
         assert!(!format!("{error} {error:?}").contains("synthetic-stderr-marker"));
         assert_eq!(crate::SummarizerError::from(error).kind(), "non_zero_exit");
     }
-    assert_eq!(work.path().read_dir().unwrap().count(), 0);
+    assert!(working_dirs_are_gone(work.path()));
 }
 
 #[cfg(unix)]
@@ -307,9 +374,17 @@ async fn timeout_and_drop_stop_grandchild_and_remove_work_directory() {
     }
 }
 
+fn working_dirs_are_gone(base: &Path) -> bool {
+    match base.join(process_dir_name()).read_dir() {
+        Ok(mut entries) => entries.next().is_none(),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => true,
+        Err(error) => panic!("failed to read CLI process directory: {error}"),
+    }
+}
+
 async fn wait_for_cleanup(work: &Path) {
     tokio::time::timeout(Duration::from_secs(2), async {
-        while work.read_dir().unwrap().next().is_some() {
+        while !working_dirs_are_gone(work) {
             tokio::time::sleep(Duration::from_millis(5)).await;
         }
     })
@@ -529,7 +604,7 @@ fn configured_cli_base_is_used_and_cleaned() {
         fixture.path(),
         r#"
         test "$(pwd -P)" != "$MEETINGRAM_TEST_CLI_WORK" || exit 1
-        test "$(cd .. && pwd -P)" = "$MEETINGRAM_TEST_CLI_WORK" || exit 2
+        test "$(cd ../.. && pwd -P)" = "$MEETINGRAM_TEST_CLI_WORK" || exit 2
         test -f system.txt || exit 3
         printf '%s\n' '{"result":"synthetic response"}'
         "#,
@@ -696,7 +771,7 @@ async fn unix_stops_descendants_when_the_leader_exits() {
     .await
     .unwrap();
     assert_eq!(output, "synthetic summary");
-    assert_eq!(work.path().read_dir().unwrap().count(), 0);
+    assert!(working_dirs_are_gone(work.path()));
 }
 
 #[cfg(windows)]

@@ -1,0 +1,7 @@
+会議終了後の議論グラフを整理します。操作を適用順に JSON オブジェクト {"ops":[...]} だけで返してください。新規ノードは作らず、操作には graph nodes にある nid を使ってください。
+ノードの種類は issue（問い）、position（案）、argument（賛否の理由）、decision（決定）、action（宿題）です。エッジは responds_to（position → issue）、supports / objects_to（argument → position または argument）、resolves（decision → issue）、assigns（action → decision または issue）、sub_issue_of（子の issue → 親の issue）です。
+操作の形:
+{"op":"merge","from":"n9","into":"n5","grounds":[{"uid":"u3","act":"rephrases"}]}
+merge は同種のノード間だけで行い、統合済みのノードは再利用しないでください。set_status の decided と resolved は issue に、retracted は position と argument に限ります。推測で決定を作らないでください。
+自己ループや graph edges にある同じ (src, dst, kind) のエッジを作らないでください。同じ応答で既に追加または統合で付け替えたエッジも重複させないでください。
+各操作には 1 件以上の grounds が必要です。根拠に使えるのは入力に掲載された発話の uid だけです。act を付けるときは asserts、asks、challenges、agrees、retracts、rephrases のいずれかです。confidence は 0 から 1 までです。根拠を示せる操作がなければ {"ops":[]} を返してください。

@@ -29,15 +29,22 @@ pub struct GoldEdge {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[non_exhaustive]
 pub struct Evaluation {
     pub node_recall: f64,
     pub node_precision: f64,
     pub edge_f1: f64,
     pub live_nodes: usize,
+    /// Live issues without a parent.
+    pub agendas: usize,
+    /// Live issues with a parent, including nested questions.
+    pub sub_questions: usize,
     pub wrong_merges: usize,
 }
 
-/// Evaluate live nodes and edges. Pass the applied operations from
+/// Evaluate live nodes and edges against agenda-level gold annotations.
+/// Exclude sub-questions and nodes attached only to sub-questions from scoring.
+/// Pass the applied operations from
 /// consolidation in order. Each merge endpoint is independently matched to
 /// the best overlapping gold node from the graph before consolidation.
 pub fn evaluate(
@@ -46,7 +53,36 @@ pub fn evaluate(
     before_consolidation: &Graph,
     consolidation_ops: &[AppliedOp],
 ) -> Evaluation {
-    let matched = matching(prediction, gold);
+    let parents = prediction.issue_parents();
+    let agendas: Vec<_> = prediction
+        .nodes
+        .values()
+        .filter(|node| {
+            node.is_live()
+                && node.kind == NodeKind::Issue
+                && !parents.contains_key(node.nid.as_str())
+        })
+        .map(|node| node.nid.as_str())
+        .collect();
+    let mut incoming = BTreeMap::<_, Vec<_>>::new();
+    for edge in prediction
+        .live_edges()
+        .filter(|edge| edge.kind != EdgeKind::SubIssueOf)
+    {
+        incoming
+            .entry(edge.dst.as_str())
+            .or_default()
+            .push(edge.src.as_str());
+    }
+    let agenda_nodes = reachable_nodes(&incoming, agendas.clone());
+    let sub_question_nodes = reachable_nodes(&incoming, parents.keys().copied().collect());
+    let excluded: BTreeSet<_> = sub_question_nodes
+        .difference(&agenda_nodes)
+        .copied()
+        .collect();
+    let matched = matching(prediction, gold, |node| {
+        node.is_live() && !excluded.contains(node.nid.as_str())
+    });
     let live_nodes = prediction.nodes.values().filter(|n| n.is_live()).count();
     let gold_edges: BTreeSet<_> = gold
         .edges
@@ -56,6 +92,9 @@ pub fn evaluate(
     let mut edge_count = 0;
     let mut matched_edges = BTreeSet::new();
     for edge in prediction.live_edges() {
+        if excluded.contains(edge.src.as_str()) || excluded.contains(edge.dst.as_str()) {
+            continue;
+        }
         edge_count += 1;
         if let (Some(&src), Some(&dst)) = (
             matched.get(edge.src.as_str()),
@@ -85,11 +124,26 @@ pub fn evaluate(
         .count();
     Evaluation {
         node_recall: ratio(matched.len(), gold.nodes.len()),
-        node_precision: ratio(matched.len(), live_nodes),
+        node_precision: ratio(matched.len(), live_nodes - excluded.len()),
         edge_f1: ratio(2 * matched_edges.len(), edge_count + gold_edges.len()),
         live_nodes,
+        agendas: agendas.len(),
+        sub_questions: parents.len(),
         wrong_merges,
     }
+}
+
+fn reachable_nodes<'a>(
+    incoming: &BTreeMap<&str, Vec<&'a str>>,
+    mut pending: Vec<&'a str>,
+) -> BTreeSet<&'a str> {
+    let mut reached = BTreeSet::new();
+    while let Some(nid) = pending.pop() {
+        if reached.insert(nid) {
+            pending.extend(incoming.get(nid).into_iter().flatten().copied());
+        }
+    }
+    reached
 }
 
 fn ratio(numerator: usize, denominator: usize) -> f64 {
@@ -142,10 +196,14 @@ fn candidates<'a>(
     candidates
 }
 
-fn matching<'a>(prediction: &'a Graph, gold: &'a GoldGraph) -> BTreeMap<&'a str, &'a str> {
+fn matching<'a>(
+    prediction: &'a Graph,
+    gold: &'a GoldGraph,
+    include: impl Fn(&crate::Node) -> bool,
+) -> BTreeMap<&'a str, &'a str> {
     let mut matched = BTreeMap::new();
     let mut used_gold = BTreeSet::new();
-    for (_, prediction_id, gold_id) in candidates(prediction, gold, crate::Node::is_live) {
+    for (_, prediction_id, gold_id) in candidates(prediction, gold, include) {
         if !matched.contains_key(prediction_id) && used_gold.insert(gold_id) {
             matched.insert(prediction_id, gold_id);
         }

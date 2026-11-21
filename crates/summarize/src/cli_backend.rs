@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitStatus;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader};
 
@@ -27,6 +27,7 @@ mod platform;
 mod platform;
 
 const DIR_PREFIX: &str = "meetingram-cli-";
+const STALE_DIR_AGE: Duration = Duration::from_secs(60 * 60);
 const SYSTEM_FILE: &str = "system.txt";
 const OUTPUT_FILE: &str = "out.txt";
 const CLAUDE_DISALLOWED_TOOLS: &str =
@@ -57,9 +58,33 @@ pub fn claude_compatibility_mode() -> bool {
     CLAUDE_COMPAT.load(Ordering::Relaxed)
 }
 
-/// Removes leftover CLI working directories from a dedicated base directory.
-/// Call only for an application-specific base directory, at startup before
-/// beginning CLI requests that use it.
+enum ProcessStart {
+    Known(u64),
+    Alive,
+    Dead,
+    Unknown,
+}
+
+fn process_dir_name() -> &'static str {
+    static NAME: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    NAME.get_or_init(|| {
+        let pid = std::process::id();
+        match platform::process_start(pid) {
+            ProcessStart::Known(start) => format!("{pid}-{start}"),
+            _ => {
+                let now = SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default();
+                format!("{pid}-t{}", now.as_nanos())
+            }
+        }
+    })
+}
+
+/// Removes leftover CLI working directories from a dedicated application base.
+/// Keeps this process's directory and those of other live processes. Legacy
+/// directories and directories whose owner cannot be checked are eligible for
+/// removal after one hour without modification.
 pub fn cleanup_stale_cli_dirs(base: &Path) -> io::Result<()> {
     let entries = match std::fs::read_dir(base) {
         Ok(entries) => entries,
@@ -68,13 +93,60 @@ pub fn cleanup_stale_cli_dirs(base: &Path) -> io::Result<()> {
     };
     for entry in entries {
         let entry = entry?;
-        if entry.file_type()?.is_dir()
-            && entry.file_name().to_string_lossy().starts_with(DIR_PREFIX)
-        {
-            std::fs::remove_dir_all(entry.path())?;
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else {
+            continue;
+        };
+        if name == process_dir_name() {
+            continue;
+        }
+        let result = (|| {
+            if entry.file_type()?.is_dir() && is_stale_cli_dir(&entry, name)? {
+                std::fs::remove_dir_all(entry.path())?;
+            }
+            Ok::<_, io::Error>(())
+        })();
+        // Another instance can be cleaning up the same stale directory.
+        match result {
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            other => other?,
         }
     }
     Ok(())
+}
+
+fn is_stale_cli_dir(entry: &std::fs::DirEntry, name: &str) -> io::Result<bool> {
+    if !name.starts_with(DIR_PREFIX) {
+        let Some((pid, start)) = name.split_once('-') else {
+            return Ok(false);
+        };
+        let Ok(pid) = pid.parse::<u32>() else {
+            return Ok(false);
+        };
+        let start = match start.parse::<u64>() {
+            Ok(start) => Some(start),
+            Err(_)
+                if start
+                    .strip_prefix('t')
+                    .is_some_and(|s| s.parse::<u128>().is_ok()) =>
+            {
+                None
+            }
+            Err(_) => return Ok(false),
+        };
+        if pid == 0 {
+            return Ok(false);
+        }
+        match platform::process_start(pid) {
+            ProcessStart::Dead => return Ok(true),
+            ProcessStart::Known(current) => return Ok(start.is_some_and(|start| start != current)),
+            ProcessStart::Alive => return Ok(false),
+            ProcessStart::Unknown => {}
+        }
+    }
+
+    let modified = entry.metadata()?.modified()?;
+    Ok(modified.elapsed().is_ok_and(|age| age > STALE_DIR_AGE))
 }
 
 /// Which CLI-based summarization backend to use.
@@ -324,15 +396,28 @@ async fn run_cli(
     compatibility: &AtomicBool,
 ) -> Result<String, CliSummarizeError> {
     tokio::time::timeout(timeout, async {
-        let base = match base {
-            Some(base) => std::path::absolute(base),
-            None => std::path::absolute(std::env::temp_dir()),
-        }
-        .map_err(CliSummarizeError::TempDir)?;
+        let dedicated_base = base.is_some();
+        let base = std::path::absolute(base.map_or_else(std::env::temp_dir, Path::to_path_buf))
+            .map_err(CliSummarizeError::TempDir)?;
         let system = input.system.to_owned();
         // The worker owns the directory throughout setup. Dropping the
         // request during a write still cleans it up after the write finishes.
         let dir = tokio::task::spawn_blocking(move || {
+            let base = if dedicated_base {
+                let process_dir = base.join(process_dir_name());
+                match std::fs::create_dir(&process_dir) {
+                    Ok(()) => {}
+                    Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+                        if !std::fs::symlink_metadata(&process_dir)?.is_dir() {
+                            return Err(error);
+                        }
+                    }
+                    Err(error) => return Err(error),
+                }
+                process_dir
+            } else {
+                base
+            };
             let dir = tempfile::Builder::new()
                 .prefix(DIR_PREFIX)
                 .tempdir_in(base)?;

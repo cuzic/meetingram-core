@@ -455,3 +455,27 @@ fn cannot_review_a_decided_node_or_edge_again() {
         assert_eq!(graph.load_graph(sid).unwrap(), approved);
     }
 }
+
+#[test]
+fn stores_and_reloads_sub_issue_edges() {
+    let (_dir, session, mut store) = stores();
+    let sid = create_session(&session);
+    append(&session, sid, "Synthetic agenda and detail");
+    store.import_utterances(sid).unwrap();
+    let ops = parse_ops(
+        r#"{"ops":[
+            {"op":"add_node","tmp":"agenda","kind":"issue","text":"Synthetic agenda","confidence":1,"grounds":[{"uid":"u1"}]},
+            {"op":"add_node","tmp":"detail","kind":"issue","text":"Synthetic detail","confidence":1,"grounds":[{"uid":"u1"}]},
+            {"op":"add_edge","src":"detail","dst":"agenda","kind":"sub_issue_of","confidence":1,"grounds":[{"uid":"u1"}]}
+        ]}"#,
+    )
+    .unwrap();
+    store
+        .apply_patch(sid, PatchSource::Live, None, &ops, &["u1"], &[])
+        .unwrap();
+
+    let graph = store.load_graph(sid).unwrap();
+    assert_eq!(graph.edges.len(), 1);
+    assert_eq!(graph.edges["e1"].kind, crate::EdgeKind::SubIssueOf);
+    assert_eq!(graph.issue_parents(), [("n2", "n1")].into());
+}

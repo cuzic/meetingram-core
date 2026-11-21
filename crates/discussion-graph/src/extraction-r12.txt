@@ -1,0 +1,1 @@
+議題の中の細かな確認の問いは issue として作り、同じ応答で sub_issue_of（子の issue → 親の issue）を add_edge してください。context の parent_nid は親の議題を指します。親は 1 つまでで、循環させないでください。

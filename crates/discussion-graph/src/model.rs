@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, fmt, str::FromStr};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +54,7 @@ stored_enum!(Status {
 stored_enum!(Review { Auto => "auto", Approved => "approved", Rejected => "rejected" });
 stored_enum!(EdgeKind {
     RespondsTo => "responds_to", Supports => "supports", ObjectsTo => "objects_to",
-    Resolves => "resolves", Assigns => "assigns",
+    Resolves => "resolves", Assigns => "assigns", SubIssueOf => "sub_issue_of",
 });
 stored_enum!(Act {
     Asserts => "asserts", Asks => "asks", Challenges => "challenges", Agrees => "agrees",
@@ -127,6 +131,13 @@ pub struct Graph {
 }
 
 impl Graph {
+    pub(crate) fn issue_parents(&self) -> BTreeMap<&str, &str> {
+        self.live_edges()
+            .filter(|edge| edge.kind == EdgeKind::SubIssueOf)
+            .map(|edge| (edge.src.as_str(), edge.dst.as_str()))
+            .collect()
+    }
+
     pub(crate) fn live_edges(&self) -> impl Iterator<Item = &Edge> {
         self.edges.values().filter(|edge| {
             edge.review != Review::Rejected
@@ -137,6 +148,7 @@ impl Graph {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Gaps {
     pub unanswered_issues: Vec<String>,
     pub one_sided_positions: Vec<String>,
@@ -178,6 +190,116 @@ pub fn detect_gaps(graph: &Graph, flush_complete: bool) -> Gaps {
         }
     }
     gaps
+}
+
+/// Count unanswered issues, including nested questions, by their root agenda issue.
+pub fn unanswered_by_agenda(graph: &Graph) -> BTreeMap<String, usize> {
+    let parents = graph.issue_parents();
+    let mut counts = BTreeMap::new();
+    for issue in detect_gaps(graph, false).unanswered_issues {
+        let mut root = issue.as_str();
+        let mut visited = BTreeSet::new();
+        while let Some(&parent) = parents.get(root) {
+            if !visited.insert(root) {
+                break;
+            }
+            root = parent;
+        }
+        *counts.entry(root.to_owned()).or_default() += 1;
+    }
+    counts
+}
+
+/// A live node in an agenda outline. The incoming relation is absent at the root.
+#[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
+pub struct OutlineNode<'a> {
+    pub node: &'a Node,
+    pub relation: Option<EdgeKind>,
+    pub children: Vec<OutlineNode<'a>>,
+}
+
+/// Agenda trees and live nodes that cannot be reached from any agenda.
+#[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
+pub struct Outline<'a> {
+    pub agendas: Vec<OutlineNode<'a>>,
+    /// Sorted by node kind and then by node ID.
+    pub unattached: Vec<&'a Node>,
+}
+
+/// Build an outline rooted at each agenda issue, following live edges toward
+/// questions, positions, arguments, decisions and actions.
+pub fn build_outline(graph: &Graph) -> Outline<'_> {
+    fn branch<'a>(
+        graph: &'a Graph,
+        incoming: &BTreeMap<&str, Vec<&'a Edge>>,
+        node: &'a Node,
+        relation: Option<EdgeKind>,
+        path: &mut BTreeSet<&'a str>,
+        attached: &mut BTreeSet<&'a str>,
+    ) -> OutlineNode<'a> {
+        path.insert(node.nid.as_str());
+        attached.insert(node.nid.as_str());
+        let mut children = Vec::new();
+        for edge in incoming.get(node.nid.as_str()).into_iter().flatten() {
+            if !path.contains(edge.src.as_str()) {
+                children.push(branch(
+                    graph,
+                    incoming,
+                    &graph.nodes[&edge.src],
+                    Some(edge.kind),
+                    path,
+                    attached,
+                ));
+            }
+        }
+        path.remove(node.nid.as_str());
+        OutlineNode {
+            node,
+            relation,
+            children,
+        }
+    }
+
+    let parents = graph.issue_parents();
+    let mut incoming = BTreeMap::<_, Vec<_>>::new();
+    for edge in graph.live_edges() {
+        incoming.entry(edge.dst.as_str()).or_default().push(edge);
+    }
+    for edges in incoming.values_mut() {
+        edges.sort_by_key(|edge| (edge.kind != EdgeKind::SubIssueOf, &edge.src, edge.kind));
+    }
+    let mut attached = BTreeSet::new();
+    let agendas = graph
+        .nodes
+        .values()
+        .filter(|node| {
+            node.is_live()
+                && node.kind == NodeKind::Issue
+                && !parents.contains_key(node.nid.as_str())
+        })
+        .map(|node| {
+            branch(
+                graph,
+                &incoming,
+                node,
+                None,
+                &mut BTreeSet::new(),
+                &mut attached,
+            )
+        })
+        .collect();
+    let mut unattached: Vec<_> = graph
+        .nodes
+        .values()
+        .filter(|node| node.is_live() && !attached.contains(node.nid.as_str()))
+        .collect();
+    unattached.sort_by_key(|node| (node.kind, node.nid.as_str()));
+    Outline {
+        agendas,
+        unattached,
+    }
 }
 
 pub fn graph_updated_subject(sid: impl fmt::Display) -> String {
