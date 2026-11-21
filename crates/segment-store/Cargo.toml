@@ -8,10 +8,10 @@ description = "Opus/Ogg encoding and atomic segment commit (write .partial -> fs
 
 [dependencies]
 ogg = "0.9"
-opus = "0.3"
+opus = "0.4"
 recorder-domain = { path = "../recorder-domain" }
 session-store = { path = "../session-store" }
-sha2 = "0.10"
+sha2 = "0.11"
 thiserror = { workspace = true }
 
 [dev-dependencies]

@@ -95,9 +95,9 @@ impl AppState {
 pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/v1/recording-sessions", post(create_session))
-        .route("/v1/recording-sessions/:id", get(get_session))
-        .route("/v1/recording-sessions/:id/tracks/:track/segments/:sequence", put(upload_segment))
-        .route("/v1/recording-sessions/:id/finalize", post(finalize_session))
+        .route("/v1/recording-sessions/{id}", get(get_session))
+        .route("/v1/recording-sessions/{id}/tracks/{track}/segments/{sequence}", put(upload_segment))
+        .route("/v1/recording-sessions/{id}/finalize", post(finalize_session))
         .with_state(state)
 }
 

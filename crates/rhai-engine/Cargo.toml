@@ -7,7 +7,7 @@ repository.workspace = true
 description = "Rhai scripting engine for meetingram plugins. Provides a hook-based event dispatch system with a generic async command dispatcher for AI/HTTP calls."
 
 [dependencies]
-rhai = { version = "=1.20.0", features = ["sync"] }
+rhai = { version = "=1.27.0", features = ["sync"] }
 dashmap = "6"
 local-broker = { path = "../local-broker" }
 transcript-event = { path = "../transcript-event" }
@@ -21,13 +21,16 @@ tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "time", "m
 tracing = "0.1"
 thiserror = { workspace = true }
 chrono = "0.4"
-genai = "0.7.0-beta.13"
-reqwest = { version = "0.12", features = ["json"] }
-jsonwebtoken = "9"
-base64 = "0.22"
+genai = "0.7.5"
+reqwest = { version = "0.13", features = ["json", "form"] }
+# jsonwebtoken 10+ picks its crypto backend from exactly one of these features
+# and panics on the first encode if none is enabled. aws-lc-rs is already in
+# the tree through rustls.
+jsonwebtoken = { version = "12", features = ["aws_lc_rs"] }
+base64 = "0.23"
 uuid = { version = "1", features = ["v4"] }
-sha2 = "0.10"
-hmac = "0.12"
+sha2 = "0.11"
+hmac = "0.13"
 # Real, non-blocking silence-detection debounce timer for `hint.rhai`'s hint
 # generation (`hint_debounce.rs`) — see that module's doc comment. Published
 # by this repo's own maintainer; API confirmed directly against its source at
@@ -36,3 +39,4 @@ timed-fsm = { version = "0.5", features = ["tokio"] }
 
 [dev-dependencies]
 tempfile = "3"
+aws-lc-rs = "1"

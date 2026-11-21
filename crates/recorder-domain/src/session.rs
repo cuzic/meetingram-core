@@ -11,7 +11,7 @@ pub struct SessionId(pub ulid::Ulid);
 
 impl SessionId {
     pub fn new() -> Self {
-        Self(ulid::Ulid::new())
+        Self(ulid::Ulid::generate())
     }
 }
 

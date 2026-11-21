@@ -263,10 +263,10 @@ async fn writer_task(
 ) {
     while let Some(cmd) = commands.recv().await {
         let result = match cmd {
-            WsCommand::Audio(bytes) => write.send(Message::Binary(bytes)).await,
+            WsCommand::Audio(bytes) => write.send(Message::Binary(bytes.into())).await,
             WsCommand::Close => {
                 write
-                    .send(Message::Text(r#"{"type":"Terminate"}"#.to_string()))
+                    .send(Message::Text(r#"{"type":"Terminate"}"#.into()))
                     .await
             }
         };

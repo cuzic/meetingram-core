@@ -146,15 +146,19 @@ fn sha256_hex(input: &str) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(input.as_bytes());
-    format!("{:x}", hasher.finalize())
+    to_hex(&hasher.finalize())
+}
+
+fn to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 fn hmac_sha256_hex(key: &[u8], msg: &str) -> String {
-    use hmac::{Hmac, Mac};
+    use hmac::{Hmac, KeyInit, Mac};
     use sha2::Sha256;
     let mut mac = Hmac::<Sha256>::new_from_slice(key).expect("HMAC can take key of any size");
     mac.update(msg.as_bytes());
-    format!("{:x}", mac.finalize().into_bytes())
+    to_hex(&mac.finalize().into_bytes())
 }
 
 fn derive_signing_key(secret_key: &str, date: &str, region: &str, service: &str) -> Vec<u8> {
@@ -168,7 +172,7 @@ fn derive_signing_key(secret_key: &str, date: &str, region: &str, service: &str)
 }
 
 fn hmac_sha256(key: &[u8], msg: &str) -> Vec<u8> {
-    use hmac::{Hmac, Mac};
+    use hmac::{Hmac, KeyInit, Mac};
     use sha2::Sha256;
     let mut mac = Hmac::<Sha256>::new_from_slice(key).expect("HMAC can take key of any size");
     mac.update(msg.as_bytes());

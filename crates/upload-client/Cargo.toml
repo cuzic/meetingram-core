@@ -8,14 +8,14 @@ description = "HTTP implementation of recorder-domain's UploadAdapter (design.md
 
 [dependencies]
 async-trait = "0.1"
-axum = { version = "0.7", optional = true }
+axum = { version = "0.8", optional = true }
 chrono = "0.4"
 hex = { version = "0.4", optional = true }
-rand = "0.9"
+rand = "0.10"
 recorder-domain = { path = "../recorder-domain" }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 serde_json = { workspace = true }
-sha2 = "0.10"
+sha2 = "0.11"
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["time", "fs"] }
 tracing = "0.1"

@@ -8,13 +8,16 @@
 use screencapturekit::shareable_content::{SCDisplay, SCRunningApplication};
 use screencapturekit::stream::content_filter::SCContentFilter;
 
+use crate::error::CaptureError;
+
 /// An unfiltered content filter over the given display — all system audio,
 /// unfiltered by application. Used for `BindingKind::EndpointLoopback`.
-pub fn unfiltered(display: &SCDisplay) -> SCContentFilter {
+pub fn unfiltered(display: &SCDisplay) -> Result<SCContentFilter, CaptureError> {
     SCContentFilter::create()
         .with_display(display)
         .with_excluding_windows(&[])
         .build()
+        .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))
 }
 
 /// A content filter scoped to one running application's audio only. Used for
@@ -24,9 +27,10 @@ pub fn unfiltered(display: &SCDisplay) -> SCContentFilter {
 pub fn scoped_to_application(
     display: &SCDisplay,
     application: &SCRunningApplication,
-) -> SCContentFilter {
+) -> Result<SCContentFilter, CaptureError> {
     SCContentFilter::create()
         .with_display(display)
         .with_including_applications(&[application], &[])
         .build()
+        .map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))
 }

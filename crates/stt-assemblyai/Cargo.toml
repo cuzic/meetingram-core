@@ -17,7 +17,7 @@ serde_json = { workspace = true }
 stt-api = { path = "../stt-api" }
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["rt", "sync", "time"] }
-tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.30", features = ["native-tls"] }
 tracing = "0.1"
 url = "2"
 

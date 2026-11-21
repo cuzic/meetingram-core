@@ -173,15 +173,15 @@ async fn writer_task(
 ) {
     while let Some(cmd) = commands.recv().await {
         let result = match cmd {
-            WsCommand::Audio(bytes) => write.send(Message::Binary(bytes)).await,
+            WsCommand::Audio(bytes) => write.send(Message::Binary(bytes.into())).await,
             WsCommand::KeepAlive => {
                 write
-                    .send(Message::Text(r#"{"type":"KeepAlive"}"#.to_string()))
+                    .send(Message::Text(r#"{"type":"KeepAlive"}"#.into()))
                     .await
             }
             WsCommand::Close => {
                 write
-                    .send(Message::Text(r#"{"type":"CloseStream"}"#.to_string()))
+                    .send(Message::Text(r#"{"type":"CloseStream"}"#.into()))
                     .await
             }
         };

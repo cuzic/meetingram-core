@@ -111,7 +111,7 @@ fn unfiltered_display_filter(
     let display = content.displays().into_iter().next().ok_or_else(|| {
         capture_macos::CaptureError::DeviceNotFound("no display available".to_string())
     })?;
-    Ok(capture_macos::app_filter::unfiltered(&display))
+    capture_macos::app_filter::unfiltered(&display)
 }
 
 fn parse_arg(args: &[String], name: &str) -> Option<u64> {

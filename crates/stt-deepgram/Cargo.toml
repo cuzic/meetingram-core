@@ -12,16 +12,16 @@ categories = ["multimedia::audio", "asynchronous"]
 [dependencies]
 async-trait = "0.1"
 futures-util = "0.3"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 stt-api = { path = "../stt-api" }
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["rt", "sync", "time"] }
-tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.30", features = ["native-tls"] }
 tracing = "0.1"
 url = "2"
 
 [dev-dependencies]
-axum = "0.7"
+axum = "0.8"
 tokio = { version = "1", features = ["full"] }

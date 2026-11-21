@@ -95,7 +95,14 @@ impl FallbackCredentialStore {
                     || lower.contains("serviceunknown")
                     || lower.contains("was not provided by any")
                     || lower.contains("could not connect")
+                    // keyring 2's `PlatformFailure` message.
                     || lower.contains("platform secure storage failure")
+                    // keyring 4 (keyring-core): `PlatformFailure`, and
+                    // `NoDefaultStore` — the latter is what `Entry::new` now
+                    // returns when the platform store (e.g. Secret Service)
+                    // failed to initialize at all.
+                    || lower.contains("platform failure")
+                    || lower.contains("no default store")
             }
             _ => false,
         }

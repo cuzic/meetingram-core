@@ -23,7 +23,7 @@ impl CredentialStore for OsKeyringStore {
 
     fn delete(&self, service: &str, account: &str) -> Result<(), StoreError> {
         let entry = keyring::Entry::new(service, account).map_err(|e| StoreError::Backend(e.to_string()))?;
-        match entry.delete_password() {
+        match entry.delete_credential() {
             Ok(()) => Ok(()),
             Err(keyring::Error::NoEntry) => Ok(()), // already gone counts as deleted
             Err(e) => Err(StoreError::Backend(e.to_string())),

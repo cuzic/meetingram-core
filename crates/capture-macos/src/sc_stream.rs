@@ -19,7 +19,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use capture_api::rebinding::BindingKind;
-use screencapturekit::cm::{CMSampleBuffer, CMSampleBufferExt};
+use screencapturekit::cm::CMSampleBuffer;
 use screencapturekit::error::SCError;
 use screencapturekit::stream::configuration::SCStreamConfiguration;
 use screencapturekit::stream::content_filter::SCContentFilter;
@@ -73,6 +73,7 @@ pub struct ScreenCaptureKitStream {
 }
 
 impl ScreenCaptureKitStream {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         filter: SCContentFilter,
         sample_rate: u32,
@@ -115,13 +116,16 @@ impl CaptureStream for ScreenCaptureKitStream {
     ) -> Result<CaptureExit, CaptureError> {
         let mut config = SCStreamConfiguration::new()
             .with_captures_audio(self.outputs.system_audio)
-            .with_captures_microphone(self.outputs.microphone)
             .with_sample_rate(self.sample_rate as i32)
             .with_channel_count(self.channels as i32);
 
+        // Microphone capture (and pinning its device) only exists on macOS 15+;
+        // screencapturekit reports that as an error rather than silently
+        // ignoring it, so only touch it when this stream actually needs the mic.
         if self.outputs.microphone {
+            config.set_captures_microphone(true).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             if let Some(device_id) = &self.microphone_device_id {
-                config.set_microphone_capture_device_id(device_id);
+                config.set_microphone_capture_device_id(device_id).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             }
         }
 
@@ -130,7 +134,7 @@ impl CaptureStream for ScreenCaptureKitStream {
         let stream_dead = Arc::new(StopSignal::new());
         let delegate_error: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
         let delegate = StreamErrorDelegate { error: delegate_error.clone(), stream_dead: stream_dead.clone() };
-        let mut stream = SCStream::new_with_delegate(&self.filter, &config, delegate);
+        let mut stream = SCStream::new_with_delegate(&self.filter, &config, delegate).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
 
         if self.outputs.microphone {
             let handler = FrameForwarder::new(
@@ -142,7 +146,7 @@ impl CaptureStream for ScreenCaptureKitStream {
                     "outputs.microphone is true but ScreenCaptureKitStream::new wasn't given a microphone_epoch",
                 ),
             );
-            stream.add_output_handler(handler, SCStreamOutputType::Microphone);
+            stream.add_output_handler(handler, SCStreamOutputType::Microphone).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             tx.send(CaptureEvent::StreamStarted {
                 stream: BindingKind::Microphone,
                 sample_rate: self.sample_rate,
@@ -161,7 +165,7 @@ impl CaptureStream for ScreenCaptureKitStream {
                     "outputs.system_audio is true but ScreenCaptureKitStream::new wasn't given a system_audio_epoch",
                 ),
             );
-            stream.add_output_handler(handler, SCStreamOutputType::Audio);
+            stream.add_output_handler(handler, SCStreamOutputType::Audio).map_err(|err| CaptureError::ScreenCaptureKit(err.to_string()))?;
             tx.send(CaptureEvent::StreamStarted {
                 stream: self.system_audio_binding,
                 sample_rate: self.sample_rate,
@@ -251,6 +255,9 @@ impl SCStreamDelegateTrait for StreamErrorDelegate {
 struct FrameForwarder {
     tx: crossbeam_channel::Sender<CaptureEvent>,
     binding: BindingKind,
+    // Not read: frames carry no sample rate of their own, and
+    // `macos_frame_collector` takes it from the `StreamStarted` event instead.
+    #[allow(dead_code)]
     sample_rate: u32,
     /// Needed to turn `samples.len()` (the total f32 count across *all* channels,
     /// interleaved or not — see `audio_buffer_list_to_f32`'s doc comment) back into a
@@ -284,7 +291,7 @@ impl FrameForwarder {
 
 impl SCStreamOutputTrait for FrameForwarder {
     fn did_output_sample_buffer(&self, sample: CMSampleBuffer, _of_type: SCStreamOutputType) {
-        let Some(buffer_list) = sample.audio_buffer_list() else {
+        let Ok(buffer_list) = sample.audio_buffer_list() else {
             return;
         };
 
@@ -362,10 +369,8 @@ impl SCStreamOutputTrait for FrameForwarder {
 fn audio_buffer_list_to_f32(buffer_list: &screencapturekit::AudioBufferList) -> Vec<f32> {
     let mut samples = Vec::new();
     for buffer in buffer_list {
-        let chunks = buffer.data().chunks_exact(4);
-        samples.extend(
-            chunks.map(|bytes| f32::from_ne_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])),
-        );
+        let (chunks, _remainder) = buffer.data().as_chunks::<4>();
+        samples.extend(chunks.iter().map(|bytes| f32::from_ne_bytes(*bytes)));
     }
     samples
 }
