@@ -130,10 +130,20 @@ fn run_fixture<'a>(
 
 #[cfg(unix)]
 fn script(dir: &Path, contents: &str) -> PathBuf {
-    use std::os::unix::fs::PermissionsExt;
     let script = dir.join("sample-cli");
-    std::fs::write(&script, format!("#!/bin/sh\n{contents}")).unwrap();
-    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o700)).unwrap();
+    // Open the fixture for writing only in the shell. Parallel tests that fork
+    // from this process cannot inherit a write descriptor and cause ETXTBSY.
+    let status = std::process::Command::new("/bin/sh")
+        .args([
+            "-c",
+            r#"printf '#!/bin/sh\n%s' "$1" > "$2" && chmod 700 "$2""#,
+            "--",
+        ])
+        .arg(contents)
+        .arg(&script)
+        .status()
+        .unwrap();
+    assert!(status.success());
     script
 }
 
