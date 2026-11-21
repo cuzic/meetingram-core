@@ -1,0 +1,666 @@
+{
+  "nodes": [
+    {
+      "id": "g1",
+      "kind": "issue",
+      "text": "v3.2を予定通り12月10日にリリースするか延期するか",
+      "status": "decided",
+      "grounds": [
+        5,
+        101,
+        163
+      ]
+    },
+    {
+      "id": "g2",
+      "kind": "issue",
+      "text": "同期機能の回帰テスト不足をどう補うか",
+      "status": "resolved",
+      "grounds": [
+        79
+      ]
+    },
+    {
+      "id": "g3",
+      "kind": "issue",
+      "text": "同期機能を待っているA社への説明をどうするか",
+      "status": "resolved",
+      "grounds": [
+        76,
+        110
+      ]
+    },
+    {
+      "id": "g4",
+      "kind": "issue",
+      "text": "ホットフィックスのリリースに時間がかかる(承認プロセス)",
+      "status": "resolved",
+      "grounds": [
+        126
+      ]
+    },
+    {
+      "id": "g5",
+      "kind": "issue",
+      "text": "リリースノートで同期機能についてどう書くか",
+      "status": "open",
+      "grounds": [
+        149,
+        155
+      ]
+    },
+    {
+      "id": "g6",
+      "kind": "position",
+      "text": "予定通り12月10日に全機能でリリースする",
+      "status": "open",
+      "grounds": [
+        19,
+        20,
+        36
+      ]
+    },
+    {
+      "id": "g7",
+      "kind": "argument",
+      "text": "A社など顧客に12月中のリリースを約束済み",
+      "status": "open",
+      "grounds": [
+        16,
+        17
+      ]
+    },
+    {
+      "id": "g8",
+      "kind": "argument",
+      "text": "競合が年内に同様の機能を出す可能性がある",
+      "status": "open",
+      "grounds": [
+        22,
+        23,
+        24
+      ]
+    },
+    {
+      "id": "g9",
+      "kind": "position",
+      "text": "1週間延期して12月17日にリリースする",
+      "status": "retracted",
+      "grounds": [
+        31,
+        36,
+        106
+      ]
+    },
+    {
+      "id": "g10",
+      "kind": "argument",
+      "text": "同期機能の回帰テストが6割しか終わっていない",
+      "status": "open",
+      "grounds": [
+        10
+      ]
+    },
+    {
+      "id": "g11",
+      "kind": "argument",
+      "text": "前回v3.1でテスト未完了のまま出して同期の障害が起きた",
+      "status": "open",
+      "grounds": [
+        27,
+        29
+      ]
+    },
+    {
+      "id": "g12",
+      "kind": "position",
+      "text": "2週間延期する",
+      "status": "retracted",
+      "grounds": [
+        39,
+        48
+      ]
+    },
+    {
+      "id": "g13",
+      "kind": "argument",
+      "text": "2週間延期すると年末年始にかかりリリース後の対応体制が薄い",
+      "status": "open",
+      "grounds": [
+        43,
+        44,
+        45
+      ]
+    },
+    {
+      "id": "g14",
+      "kind": "position",
+      "text": "同期機能だけフィーチャーフラグでオフにして12月10日にリリースする",
+      "status": "open",
+      "grounds": [
+        51,
+        56,
+        103,
+        104
+      ]
+    },
+    {
+      "id": "g15",
+      "kind": "argument",
+      "text": "同期をフラグで切ればリスクのある部分がユーザーに出ない",
+      "status": "open",
+      "grounds": [
+        55
+      ]
+    },
+    {
+      "id": "g16",
+      "kind": "argument",
+      "text": "フラグをオフにした状態自体がテストされていない",
+      "status": "open",
+      "grounds": [
+        60,
+        61,
+        65
+      ]
+    },
+    {
+      "id": "g17",
+      "kind": "argument",
+      "text": "v3.0でも同じフラグの仕組みで共有リンク機能を止めて問題なかった",
+      "status": "open",
+      "grounds": [
+        63,
+        64
+      ]
+    },
+    {
+      "id": "g18",
+      "kind": "argument",
+      "text": "A社が一番待っているのは同期機能なので外して出す意味が薄い",
+      "status": "open",
+      "grounds": [
+        68,
+        69
+      ]
+    },
+    {
+      "id": "g19",
+      "kind": "position",
+      "text": "自動テストを追加で書いて同期のテスト不足を補う",
+      "status": "retracted",
+      "grounds": [
+        80,
+        81,
+        87
+      ]
+    },
+    {
+      "id": "g20",
+      "kind": "argument",
+      "text": "自動テスト追加には5日程度かかり12月10日に間に合わない",
+      "status": "open",
+      "grounds": [
+        84,
+        85
+      ]
+    },
+    {
+      "id": "g21",
+      "kind": "position",
+      "text": "同期まわりの探索的テストを2日間集中して行う",
+      "status": "open",
+      "grounds": [
+        90,
+        91
+      ]
+    },
+    {
+      "id": "g22",
+      "kind": "argument",
+      "text": "探索的テストの中でフラグをオフにした状態も確認できる",
+      "status": "open",
+      "grounds": [
+        93,
+        94,
+        159
+      ]
+    },
+    {
+      "id": "g23",
+      "kind": "position",
+      "text": "A社に事前連絡し同期は1月中旬めどになると説明する",
+      "status": "open",
+      "grounds": [
+        114,
+        121
+      ]
+    },
+    {
+      "id": "g24",
+      "kind": "argument",
+      "text": "後で気づかれるより先に伝えた方がよい",
+      "status": "open",
+      "grounds": [
+        113
+      ]
+    },
+    {
+      "id": "g25",
+      "kind": "argument",
+      "text": "A社は以前、事前相談なしの仕様変更で強く不満を示した",
+      "status": "open",
+      "grounds": [
+        116,
+        117,
+        118
+      ]
+    },
+    {
+      "id": "g26",
+      "kind": "position",
+      "text": "当番を決めて当番1人の承認でホットフィックスを出せるようにする",
+      "status": "open",
+      "grounds": [
+        131
+      ]
+    },
+    {
+      "id": "g27",
+      "kind": "argument",
+      "text": "現行ルールは承認2人必要で夜間に2人目が捕まらず3時間止まった",
+      "status": "open",
+      "grounds": [
+        128,
+        129
+      ]
+    },
+    {
+      "id": "g28",
+      "kind": "argument",
+      "text": "1人承認だとレビューが甘くなる",
+      "status": "open",
+      "grounds": [
+        133,
+        134
+      ]
+    },
+    {
+      "id": "g29",
+      "kind": "position",
+      "text": "夜間のみ当番1人承認とし翌営業日朝にもう1人が事後レビュー、昼間は従来通り2人",
+      "status": "open",
+      "grounds": [
+        139,
+        142
+      ]
+    },
+    {
+      "id": "g30",
+      "kind": "decision",
+      "text": "v3.2は12月10日に予定通りリリースし、同期機能はフラグでオフにする",
+      "status": "open",
+      "grounds": [
+        165
+      ]
+    },
+    {
+      "id": "g31",
+      "kind": "decision",
+      "text": "テストは探索的テスト2日間で補い、自動テストの追加は次スプリントで行う",
+      "status": "open",
+      "grounds": [
+        97,
+        98
+      ]
+    },
+    {
+      "id": "g32",
+      "kind": "decision",
+      "text": "A社に事前連絡し同期は1月中旬めどと説明する",
+      "status": "open",
+      "grounds": [
+        123
+      ]
+    },
+    {
+      "id": "g33",
+      "kind": "decision",
+      "text": "ホットフィックスは夜間1人承認・翌朝事後レビューとする",
+      "status": "open",
+      "grounds": [
+        146
+      ]
+    },
+    {
+      "id": "g34",
+      "kind": "action",
+      "text": "小野寺がA社に今週金曜までに連絡する",
+      "status": "open",
+      "grounds": [
+        165,
+        166
+      ]
+    },
+    {
+      "id": "g35",
+      "kind": "action",
+      "text": "田辺が探索的テストの計画を明日午前までに共有する",
+      "status": "open",
+      "grounds": [
+        167
+      ]
+    },
+    {
+      "id": "g36",
+      "kind": "action",
+      "text": "森川がフラグをオフにした状態の動作を開発環境で確認する",
+      "status": "open",
+      "grounds": [
+        160,
+        161,
+        168
+      ]
+    },
+    {
+      "id": "g37",
+      "kind": "action",
+      "text": "自分がホットフィックス手順書を更新する",
+      "status": "open",
+      "grounds": [
+        168
+      ]
+    },
+    {
+      "id": "g38",
+      "kind": "position",
+      "text": "リリースノートでは同期に触れず他の新機能だけ書く",
+      "status": "open",
+      "grounds": [
+        150
+      ]
+    },
+    {
+      "id": "g39",
+      "kind": "argument",
+      "text": "ベータで同期を使った人がいるので書かないと問い合わせが来る",
+      "status": "open",
+      "grounds": [
+        151,
+        152
+      ]
+    },
+    {
+      "id": "g40",
+      "kind": "argument",
+      "text": "事後レビューがあればスピードとレビュー品質を両立できる",
+      "status": "open",
+      "grounds": [
+        141,
+        144
+      ]
+    },
+    {
+      "id": "g41",
+      "kind": "argument",
+      "text": "1週間あれば回帰テストを最後まで回せる",
+      "status": "open",
+      "grounds": [
+        33
+      ]
+    },
+    {
+      "id": "g42",
+      "kind": "argument",
+      "text": "1週間延期では追加の不具合が見つかったときに足りない",
+      "status": "open",
+      "grounds": [
+        40
+      ]
+    },
+    {
+      "id": "g43",
+      "kind": "argument",
+      "text": "同期以外の機能はテストがほぼ終わっている",
+      "status": "open",
+      "grounds": [
+        53,
+        54
+      ]
+    },
+    {
+      "id": "g44",
+      "kind": "argument",
+      "text": "具体的な日付を約束するとまた縛られる",
+      "status": "open",
+      "grounds": [
+        122
+      ]
+    },
+    {
+      "id": "g45",
+      "kind": "argument",
+      "text": "顧客にとっては早く直してもらえる方がありがたい",
+      "status": "open",
+      "grounds": [
+        136
+      ]
+    },
+    {
+      "id": "g46",
+      "kind": "argument",
+      "text": "壊れた同期を出すよりは遅れる方がよい",
+      "status": "open",
+      "grounds": [
+        73
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "g6",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g9",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g12",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g14",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g19",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g21",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g23",
+      "dst": "g3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g26",
+      "dst": "g4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g29",
+      "dst": "g4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g38",
+      "dst": "g5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g7",
+      "dst": "g6",
+      "kind": "supports"
+    },
+    {
+      "src": "g8",
+      "dst": "g6",
+      "kind": "supports"
+    },
+    {
+      "src": "g10",
+      "dst": "g9",
+      "kind": "supports"
+    },
+    {
+      "src": "g11",
+      "dst": "g9",
+      "kind": "supports"
+    },
+    {
+      "src": "g41",
+      "dst": "g9",
+      "kind": "supports"
+    },
+    {
+      "src": "g42",
+      "dst": "g12",
+      "kind": "supports"
+    },
+    {
+      "src": "g13",
+      "dst": "g12",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g15",
+      "dst": "g14",
+      "kind": "supports"
+    },
+    {
+      "src": "g43",
+      "dst": "g14",
+      "kind": "supports"
+    },
+    {
+      "src": "g16",
+      "dst": "g14",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g17",
+      "dst": "g16",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g18",
+      "dst": "g14",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g46",
+      "dst": "g18",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g20",
+      "dst": "g19",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g22",
+      "dst": "g21",
+      "kind": "supports"
+    },
+    {
+      "src": "g24",
+      "dst": "g23",
+      "kind": "supports"
+    },
+    {
+      "src": "g25",
+      "dst": "g23",
+      "kind": "supports"
+    },
+    {
+      "src": "g44",
+      "dst": "g23",
+      "kind": "supports"
+    },
+    {
+      "src": "g27",
+      "dst": "g26",
+      "kind": "supports"
+    },
+    {
+      "src": "g45",
+      "dst": "g26",
+      "kind": "supports"
+    },
+    {
+      "src": "g28",
+      "dst": "g26",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g40",
+      "dst": "g29",
+      "kind": "supports"
+    },
+    {
+      "src": "g39",
+      "dst": "g38",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g30",
+      "dst": "g1",
+      "kind": "resolves"
+    },
+    {
+      "src": "g31",
+      "dst": "g2",
+      "kind": "resolves"
+    },
+    {
+      "src": "g32",
+      "dst": "g3",
+      "kind": "resolves"
+    },
+    {
+      "src": "g33",
+      "dst": "g4",
+      "kind": "resolves"
+    },
+    {
+      "src": "g34",
+      "dst": "g32",
+      "kind": "assigns"
+    },
+    {
+      "src": "g35",
+      "dst": "g31",
+      "kind": "assigns"
+    },
+    {
+      "src": "g36",
+      "dst": "g30",
+      "kind": "assigns"
+    },
+    {
+      "src": "g37",
+      "dst": "g33",
+      "kind": "assigns"
+    }
+  ]
+}

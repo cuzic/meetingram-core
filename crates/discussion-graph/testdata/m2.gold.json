@@ -1,0 +1,498 @@
+{
+  "nodes": [
+    {
+      "id": "g1",
+      "kind": "issue",
+      "text": "相手の業務量が多く深夜まで作業が続いている状態をどう減らすか",
+      "status": "resolved",
+      "grounds": [
+        5,
+        7,
+        17
+      ]
+    },
+    {
+      "id": "g2",
+      "kind": "issue",
+      "text": "今後のキャリアをスペシャリストとマネジメントのどちらに向けるか",
+      "status": "open",
+      "grounds": [
+        61,
+        66,
+        92,
+        171
+      ]
+    },
+    {
+      "id": "g3",
+      "kind": "issue",
+      "text": "基盤チームがAPI仕様変更を事前共有せず手戻りが出ている",
+      "status": "open",
+      "grounds": [
+        98
+      ]
+    },
+    {
+      "id": "g4",
+      "kind": "issue",
+      "text": "来期の目標をどう設定するか",
+      "status": "open",
+      "grounds": [
+        12,
+        137,
+        139
+      ]
+    },
+    {
+      "id": "g5",
+      "kind": "position",
+      "text": "相手を問い合わせ対応の当番から一時的に外す",
+      "status": "open",
+      "grounds": [
+        35,
+        37,
+        58,
+        150
+      ]
+    },
+    {
+      "id": "g6",
+      "kind": "argument",
+      "text": "問い合わせ当番に週10時間ほど取られ割り込みで集中が途切れる",
+      "status": "open",
+      "grounds": [
+        12,
+        19,
+        20
+      ]
+    },
+    {
+      "id": "g7",
+      "kind": "argument",
+      "text": "作業が夜にずれ込み深夜2〜3時まで起きている日がある",
+      "status": "open",
+      "grounds": [
+        12,
+        22,
+        57
+      ]
+    },
+    {
+      "id": "g8",
+      "kind": "position",
+      "text": "請求システム刷新案件の締め切りを後ろにずらす",
+      "status": "retracted",
+      "grounds": [
+        26,
+        32
+      ]
+    },
+    {
+      "id": "g9",
+      "kind": "argument",
+      "text": "1月末リリースは顧客と合意済みで動かせない",
+      "status": "open",
+      "grounds": [
+        28,
+        29,
+        31
+      ]
+    },
+    {
+      "id": "g10",
+      "kind": "argument",
+      "text": "当番を外すと他のメンバーに負荷が移る",
+      "status": "open",
+      "grounds": [
+        40,
+        41,
+        155
+      ]
+    },
+    {
+      "id": "g11",
+      "kind": "argument",
+      "text": "当番ローテーションに入っていないメンバー(吉岡)がいる",
+      "status": "open",
+      "grounds": [
+        43,
+        44,
+        46,
+        48,
+        151
+      ]
+    },
+    {
+      "id": "g12",
+      "kind": "decision",
+      "text": "来月から2か月間、相手を問い合わせ当番から外し、その後見直す",
+      "status": "open",
+      "grounds": [
+        51,
+        55
+      ]
+    },
+    {
+      "id": "g13",
+      "kind": "action",
+      "text": "自分が当番表を調整し、チームと吉岡に説明・確認する",
+      "status": "open",
+      "grounds": [
+        53,
+        152,
+        168
+      ]
+    },
+    {
+      "id": "g14",
+      "kind": "position",
+      "text": "スペシャリストとして技術を深めたい",
+      "status": "open",
+      "grounds": [
+        12,
+        63
+      ]
+    },
+    {
+      "id": "g15",
+      "kind": "position",
+      "text": "テックリードのように人を見ながら技術もやる役割もありうる",
+      "status": "open",
+      "grounds": [
+        12,
+        63
+      ]
+    },
+    {
+      "id": "g16",
+      "kind": "argument",
+      "text": "評価制度がマネジメント寄りでスペシャリストの評価軸がはっきりしない",
+      "status": "open",
+      "grounds": [
+        73,
+        74
+      ]
+    },
+    {
+      "id": "g17",
+      "kind": "argument",
+      "text": "新人のメンターをして人の成長を見るのが楽しかった",
+      "status": "open",
+      "grounds": [
+        12
+      ]
+    },
+    {
+      "id": "g18",
+      "kind": "argument",
+      "text": "マネジメント寄りになると会議が増え手を動かす時間がなくなる",
+      "status": "open",
+      "grounds": [
+        12,
+        81,
+        82
+      ]
+    },
+    {
+      "id": "g19",
+      "kind": "position",
+      "text": "半年ほどテックリード的な役割を試してみる",
+      "status": "open",
+      "grounds": [
+        85,
+        89
+      ]
+    },
+    {
+      "id": "g20",
+      "kind": "argument",
+      "text": "試して合わなければ戻ればよい",
+      "status": "open",
+      "grounds": [
+        87
+      ]
+    },
+    {
+      "id": "g21",
+      "kind": "position",
+      "text": "基盤チームに仕様変更を影響チームへ事前共有するルールを作ってもらう",
+      "status": "open",
+      "grounds": [
+        12,
+        115,
+        116
+      ]
+    },
+    {
+      "id": "g22",
+      "kind": "argument",
+      "text": "先月、認証APIの仕様変更が周知されず2日分の手戻りが出た",
+      "status": "open",
+      "grounds": [
+        12,
+        100,
+        102
+      ]
+    },
+    {
+      "id": "g23",
+      "kind": "argument",
+      "text": "基盤チームも人手不足でルールを守る余裕がないかもしれない",
+      "status": "open",
+      "grounds": [
+        119,
+        120,
+        122
+      ]
+    },
+    {
+      "id": "g24",
+      "kind": "position",
+      "text": "マネージャー同士(自分と片桐)で話し、両チームで変更共有の場を作る",
+      "status": "open",
+      "grounds": [
+        123,
+        127
+      ]
+    },
+    {
+      "id": "g25",
+      "kind": "argument",
+      "text": "現場同士で言うと角が立つ",
+      "status": "open",
+      "grounds": [
+        125
+      ]
+    },
+    {
+      "id": "g26",
+      "kind": "position",
+      "text": "相手が基盤チームのリーダー大塚に直接言う",
+      "status": "retracted",
+      "grounds": [
+        104,
+        106,
+        112,
+        113
+      ]
+    },
+    {
+      "id": "g27",
+      "kind": "argument",
+      "text": "以前直接話したときに感情的になりうまくいかなかった",
+      "status": "open",
+      "grounds": [
+        108,
+        110
+      ]
+    },
+    {
+      "id": "g28",
+      "kind": "action",
+      "text": "自分が基盤チームのマネージャー片桐に相談し、結果を共有する",
+      "status": "open",
+      "grounds": [
+        123,
+        135,
+        168
+      ]
+    },
+    {
+      "id": "g29",
+      "kind": "position",
+      "text": "来期の目標はキャリアの方向性が見えてから決める",
+      "status": "open",
+      "grounds": [
+        141,
+        145
+      ]
+    },
+    {
+      "id": "g30",
+      "kind": "action",
+      "text": "相手が次の1on1までにやりたいことを書き出してくる",
+      "status": "open",
+      "grounds": [
+        94,
+        95,
+        169
+      ]
+    },
+    {
+      "id": "g31",
+      "kind": "argument",
+      "text": "今年からスペシャリスト向けの等級ができた",
+      "status": "open",
+      "grounds": [
+        76,
+        77
+      ]
+    },
+    {
+      "id": "g32",
+      "kind": "argument",
+      "text": "定例を作るとまた会議が増える",
+      "status": "open",
+      "grounds": [
+        129,
+        131
+      ]
+    },
+    {
+      "id": "g34",
+      "kind": "argument",
+      "text": "方向が決まらないまま目標を立てても形だけになる",
+      "status": "open",
+      "grounds": [
+        143
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "g5",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g8",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g14",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g15",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g19",
+      "dst": "g2",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g21",
+      "dst": "g3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g24",
+      "dst": "g3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g26",
+      "dst": "g3",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g29",
+      "dst": "g4",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g6",
+      "dst": "g5",
+      "kind": "supports"
+    },
+    {
+      "src": "g7",
+      "dst": "g5",
+      "kind": "supports"
+    },
+    {
+      "src": "g10",
+      "dst": "g5",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g11",
+      "dst": "g10",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g9",
+      "dst": "g8",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g16",
+      "dst": "g14",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g31",
+      "dst": "g16",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g17",
+      "dst": "g15",
+      "kind": "supports"
+    },
+    {
+      "src": "g18",
+      "dst": "g15",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g20",
+      "dst": "g19",
+      "kind": "supports"
+    },
+    {
+      "src": "g22",
+      "dst": "g21",
+      "kind": "supports"
+    },
+    {
+      "src": "g23",
+      "dst": "g21",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g25",
+      "dst": "g24",
+      "kind": "supports"
+    },
+    {
+      "src": "g32",
+      "dst": "g24",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g27",
+      "dst": "g26",
+      "kind": "objects_to"
+    },
+    {
+      "src": "g34",
+      "dst": "g29",
+      "kind": "supports"
+    },
+    {
+      "src": "g12",
+      "dst": "g1",
+      "kind": "resolves"
+    },
+    {
+      "src": "g13",
+      "dst": "g12",
+      "kind": "assigns"
+    },
+    {
+      "src": "g28",
+      "dst": "g3",
+      "kind": "assigns"
+    },
+    {
+      "src": "g30",
+      "dst": "g2",
+      "kind": "assigns"
+    }
+  ]
+}

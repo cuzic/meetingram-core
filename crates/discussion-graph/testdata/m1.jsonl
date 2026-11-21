@@ -1,0 +1,168 @@
+{"row_id": 1, "track": "self", "speaker_label": "自分", "start_ms": 2277, "end_ms": 4452, "text": "えーと、じゃあ始めますか。"}
+{"row_id": 2, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 5114, "end_ms": 5765, "text": "はい。"}
+{"row_id": 3, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 6159, "end_ms": 7599, "text": "お願いしまーす。"}
+{"row_id": 4, "track": "self", "speaker_label": "自分", "start_ms": 8286, "end_ms": 13591, "text": "今日はですね、あの、v3.2のリリースをどうするかっていう話で、"}
+{"row_id": 5, "track": "self", "speaker_label": "自分", "start_ms": 13766, "end_ms": 21419, "text": "予定だと12月10日なんですけど、まあ、このまま出すのか、ちょっとずらすのかを、今日決めたいと思ってます。"}
+{"row_id": 6, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 21764, "end_ms": 22475, "text": "はい。"}
+{"row_id": 7, "track": "self", "speaker_label": "自分", "start_ms": 23385, "end_ms": 31345, "text": "で、まず現状なんですけど、田辺さんの方から、テストの状況をちょっと共有してもらっていいですか。"}
+{"row_id": 8, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 31950, "end_ms": 33765, "text": "はい、えーと、ですね。"}
+{"row_id": 9, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 34160, "end_ms": 37755, "text": "あの、全体としては8割ぐらいは終わってるんですけど、"}
+{"row_id": 10, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 37842, "end_ms": 43493, "text": "同期機能のところ、えー、会期テストがですね、まだ6割ぐらいしか終わってなくて。"}
+{"row_id": 11, "track": "self", "speaker_label": "自分", "start_ms": 43753, "end_ms": 44310, "text": "6割。"}
+{"row_id": 12, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 44757, "end_ms": 52543, "text": "はい。で、正直このまま12月10日に出すのは、ちょっと、あの、怖いなっていうのが本音です。"}
+{"row_id": 13, "track": "self", "speaker_label": "自分", "start_ms": 53218, "end_ms": 54817, "text": "うーん、なるほど。"}
+{"row_id": 14, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 55879, "end_ms": 60839, "text": "まあ、そうですよね。同期はちょっと、後半でかなり手入れたので。"}
+{"row_id": 15, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 61694, "end_ms": 64093, "text": "えっと、ちょっといいですか。"}
+{"row_id": 16, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 64216, "end_ms": 71500, "text": "あの、営業側からするとですね、12月10日っていうのは、もうお客さんに言っちゃってるんですよ。"}
+{"row_id": 17, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 71788, "end_ms": 78227, "text": "特に映写さん、あ、A社さんですね、A社さんには12月中に出ますって、はっきり伝えてて。"}
+{"row_id": 18, "track": "self", "speaker_label": "自分", "start_ms": 79287, "end_ms": 80050, "text": "うん。"}
+{"row_id": 19, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 80572, "end_ms": 85489, "text": "なので、ずらすっていうのは、ちょっと、かなり厳しいかなと。"}
+{"row_id": 20, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 85716, "end_ms": 87859, "text": "予定通り出したいです、正直。"}
+{"row_id": 21, "track": "self", "speaker_label": "自分", "start_ms": 88843, "end_ms": 89632, "text": "はい。"}
+{"row_id": 22, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 90698, "end_ms": 97631, "text": "あとあれですよね、競合のほうも、なんか年内に似たような機能出すって噂ありましたよね。"}
+{"row_id": 23, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 97848, "end_ms": 102421, "text": "そうそう、そうなんですよ。この前プレスリリース出てました。"}
+{"row_id": 24, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 102610, "end_ms": 106268, "text": "だから年明けにずれると、先に出されちゃう可能性がある。"}
+{"row_id": 25, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 106521, "end_ms": 107527, "text": "うーん。"}
+{"row_id": 26, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 107810, "end_ms": 110515, "text": "いや、気持ちはわかるんですけど、"}
+{"row_id": 27, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 110696, "end_ms": 115814, "text": "あの、前回のv3.1のときも、同期まわりで障害出たじゃないですか。"}
+{"row_id": 28, "track": "self", "speaker_label": "自分", "start_ms": 116358, "end_ms": 118826, "text": "ああ、ありましたね、11月の頭の。"}
+{"row_id": 29, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 119041, "end_ms": 126240, "text": "そうです。あのときもテストが間に合ってないまま出して、結局週末に対応することになって。"}
+{"row_id": 30, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 126560, "end_ms": 128543, "text": "あれは、きつかったですね。"}
+{"row_id": 31, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 128846, "end_ms": 133961, "text": "なので、私としては、1週間、12月17日まで延期したいです。"}
+{"row_id": 32, "track": "self", "speaker_label": "自分", "start_ms": 134977, "end_ms": 135910, "text": "1週間。"}
+{"row_id": 33, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 136682, "end_ms": 141738, "text": "はい、1週間あれば、会期テストは、まあ、最後まで回せると思います。"}
+{"row_id": 34, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 142133, "end_ms": 143040, "text": "うーん。"}
+{"row_id": 35, "track": "self", "speaker_label": "自分", "start_ms": 143374, "end_ms": 145476, "text": "えーと、ちょっと整理すると、"}
+{"row_id": 36, "track": "self", "speaker_label": "自分", "start_ms": 145615, "end_ms": 150688, "text": "小野寺さんは予定通り、田辺さんは1週間延期、っていうことですよね。"}
+{"row_id": 37, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 150888, "end_ms": 151533, "text": "はい。"}
+{"row_id": 38, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 152555, "end_ms": 154176, "text": "はい、そうです。"}
+{"row_id": 39, "track": "self", "speaker_label": "自分", "start_ms": 154396, "end_ms": 161452, "text": "うーん、私はですね、むしろもうちょっと、2週間ぐらい見ておいた方が安全なんじゃないかと思ってて。"}
+{"row_id": 40, "track": "self", "speaker_label": "自分", "start_ms": 161840, "end_ms": 166761, "text": "1週間だと、また何か見つかったときに、結局足りなくなるので。"}
+{"row_id": 41, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 167004, "end_ms": 168551, "text": "あー、2週間ですか。"}
+{"row_id": 42, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 169203, "end_ms": 170535, "text": "2週間はさすがに…"}
+{"row_id": 43, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 171359, "end_ms": 176463, "text": "いや、ちょっと気になるのが、2週間ずらすと12月24日でしょ。"}
+{"row_id": 44, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 176740, "end_ms": 180719, "text": "そこからもう年末年始で、人がいなくなるんですよね。"}
+{"row_id": 45, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 180905, "end_ms": 185633, "text": "リリース直後に何かあっても、対応できる人が薄いっていう。"}
+{"row_id": 46, "track": "self", "speaker_label": "自分", "start_ms": 185848, "end_ms": 187036, "text": "ああ、そっか。"}
+{"row_id": 47, "track": "self", "speaker_label": "自分", "start_ms": 187434, "end_ms": 189483, "text": "そうですね、それは確かに。"}
+{"row_id": 48, "track": "self", "speaker_label": "自分", "start_ms": 189863, "end_ms": 194746, "text": "うん、2週間はさすがに長いですね。ちょっとそれは取り下げます。"}
+{"row_id": 49, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 195084, "end_ms": 195811, "text": "はい。"}
+{"row_id": 50, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 196653, "end_ms": 198918, "text": "で、あの、一個提案なんですけど、"}
+{"row_id": 51, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 199114, "end_ms": 205519, "text": "同期機能だけ、フューチャーフラグで、オフにして出すっていうのはどうですかね。"}
+{"row_id": 52, "track": "self", "speaker_label": "自分", "start_ms": 206461, "end_ms": 207066, "text": "ほう。"}
+{"row_id": 53, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 207910, "end_ms": 213735, "text": "同期以外のところは、田辺さんの話だと、ほぼテスト終わってるんですよね?"}
+{"row_id": 54, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 214638, "end_ms": 217375, "text": "そうですね、同期以外はほぼ終わってます。"}
+{"row_id": 55, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 218069, "end_ms": 223000, "text": "なので、同期だけ切っちゃえば、リスクのあるところはユーザーに出ないので、"}
+{"row_id": 56, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 223104, "end_ms": 226829, "text": "12月10日に、他の機能は予定通り出せるっていう。"}
+{"row_id": 57, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 227553, "end_ms": 229000, "text": "ああ、なるほど。"}
+{"row_id": 58, "track": "self", "speaker_label": "自分", "start_ms": 229957, "end_ms": 232060, "text": "それ、いいかもしれないですね。"}
+{"row_id": 59, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 232690, "end_ms": 235334, "text": "うーん、ちょっと気になるのがですね、"}
+{"row_id": 60, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 235665, "end_ms": 240412, "text": "フラグでオフにした状態っていうのを、そもそもテストしてないんですよ。"}
+{"row_id": 61, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 240527, "end_ms": 246641, "text": "オフにしたときに、他のところに影響出ないかっていうのは、まだ誰も見てないので。"}
+{"row_id": 62, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 247413, "end_ms": 250563, "text": "ああ、まあ、それはそうなんですけど、"}
+{"row_id": 63, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 250957, "end_ms": 257833, "text": "ただ、v3.0のときにも同じ仕組みで、えーと、共有リンクの機能をフラグで止めてたじゃないですか。"}
+{"row_id": 64, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 258017, "end_ms": 263751, "text": "あのときは特に問題なかったので、仕組み自体は、まあ、実績あるかなと。"}
+{"row_id": 65, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 264226, "end_ms": 269060, "text": "うーん、まあ、仕組みはそうですけど、今回のコードで確認はしたいですね。"}
+{"row_id": 66, "track": "self", "speaker_label": "自分", "start_ms": 269321, "end_ms": 269973, "text": "はい。"}
+{"row_id": 67, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 270550, "end_ms": 273890, "text": "あの、すみません、ちょっといいですか。"}
+{"row_id": 68, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 274037, "end_ms": 278825, "text": "A社さんが一番待ってるのって、まさにその同期機能なんですよね。"}
+{"row_id": 69, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 279135, "end_ms": 285302, "text": "だから、同期を外して出しても、A社さん的にはあんまり意味がないっていうか。"}
+{"row_id": 70, "track": "self", "speaker_label": "自分", "start_ms": 286252, "end_ms": 286946, "text": "ああ…"}
+{"row_id": 71, "track": "self", "speaker_label": "自分", "start_ms": 287097, "end_ms": 289156, "text": "そっか、そこはそうですね。"}
+{"row_id": 72, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 289374, "end_ms": 290317, "text": "うーん。"}
+{"row_id": 73, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 291234, "end_ms": 296511, "text": "でも、壊れた同期を出しちゃうよりは、遅れる方がまだいいと思いますけど。"}
+{"row_id": 74, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 296732, "end_ms": 299456, "text": "まあ、それは、そうなんですけどね。"}
+{"row_id": 75, "track": "self", "speaker_label": "自分", "start_ms": 300149, "end_ms": 305320, "text": "ちょっと、じゃあその顧客の話は、一回別の論点として置いておきましょうか。"}
+{"row_id": 76, "track": "self", "speaker_label": "自分", "start_ms": 305563, "end_ms": 311008, "text": "A社さんに何て説明するか、っていうのは後でちゃんとやりましょう。"}
+{"row_id": 77, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 311285, "end_ms": 313047, "text": "はい、わかりました。"}
+{"row_id": 78, "track": "self", "speaker_label": "自分", "start_ms": 314001, "end_ms": 316272, "text": "で、テストの方なんですけど、"}
+{"row_id": 79, "track": "self", "speaker_label": "自分", "start_ms": 316418, "end_ms": 322226, "text": "同期のテストが足りてないっていうのを、どうやって埋めるかですよね。"}
+{"row_id": 80, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 322775, "end_ms": 327772, "text": "えーと、僕の方で、自動テストを追加で書くっていうのはできると思います。"}
+{"row_id": 81, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 328094, "end_ms": 333490, "text": "同期のシナリオを、まあ20本ぐらい足せば、かなりカバーできるかなと。"}
+{"row_id": 82, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 334567, "end_ms": 336734, "text": "うーん、それ何日かかります?"}
+{"row_id": 83, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 336964, "end_ms": 341120, "text": "うーん、まあ、5日…ぐらいですかね。レビュー入れて。"}
+{"row_id": 84, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 341334, "end_ms": 344994, "text": "5日だと、12月10日にはもう間に合わないですよね。"}
+{"row_id": 85, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 345268, "end_ms": 349790, "text": "今日が12月1日なので、他の作業もあるし、ちょっと無理かなと。"}
+{"row_id": 86, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 350063, "end_ms": 351344, "text": "ああ、確かに。"}
+{"row_id": 87, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 351483, "end_ms": 358776, "text": "うん、そうですね、今からだと間に合わないか。じゃあ自動テストは、えーと、今回は無しで。"}
+{"row_id": 88, "track": "self", "speaker_label": "自分", "start_ms": 359402, "end_ms": 360152, "text": "はい。"}
+{"row_id": 89, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 361104, "end_ms": 362560, "text": "代わりにというか、"}
+{"row_id": 90, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 362865, "end_ms": 367869, "text": "私の方で、探索的テストを、2日間集中してやるっていうのはどうでしょう。"}
+{"row_id": 91, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 367991, "end_ms": 373621, "text": "同期まわりを、えー、シナリオ決めずに、いろんなパターンで触ってみる感じで。"}
+{"row_id": 92, "track": "self", "speaker_label": "自分", "start_ms": 373851, "end_ms": 374700, "text": "2日間。"}
+{"row_id": 93, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 375392, "end_ms": 379340, "text": "はい。で、もし森川さんの案で同期をオフにするなら、"}
+{"row_id": 94, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 379477, "end_ms": 384669, "text": "オフにした状態の確認も、その2日間の中で一緒にできるので。"}
+{"row_id": 95, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 385544, "end_ms": 387852, "text": "ああ、それはありがたいです。"}
+{"row_id": 96, "track": "self", "speaker_label": "自分", "start_ms": 388063, "end_ms": 389043, "text": "いいですね。"}
+{"row_id": 97, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 389937, "end_ms": 394279, "text": "自動テストは、じゃあ次のスプリントで、ちゃんと書きます。"}
+{"row_id": 98, "track": "self", "speaker_label": "自分", "start_ms": 394652, "end_ms": 402132, "text": "はい、じゃあテストは、田辺さんの探索的テスト2日間で、自動テストの追加は次のスプリント、でいきましょう。"}
+{"row_id": 99, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 403007, "end_ms": 403643, "text": "はい。"}
+{"row_id": 100, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 404090, "end_ms": 407038, "text": "あの、すみません、話戻っちゃうんですけど。"}
+{"row_id": 101, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 407246, "end_ms": 411924, "text": "リリース日の話で、結局12月10日でいけそうなんですかね。"}
+{"row_id": 102, "track": "self", "speaker_label": "自分", "start_ms": 412947, "end_ms": 414770, "text": "えーと、そうですね、"}
+{"row_id": 103, "track": "self", "speaker_label": "自分", "start_ms": 414952, "end_ms": 419539, "text": "森川さんのフラグの案と、田辺さんの探索的テストを組み合わせれば、"}
+{"row_id": 104, "track": "self", "speaker_label": "自分", "start_ms": 419731, "end_ms": 424488, "text": "12月10日に、同期以外は出せるんじゃないかなっていう感じはしてます。"}
+{"row_id": 105, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 424902, "end_ms": 426807, "text": "うーん、まあ、それなら。"}
+{"row_id": 106, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 427066, "end_ms": 432763, "text": "同期を出さないんだったら、私は1週間延期には、もうこだわらないです。"}
+{"row_id": 107, "track": "self", "speaker_label": "自分", "start_ms": 433004, "end_ms": 435195, "text": "はい、ありがとうございます。"}
+{"row_id": 108, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 435678, "end_ms": 437014, "text": "わかりました。"}
+{"row_id": 109, "track": "self", "speaker_label": "自分", "start_ms": 437675, "end_ms": 440992, "text": "ただ、ちょっとまだ最終決定は、最後にしたいので、"}
+{"row_id": 110, "track": "self", "speaker_label": "自分", "start_ms": 441181, "end_ms": 445023, "text": "先にA社さんの件、さっきのに戻りたいんですけど。"}
+{"row_id": 111, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 445863, "end_ms": 446501, "text": "はい。"}
+{"row_id": 112, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 446742, "end_ms": 451467, "text": "えーと、正直、同期が遅れるっていうのは、言いづらいんですけど、"}
+{"row_id": 113, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 451866, "end_ms": 457343, "text": "黙って出して、後で気づかれるよりは、先に言っちゃった方がいいかなと思ってて。"}
+{"row_id": 114, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 457439, "end_ms": 462966, "text": "なので、事前にA社さんに連絡して、同期は1月になりますって説明しようかと。"}
+{"row_id": 115, "track": "self", "speaker_label": "自分", "start_ms": 463208, "end_ms": 465648, "text": "うん、それがいいと思います。"}
+{"row_id": 116, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 466432, "end_ms": 471138, "text": "あの、A社さんって、前に、なんか仕様変更で怒ってませんでしたっけ。"}
+{"row_id": 117, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 472148, "end_ms": 478426, "text": "ああ、ありました。春ごろに、事前相談なしで画面変えちゃって、それで結構言われて。"}
+{"row_id": 118, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 478575, "end_ms": 482676, "text": "だから今回は、先に言っておかないと、むしろまずいです。"}
+{"row_id": 119, "track": "self", "speaker_label": "自分", "start_ms": 482901, "end_ms": 483833, "text": "なるほど。"}
+{"row_id": 120, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 484276, "end_ms": 487412, "text": "1月っていうのは、具体的にいつって言います?"}
+{"row_id": 121, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 487660, "end_ms": 492246, "text": "うーん、そこは、具体的な日付は言わずに、1月中旬めど、ぐらいで。"}
+{"row_id": 122, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 492903, "end_ms": 496847, "text": "うん、それがいいですね。日付言っちゃうと、また縛られるので。"}
+{"row_id": 123, "track": "self", "speaker_label": "自分", "start_ms": 497717, "end_ms": 505080, "text": "はい、じゃあA社さんの件は、事前に連絡して、同期は1月中旬めどって説明する、で決まりで。"}
+{"row_id": 124, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 505359, "end_ms": 506015, "text": "はい。"}
+{"row_id": 125, "track": "self", "speaker_label": "自分", "start_ms": 507058, "end_ms": 510923, "text": "で、次ですね、ホットフィックスの話をしたいんですけど。"}
+{"row_id": 126, "track": "self", "speaker_label": "自分", "start_ms": 511008, "end_ms": 516814, "text": "前回の障害のときに、ほっとフィックス出すのに、結構時間かかったじゃないですか。"}
+{"row_id": 127, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 517745, "end_ms": 519096, "text": "かかりましたね。"}
+{"row_id": 128, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 519315, "end_ms": 523474, "text": "あれ、今のルールだと、承認が2人必要なんですよ。"}
+{"row_id": 129, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 523820, "end_ms": 529136, "text": "で、夜中だと2人目がなかなか捕まらなくて、それで3時間ぐらい止まってました。"}
+{"row_id": 130, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 529499, "end_ms": 530413, "text": "3時間…"}
+{"row_id": 131, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 531329, "end_ms": 537132, "text": "なので、僕としては、当番を決めて、当番1人の承認で出せるようにしたいなと。"}
+{"row_id": 132, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 537752, "end_ms": 540612, "text": "うーん、それはちょっと、どうなんでしょう。"}
+{"row_id": 133, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 540890, "end_ms": 544402, "text": "1人だと、どうしてもレビューが甘くなるっていうか、"}
+{"row_id": 134, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 544582, "end_ms": 550918, "text": "夜中に1人で見て、それで本当に大丈夫か、っていうのは、ちょっと気になります。"}
+{"row_id": 135, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 551124, "end_ms": 553298, "text": "まあ、そうなんですけどね。"}
+{"row_id": 136, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 554166, "end_ms": 560531, "text": "営業的には、とにかく早く直してもらえる方がありがたいですけど。お客さんからすると。"}
+{"row_id": 137, "track": "self", "speaker_label": "自分", "start_ms": 561570, "end_ms": 562438, "text": "うーん、"}
+{"row_id": 138, "track": "self", "speaker_label": "自分", "start_ms": 562685, "end_ms": 564854, "text": "じゃあ、間を取って、というか、"}
+{"row_id": 139, "track": "self", "speaker_label": "自分", "start_ms": 564984, "end_ms": 572169, "text": "夜間だけは当番1人の承認で出して、翌営業日の朝に、もう1人が事後レビューする、っていうのはどうですか。"}
+{"row_id": 140, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 573186, "end_ms": 575291, "text": "ああ、それならいいですね。"}
+{"row_id": 141, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 575617, "end_ms": 579245, "text": "事後レビューが必ずあるなら、私もいいと思います。"}
+{"row_id": 142, "track": "self", "speaker_label": "自分", "start_ms": 579844, "end_ms": 582091, "text": "昼間は今まで通り2人で。"}
+{"row_id": 143, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 582608, "end_ms": 583384, "text": "はい。"}
+{"row_id": 144, "track": "self", "speaker_label": "自分", "start_ms": 583912, "end_ms": 587656, "text": "スピードと、レビューの両方、まあ、取れるかなと。"}
+{"row_id": 145, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 588732, "end_ms": 589524, "text": "はい。"}
+{"row_id": 146, "track": "self", "speaker_label": "自分", "start_ms": 589808, "end_ms": 596387, "text": "じゃあホットフィックスは、夜間は1人承認で翌朝事後レビュー、で決定にします。"}
+{"row_id": 147, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 597150, "end_ms": 598210, "text": "了解です。"}
+{"row_id": 148, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 598909, "end_ms": 601613, "text": "あの、あともう一個だけいいですか。"}
+{"row_id": 149, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 601725, "end_ms": 605374, "text": "リリースノートなんですけど、同期のこと、どう書きます?"}
+{"row_id": 150, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 605542, "end_ms": 612261, "text": "私としては、まあ、同期のことは触れずに、他の新機能だけ書けばいいかなと思ってるんですけど。"}
+{"row_id": 151, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 613267, "end_ms": 616988, "text": "うーん、でも、ベータで同期触ってた人もいるので、"}
+{"row_id": 152, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 617144, "end_ms": 622521, "text": "何も書かないと、あれ、同期どこいった?っていう問い合わせが来ると思うんですよね。"}
+{"row_id": 153, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 623461, "end_ms": 625216, "text": "ああ、それはあるかも。"}
+{"row_id": 154, "track": "self", "speaker_label": "自分", "start_ms": 626121, "end_ms": 629570, "text": "うーん、それは、ちょっと今日は時間ないので、"}
+{"row_id": 155, "track": "self", "speaker_label": "自分", "start_ms": 629902, "end_ms": 633329, "text": "サポートの人も入れて、別で決めましょうか。"}
+{"row_id": 156, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 633617, "end_ms": 635060, "text": "はい、了解です。"}
+{"row_id": 157, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 635799, "end_ms": 636460, "text": "はい。"}
+{"row_id": 158, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 637406, "end_ms": 641420, "text": "あ、すみません、さっきのフラグの件で、もう一回だけ。"}
+{"row_id": 159, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 641767, "end_ms": 646170, "text": "オフにした状態の確認って、私の探索的テストでもやりますけど、"}
+{"row_id": 160, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 646536, "end_ms": 651044, "text": "森川さんの方でも、開発環境で一通り見てもらえると安心です。"}
+{"row_id": 161, "track": "remote", "speaker_label": "相手 (話者2)", "start_ms": 651634, "end_ms": 653643, "text": "はい、それはやります。"}
+{"row_id": 162, "track": "self", "speaker_label": "自分", "start_ms": 654467, "end_ms": 656229, "text": "ありがとうございます。"}
+{"row_id": 163, "track": "self", "speaker_label": "自分", "start_ms": 656381, "end_ms": 661579, "text": "えーと、じゃあ時間なので、最後にリリース日だけ決めちゃいます。"}
+{"row_id": 164, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 662058, "end_ms": 662719, "text": "はい。"}
+{"row_id": 165, "track": "self", "speaker_label": "自分", "start_ms": 663339, "end_ms": 675714, "text": "最終的に、v3.2は12月10日に予定通りリリース、同期機能だけフラグでオフ、で決定とします。で、アクションですが、小野寺さんはA社さんへの連絡を今週金曜までにお願いします。"}
+{"row_id": 166, "track": "remote", "speaker_label": "相手 (話者3)", "start_ms": 675919, "end_ms": 678883, "text": "はい、金曜までにA社さんに連絡します。"}
+{"row_id": 167, "track": "remote", "speaker_label": "相手 (話者1)", "start_ms": 679634, "end_ms": 684228, "text": "探索的テストの計画は、私が明日の午前中までにまとめて共有します。"}
+{"row_id": 168, "track": "self", "speaker_label": "自分", "start_ms": 684838, "end_ms": 693055, "text": "森川さんはフラグをオフにした状態の動作確認を、私はホットフィックスの手順書の更新をやります。以上です、ありがとうございました。"}
