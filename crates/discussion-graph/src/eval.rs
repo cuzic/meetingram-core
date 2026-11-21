@@ -29,6 +29,7 @@ pub struct GoldEdge {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[non_exhaustive]
 pub struct Evaluation {
     pub node_recall: f64,
     pub node_precision: f64,

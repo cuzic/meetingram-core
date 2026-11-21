@@ -37,6 +37,7 @@ parent_nid は既存の親です。親の無い細かな問いは、子を src�
 const GROUP_OPERATIONS: &str = "\ngraph groups はまとまりごとの nid の一覧です。同じまとまりの中で重複を比較して merge し、不足するエッジを add_edge、状態の訂正を set_status で返してください。external のエッジも既に存在するので、add_edge で出し直さないでください。\n";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Prompt {
     pub system: String,
     pub user: String,

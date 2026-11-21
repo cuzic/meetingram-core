@@ -549,3 +549,34 @@ fn prompts_show_parents_and_stage_one_can_attach_a_question_using_uid_only() {
         [serde_json::json!({"nids":["n1","n2","n3","p1","p2","p3"]})]
     );
 }
+
+#[test]
+fn stage_one_lists_sub_issue_edges() {
+    let ops = parse_ops(r#"{"ops":[
+        {"op":"add_edge","src":"n1","dst":"n2","kind":"sub_issue_of","confidence":0.9,"grounds":[{"uid":"u1"}]}
+    ]}"#).unwrap();
+    let graph = apply_patch(&graph_with_groups(2), &ops, &["u1"]).graph;
+    let prompt = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
+        .unwrap()
+        .unwrap();
+    let edges = section(&prompt, "graph edges");
+    assert_eq!(edges.len(), 1);
+    assert_eq!(edges[0]["src"], "n1");
+    assert_eq!(edges[0]["dst"], "n2");
+    assert_eq!(edges[0]["kind"], "sub_issue_of");
+}
+
+#[test]
+fn stage_two_keeps_an_earlier_child_in_its_agenda_group() {
+    let ops = parse_ops(r#"{"ops":[
+        {"op":"add_edge","src":"n1","dst":"n2","kind":"sub_issue_of","confidence":0.9,"grounds":[{"uid":"u1"}]}
+    ]}"#).unwrap();
+    let graph = apply_patch(&graph_with_groups(2), &ops, &["u1"]).graph;
+    let (prompts, omitted) = build_consolidate_groups(&graph, DEFAULT_INPUT_LIMIT);
+    assert_eq!(omitted, 0);
+    assert_eq!(prompts.len(), 1);
+    assert_eq!(
+        section(&prompts[0], "graph groups"),
+        [serde_json::json!({"nids":["n1","n2","p1","p2"]})]
+    );
+}

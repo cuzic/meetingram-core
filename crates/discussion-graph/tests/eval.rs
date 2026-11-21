@@ -300,8 +300,8 @@ fn outlines_nested_issues_and_counts_unanswered_questions_by_agenda() {
         [("agenda".into(), 2)].into()
     );
     let outline = discussion_graph::build_outline(&graph);
-    assert_eq!(outline.len(), 1);
-    let mut branch = &outline[0];
+    assert_eq!(outline.agendas.len(), 1);
+    let mut branch = &outline.agendas[0];
     for (id, relation) in [
         ("agenda", None),
         ("detail", Some(SubIssueOf)),
@@ -319,4 +319,70 @@ fn outlines_nested_issues_and_counts_unanswered_questions_by_agenda() {
             branch = &branch.children[0];
         }
     }
+}
+
+#[test]
+fn outline_lists_live_unattached_nodes_by_kind_then_nid() {
+    use NodeKind::*;
+    let mut graph = graph_from_gold(
+        vec![],
+        &GoldGraph {
+            nodes: vec![
+                gold_node("agenda", Issue, 1),
+                gold_node("rejected", Issue, 2),
+                gold_node("z-position", Position, 3),
+                gold_node("b-position", Position, 4),
+                gold_node("a-argument", Argument, 5),
+                gold_node("decision", Decision, 6),
+                gold_node("attached", Position, 7),
+                gold_node("hidden", Action, 8),
+            ],
+            edges: vec![
+                gold_edge("b-position", "rejected", EdgeKind::RespondsTo),
+                gold_edge("a-argument", "b-position", EdgeKind::Supports),
+                gold_edge("attached", "agenda", EdgeKind::RespondsTo),
+            ],
+        },
+    );
+    graph.nodes.get_mut("rejected").unwrap().review = Review::Rejected;
+    graph.nodes.get_mut("hidden").unwrap().status = Status::Merged;
+
+    let outline = discussion_graph::build_outline(&graph);
+    assert_eq!(
+        outline
+            .unattached
+            .iter()
+            .map(|node| node.nid.as_str())
+            .collect::<Vec<_>>(),
+        ["b-position", "z-position", "a-argument", "decision"]
+    );
+}
+
+#[test]
+fn outline_puts_sub_questions_before_positions() {
+    use NodeKind::*;
+    let graph = graph_from_gold(
+        vec![],
+        &GoldGraph {
+            nodes: vec![
+                gold_node("agenda", Issue, 1),
+                gold_node("z-question", Issue, 2),
+                gold_node("a-position", Position, 3),
+            ],
+            edges: vec![
+                gold_edge("a-position", "agenda", EdgeKind::RespondsTo),
+                gold_edge("z-question", "agenda", EdgeKind::SubIssueOf),
+            ],
+        },
+    );
+
+    let outline = discussion_graph::build_outline(&graph);
+    assert_eq!(
+        outline.agendas[0]
+            .children
+            .iter()
+            .map(|child| child.node.nid.as_str())
+            .collect::<Vec<_>>(),
+        ["z-question", "a-position"]
+    );
 }

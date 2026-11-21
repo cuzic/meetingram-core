@@ -115,6 +115,7 @@ pub enum Rejection {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct PatchResult {
     pub graph: Graph,
     pub applied: Vec<AppliedOp>,

@@ -506,3 +506,18 @@ fn sub_issue_hierarchy_survives_patch_and_merge() {
         .values()
         .any(|edge| edge.src == "n4" && edge.dst == "n3"));
 }
+
+#[test]
+fn sub_issue_edges_require_two_issues() {
+    let graph = apply(&Graph::default(), [add("a", "issue"), add("b", "position")]).graph;
+    reject(
+        &graph,
+        edge("n2", "n1", "sub_issue_of"),
+        Rejection::EdgeKind,
+    );
+    reject(
+        &graph,
+        edge("n1", "n2", "sub_issue_of"),
+        Rejection::EdgeKind,
+    );
+}
