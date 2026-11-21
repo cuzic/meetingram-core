@@ -185,6 +185,37 @@ fn launch_error(backend: CliBackend, error: io::Error) -> CliSummarizeError {
     }
 }
 
+struct WorkingDir(tempfile::TempDir);
+
+impl WorkingDir {
+    fn path(&self) -> &Path {
+        self.0.path()
+    }
+}
+
+#[cfg(windows)]
+impl Drop for WorkingDir {
+    fn drop(&mut self) {
+        // Windows can briefly keep a terminated process's working directory
+        // open. TempDir alone makes only one attempt and suppresses the error.
+        for _ in 0..20 {
+            match std::fs::remove_dir_all(self.path()) {
+                Ok(()) => return,
+                Err(error) if error.kind() == io::ErrorKind::NotFound => return,
+                Err(error)
+                    if matches!(
+                        error.kind(),
+                        io::ErrorKind::PermissionDenied | io::ErrorKind::DirectoryNotEmpty
+                    ) || error.raw_os_error() == Some(32) =>
+                {
+                    std::thread::sleep(Duration::from_millis(5));
+                }
+                Err(_) => return,
+            }
+        }
+    }
+}
+
 async fn run_cli(
     backend: CliBackend,
     binary: &Path,
@@ -207,7 +238,7 @@ async fn run_cli(
                 .prefix(DIR_PREFIX)
                 .tempdir_in(base)?;
             std::fs::write(dir.path().join(SYSTEM_FILE), system)?;
-            Ok::<_, io::Error>(dir)
+            Ok::<_, io::Error>(WorkingDir(dir))
         })
         .await
         .map_err(|error| CliSummarizeError::TempDir(io::Error::other(error)))?

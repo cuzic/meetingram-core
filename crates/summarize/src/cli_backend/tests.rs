@@ -424,16 +424,17 @@ async fn windows_fixture_subprocess() {
             panic!("descendant exited before cancellation");
         }
         // SAFETY: OpenProcess succeeded and returned an exclusively owned handle.
-        let _process = unsafe { OwnedHandle::from_raw_handle(handle) };
+        let process = unsafe { OwnedHandle::from_raw_handle(handle) };
         if cancel {
             drop(call);
         } else {
             let error = call.await.unwrap_err();
             assert_eq!(crate::SummarizerError::from(error).kind(), "timeout");
         }
-        // SAFETY: _process keeps the handle alive.
+        // SAFETY: process keeps the handle alive.
         assert_eq!(unsafe { WaitForSingleObject(handle, 1000) }, WAIT_OBJECT_0);
-        assert_eq!(work.read_dir().unwrap().count(), 0);
+        drop(process);
+        assert_eq!(work.read_dir().unwrap().count(), 0, "cancel = {cancel}");
         std::fs::remove_file(&pid_file).unwrap();
     }
 }

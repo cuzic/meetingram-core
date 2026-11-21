@@ -219,6 +219,7 @@ impl Drop for Group {
             if TerminateJobObject(self.job.as_raw_handle(), 1) == 0 {
                 return;
             }
+            WaitForSingleObject(self.process.as_raw_handle(), INFINITE);
             let mut accounting = JOBOBJECT_BASIC_ACCOUNTING_INFORMATION::default();
             while QueryInformationJobObject(
                 self.job.as_raw_handle(),
