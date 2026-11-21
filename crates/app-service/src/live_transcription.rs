@@ -2958,6 +2958,10 @@ pub use stt_wiring::run_live_transcription;
 /// `status_sink` for both tracks immediately, same as the non-Windows desktop path
 /// (see `apps/desktop/src/transcription_status.rs`).
 #[cfg(not(feature = "live-transcription"))]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "The stub exposes the same signature as the live implementation"
+)]
 pub async fn run_live_transcription(
     _session_id: SessionId,
     _sample_rate_hz: u32,
