@@ -229,3 +229,94 @@ fn merging_duplicates_into_the_node_with_more_grounds_is_not_an_error() {
         0
     );
 }
+
+#[test]
+fn evaluates_agendas_and_shared_nodes_without_sub_question_branches() {
+    use EdgeKind::*;
+    use NodeKind::*;
+    let gold = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", Issue, 1),
+            gold_node("shared", Position, 4),
+        ],
+        edges: vec![gold_edge("shared", "agenda", RespondsTo)],
+    };
+    let prediction = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", Issue, 1),
+            gold_node("detail", Issue, 1),
+            gold_node("nested", Issue, 2),
+            gold_node("private", Position, 4),
+            gold_node("shared", Position, 4),
+            gold_node("reason", Argument, 5),
+        ],
+        edges: vec![
+            gold_edge("detail", "agenda", SubIssueOf),
+            gold_edge("nested", "detail", SubIssueOf),
+            gold_edge("private", "nested", RespondsTo),
+            gold_edge("shared", "nested", RespondsTo),
+            gold_edge("shared", "agenda", RespondsTo),
+            gold_edge("reason", "private", ObjectsTo),
+        ],
+    };
+    let graph = graph_from_gold(
+        (1..=5).map(|i| utterance(i, "Synthetic".into())).collect(),
+        &prediction,
+    );
+    let score = evaluate(&graph, &gold, &graph, &[]);
+    assert_eq!(score.node_precision, 1.0);
+    assert_eq!(score.node_recall, 1.0);
+    assert_eq!(score.edge_f1, 1.0);
+    assert_eq!(score.agendas, 1);
+    assert_eq!(score.sub_questions, 2);
+    assert_eq!(score.live_nodes, 6);
+}
+
+#[test]
+fn outlines_nested_issues_and_counts_unanswered_questions_by_agenda() {
+    use EdgeKind::*;
+    use NodeKind::*;
+    let data = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", Issue, 1),
+            gold_node("detail", Issue, 2),
+            gold_node("nested", Issue, 3),
+            gold_node("position", Position, 4),
+            gold_node("argument", Argument, 5),
+            gold_node("objection", Argument, 6),
+        ],
+        edges: vec![
+            gold_edge("detail", "agenda", SubIssueOf),
+            gold_edge("nested", "detail", SubIssueOf),
+            gold_edge("position", "nested", RespondsTo),
+            gold_edge("argument", "position", Supports),
+            gold_edge("objection", "argument", ObjectsTo),
+            gold_edge("argument", "objection", Supports),
+        ],
+    };
+    let graph = graph_from_gold(vec![], &data);
+    assert_eq!(
+        discussion_graph::unanswered_by_agenda(&graph),
+        [("agenda".into(), 2)].into()
+    );
+    let outline = discussion_graph::build_outline(&graph);
+    assert_eq!(outline.len(), 1);
+    let mut branch = &outline[0];
+    for (id, relation) in [
+        ("agenda", None),
+        ("detail", Some(SubIssueOf)),
+        ("nested", Some(SubIssueOf)),
+        ("position", Some(RespondsTo)),
+        ("argument", Some(Supports)),
+        ("objection", Some(ObjectsTo)),
+    ] {
+        assert_eq!(branch.node.nid, id);
+        assert_eq!(branch.relation, relation);
+        if id == "objection" {
+            assert!(branch.children.is_empty());
+        } else {
+            assert_eq!(branch.children.len(), 1);
+            branch = &branch.children[0];
+        }
+    }
+}

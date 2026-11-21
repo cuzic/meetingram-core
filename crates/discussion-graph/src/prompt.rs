@@ -2,13 +2,14 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::json;
 
-use crate::{Edge, Graph, Node, NodeKind, Status, Utterance};
+use crate::{Edge, EdgeKind, Graph, Node, NodeKind, Status, Utterance};
 
 pub const DEFAULT_INPUT_LIMIT: usize = 24_000;
 
 const EXTRACT: &str = concat!(
     include_str!("extraction.txt"),
-    include_str!("extraction-r11.txt")
+    include_str!("extraction-r11.txt"),
+    include_str!("extraction-r12.txt")
 );
 const BASELINE: &str = concat!(
     include_str!("extraction.txt"),
@@ -28,7 +29,11 @@ const CONSOLIDATE_EDITS: &str = concat!(
     include_str!("consolidation.txt"),
     include_str!("consolidation-edits.txt")
 );
-const ISSUE_MERGES: &str = "\n全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge だけで統合してください。ground_count が多い方を into にしてください。\n";
+const ISSUE_OPERATIONS: &str = r#"
+全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge で統合してください。ground_count が多い方を into にしてください。
+parent_nid は既存の親です。親の無い細かな問いは、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。
+{"op":"add_edge","src":"n8","dst":"n5","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u3"}]}
+"#;
 const GROUP_OPERATIONS: &str = "\ngraph groups はまとまりごとの nid の一覧です。同じまとまりの中で重複を比較して merge し、不足するエッジを add_edge、状態の訂正を set_status で返してください。external のエッジも既に存在するので、add_edge で出し直さないでください。\n";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -67,6 +72,7 @@ pub fn build_incremental(
         .copied()
         .filter(|u| pending_ids.contains(u.uid.as_str()))
         .collect();
+    let parents = graph.issue_parents();
     let mut context: Vec<_> = context_nodes(graph, recent_touched)
         .into_iter()
         .enumerate()
@@ -76,11 +82,13 @@ pub fn build_incremental(
             } else {
                 node.updated_rev
             };
-            let line = json!({
+            let mut line = json!({
                 "nid": node.nid, "kind": node.kind, "status": node.status, "text": node.text,
-            })
-            .to_string();
-            (index, revision, node, line)
+            });
+            if let Some(parent) = parents.get(node.nid.as_str()) {
+                line["parent_nid"] = json!(parent);
+            }
+            (index, revision, node, line.to_string())
         })
         .collect();
     // Trim by age across both groups, then restore their presentation order.
@@ -291,7 +299,7 @@ pub fn build_consolidate_issues(
             &node.nid,
         )
     });
-    let system = format!("{CONSOLIDATE}{ISSUE_MERGES}");
+    let system = format!("{CONSOLIDATE}{ISSUE_OPERATIONS}");
     let issue_count = issues.len();
     let render = |issues: &[&Node], evidence| {
         let nodes = issues
@@ -386,6 +394,7 @@ struct GroupBatch<'a> {
 struct Consolidation<'a> {
     nodes: BTreeMap<&'a str, &'a Node>,
     edges: Vec<&'a Edge>,
+    parents: BTreeMap<&'a str, &'a str>,
     evidence: BTreeMap<&'a str, Vec<&'a Utterance>>,
 }
 
@@ -411,6 +420,7 @@ impl<'a> Consolidation<'a> {
         Self {
             nodes,
             edges,
+            parents: graph.issue_parents(),
             evidence,
         }
     }
@@ -429,7 +439,10 @@ impl<'a> Consolidation<'a> {
         }
         let mut groups = Vec::new();
         let mut assigned = BTreeSet::new();
-        for issue in self.issues() {
+        for issue in self
+            .issues()
+            .filter(|node| !self.parents.contains_key(node.nid.as_str()))
+        {
             let id = issue.nid.as_str();
             let mut group = BTreeSet::new();
             let mut pending = vec![id];
@@ -508,7 +521,8 @@ impl<'a> Consolidation<'a> {
         for edge in &self.edges {
             let has_src = evidence.contains_key(edge.src.as_str());
             let has_dst = evidence.contains_key(edge.dst.as_str());
-            if layout != Layout::Issues && has_src && has_dst {
+            if (layout != Layout::Issues || edge.kind == EdgeKind::SubIssueOf) && has_src && has_dst
+            {
                 push_line(
                     &mut edges,
                     json!({
@@ -554,7 +568,7 @@ impl<'a> Consolidation<'a> {
                 }
             }).collect();
             let line = if layout == Layout::Issues {
-                json!({"nid":nid, "text":node.text, "ground_count":utterances.len(), "grounds":grounds})
+                json!({"nid":nid, "parent_nid":self.parents.get(nid), "text":node.text, "ground_count":utterances.len(), "grounds":grounds})
             } else {
                 json!({
                     "nid":nid, "kind":node.kind, "status":node.status, "text":node.text,

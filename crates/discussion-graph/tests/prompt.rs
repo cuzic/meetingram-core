@@ -267,7 +267,7 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     let build = |graph: &Graph, limit| build_consolidate_issues(graph, limit).unwrap().unwrap();
     let full = build(&graph, DEFAULT_INPUT_LIMIT);
     assert_graph_prompt(&full, 0, 3, DEFAULT_INPUT_LIMIT);
-    assert!(full.system.contains("issue 同士の merge だけ"));
+    assert!(full.system.contains("issue 同士の merge"));
     assert!(!full.system.contains("reference"));
     assert!(!full.system.contains("add_node"));
     assert!(full.user.find("graph edges").unwrap() < full.user.find("graph nodes").unwrap());
@@ -503,4 +503,49 @@ fn incremental_prompt_limits_issue_and_action_creation() {
     ] {
         assert!(prompt.system.contains(rule));
     }
+}
+
+#[test]
+fn prompts_show_parents_and_stage_one_can_attach_a_question_using_uid_only() {
+    let mut graph = graph_with_groups(3);
+    add_ground(&mut graph, "n2", 2, 400);
+    add_ground(&mut graph, "n3", 3, 400);
+    let first = parse_ops(r#"{"ops":[
+        {"op":"add_edge","src":"n2","dst":"n3","kind":"sub_issue_of","confidence":0.9,"grounds":[{"uid":"u2"}]}
+    ]}"#).unwrap();
+    graph = apply_patch(&graph, &first, &["u2"]).graph;
+    let live = build_incremental(&graph, &[], &[], false, DEFAULT_INPUT_LIMIT).unwrap();
+    assert!(live.system.contains("同じ応答で sub_issue_of"));
+    assert!(section(&live, "context")
+        .iter()
+        .any(|line| line["nid"] == "n2" && line["parent_nid"] == "n3"));
+
+    let full = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
+        .unwrap()
+        .unwrap();
+    let issues = build_consolidate_issues(&graph, size(&full) - 1)
+        .unwrap()
+        .unwrap();
+    assert!(issues.system.contains("sub_issue_of の add_edge"));
+    assert_eq!(issues.allowed_uids, ["u2", "u3"]);
+    let nodes = section(&issues, "graph nodes");
+    assert_eq!(nodes[1]["parent_nid"], "n3");
+    assert_eq!(nodes[1]["grounds"][0], serde_json::json!({"uid":"u2"}));
+    assert!(nodes[2]["parent_nid"].is_null());
+    let ops = parse_ops(r#"{"ops":[
+        {"op":"add_edge","src":"n3","dst":"n1","kind":"sub_issue_of","confidence":0.9,"grounds":[{"uid":"u3"}]}
+    ]}"#).unwrap();
+    let allowed = issues
+        .allowed_uids
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let result = apply_patch(&graph, &ops, &allowed);
+    assert_eq!(result.applied.len(), 1);
+    let (groups, omitted) = build_consolidate_groups(&result.graph, DEFAULT_INPUT_LIMIT);
+    assert_eq!(omitted, 0);
+    assert_eq!(
+        section(&groups[0], "graph groups"),
+        [serde_json::json!({"nids":["n1","n2","n3","p1","p2","p3"]})]
+    );
 }
