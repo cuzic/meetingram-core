@@ -16,16 +16,18 @@ Claude の手順（skills）は meetingram の `.claude/skills/` にある。
 ## 完了の定義
 
 ```sh
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --exclude capture-macos --exclude capture-windows --exclude stt-whisper -- -D warnings
 cargo test --workspace --exclude capture-macos --exclude capture-windows --exclude stt-whisper
-cargo check -p capture-windows --target x86_64-pc-windows-msvc --all-targets   # Linux から Windows 向けの型チェック
-gh pr checks <PR> --watch                                                       # Windows と macOS の build（clippy・テスト）
+cargo clippy -p capture-windows --target x86_64-pc-windows-msvc --all-targets -- -D warnings   # Linux から Windows 向けに
+gh pr checks <PR> --watch                                                       # Linux・Windows・macOS の build
 ```
 
-- 3 つとも通ること。`capture-macos` と `app-service` の OS 別機能（`windows-supervisor`、`macos-supervisor`、
+- すべて通ること（Linux の CI `linux-build.yml` が上の 4 つを回す）。`capture-macos` と `app-service` の OS 別機能（`windows-supervisor`、`macos-supervisor`、
   `live-transcription`）は CI でしか確かめられない。CI を通す前に「動く」と報告しない。
 - `e2e-best-effort` ジョブ（仮想オーディオでのキャプチャのスモークテスト）は失敗を許すが、落ちたらログを読む。
-- 触った crate で `cargo clippy -p <crate> --all-targets --no-deps` の警告を増やさない
-  （全体の clippy と rustfmt はまだ整備していない。触っていないファイルを整形しない）。
+- `cargo fmt --all` をかけてからコミットする。clippy の警告は直す。直すと公開 API が変わるものだけ、
+  その項目に `#[allow(clippy::…, reason = "…")]` を付けて PR 本文に書く。
 - 新しい挙動にはテストを付け、そのテストが落ちる変更（手書きの変異でよい）を 1 つ確かめる。
 - 公開 API・イベント・設定・保存形式を変えたら、PR 本文に書く（アプリの追従とタグの番号に効く）。
 
