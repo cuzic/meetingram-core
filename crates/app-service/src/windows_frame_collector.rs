@@ -58,7 +58,13 @@ pub fn track_for_binding(binding: BindingKind) -> Option<TrackKind> {
 /// this stream's sample rate — a second, independent clock distinct from the host's
 /// QPC clock, useful for diagnosing how far the two have diverged. It is not used
 /// for alignment (`host_time_ns` is — see `audio_timeline::TimelineAligner`).
-fn to_captured_frame(track: TrackKind, record: &CapturedFrameRecord, samples: Vec<f32>, sample_rate: u32, channels: u16) -> CapturedFrame {
+fn to_captured_frame(
+    track: TrackKind,
+    record: &CapturedFrameRecord,
+    samples: Vec<f32>,
+    sample_rate: u32,
+    channels: u16,
+) -> CapturedFrame {
     let source_time_ns = if sample_rate > 0 {
         Some(((record.device_position_frames as f64 / sample_rate as f64) * 1_000_000_000.0) as u64)
     } else {
@@ -131,17 +137,25 @@ pub fn collect_frames(
 
     while let Ok(event) = rx.recv() {
         match event {
-            FrameSinkEvent::StreamStarted { binding, sample_rate, channels, nominal_frame_interval_ns } => {
+            FrameSinkEvent::StreamStarted {
+                binding,
+                sample_rate,
+                channels,
+                nominal_frame_interval_ns,
+            } => {
                 formats.insert(binding, (sample_rate, channels));
                 intervals.insert(binding, nominal_frame_interval_ns);
             }
             FrameSinkEvent::Frame { record, samples } => {
-                let Some(track) = track_for_binding(record.stream) else { continue };
+                let Some(track) = track_for_binding(record.stream) else {
+                    continue;
+                };
                 // Falls back to 48kHz mono if a frame somehow arrives before its
                 // stream's own StreamStarted (shouldn't happen — capture-windows
                 // always sends StreamStarted before the first Frame — but a wrong
                 // guess here is better than a panic).
-                let (sample_rate, channels) = formats.get(&record.stream).copied().unwrap_or((48_000, 1));
+                let (sample_rate, channels) =
+                    formats.get(&record.stream).copied().unwrap_or((48_000, 1));
                 let frame = to_captured_frame(track, &record, samples, sample_rate, channels);
 
                 if let Some(sink) = level_sink {
@@ -149,7 +163,9 @@ pub fn collect_frames(
                     let mut snapshot = sink.lock().unwrap();
                     match track {
                         TrackKind::SelfMic => (snapshot.self_rms, snapshot.self_peak) = (rms, peak),
-                        TrackKind::RemoteAudio => (snapshot.remote_rms, snapshot.remote_peak) = (rms, peak),
+                        TrackKind::RemoteAudio => {
+                            (snapshot.remote_rms, snapshot.remote_peak) = (rms, peak)
+                        }
                     }
                 }
 
@@ -181,8 +197,14 @@ pub fn collect_frames(
     CollectedFrames {
         self_frames,
         remote_frames,
-        self_nominal_frame_interval_ns: intervals.get(&BindingKind::Microphone).copied().unwrap_or(0),
-        remote_nominal_frame_interval_ns: intervals.get(&BindingKind::EndpointLoopback).copied().unwrap_or(0),
+        self_nominal_frame_interval_ns: intervals
+            .get(&BindingKind::Microphone)
+            .copied()
+            .unwrap_or(0),
+        remote_nominal_frame_interval_ns: intervals
+            .get(&BindingKind::EndpointLoopback)
+            .copied()
+            .unwrap_or(0),
     }
 }
 
@@ -192,21 +214,49 @@ mod tests {
 
     #[test]
     fn track_for_binding_maps_phase_1a_bindings_and_excludes_process_loopback() {
-        assert_eq!(track_for_binding(BindingKind::Microphone), Some(TrackKind::SelfMic));
-        assert_eq!(track_for_binding(BindingKind::EndpointLoopback), Some(TrackKind::RemoteAudio));
+        assert_eq!(
+            track_for_binding(BindingKind::Microphone),
+            Some(TrackKind::SelfMic)
+        );
+        assert_eq!(
+            track_for_binding(BindingKind::EndpointLoopback),
+            Some(TrackKind::RemoteAudio)
+        );
         assert_eq!(track_for_binding(BindingKind::ProcessLoopback), None);
     }
 
     #[test]
     fn to_captured_frame_converts_qpc_100ns_to_nanoseconds() {
-        let record = CapturedFrameRecord::from_raw(BindingKind::Microphone, 1, 0, 0, 0, 12_345, 960, 0, 0, None);
+        let record = CapturedFrameRecord::from_raw(
+            BindingKind::Microphone,
+            1,
+            0,
+            0,
+            0,
+            12_345,
+            960,
+            0,
+            0,
+            None,
+        );
         let frame = to_captured_frame(TrackKind::SelfMic, &record, vec![0.0; 960], 48_000, 1);
         assert_eq!(frame.host_time_ns, 1_234_500);
     }
 
     #[test]
     fn to_captured_frame_derives_source_time_from_device_position() {
-        let record = CapturedFrameRecord::from_raw(BindingKind::Microphone, 1, 0, 0, 48_000, 0, 960, 0, 0, None);
+        let record = CapturedFrameRecord::from_raw(
+            BindingKind::Microphone,
+            1,
+            0,
+            0,
+            48_000,
+            0,
+            960,
+            0,
+            0,
+            None,
+        );
         let frame = to_captured_frame(TrackKind::SelfMic, &record, vec![0.0; 960], 48_000, 1);
         assert_eq!(frame.source_time_ns, Some(1_000_000_000));
     }
@@ -229,8 +279,22 @@ mod tests {
     }
 
     fn frame_event(binding: BindingKind, packet_seq: u64) -> FrameSinkEvent {
-        let record = CapturedFrameRecord::from_raw(binding, packet_seq, packet_seq, 0, 0, packet_seq * 1_000, 960, 0, 0, None);
-        FrameSinkEvent::Frame { record, samples: vec![0.0; 960] }
+        let record = CapturedFrameRecord::from_raw(
+            binding,
+            packet_seq,
+            packet_seq,
+            0,
+            0,
+            packet_seq * 1_000,
+            960,
+            0,
+            0,
+            None,
+        );
+        FrameSinkEvent::Frame {
+            record,
+            samples: vec![0.0; 960],
+        }
     }
 
     /// task #86: a full `stt_sink` must drop the overflowing chunk via `try_send`
@@ -243,10 +307,17 @@ mod tests {
         let (stt_tx, mut stt_rx) = tokio::sync::mpsc::channel(1);
 
         frame_tx
-            .send(FrameSinkEvent::StreamStarted { binding: BindingKind::Microphone, sample_rate: 48_000, channels: 1, nominal_frame_interval_ns: 10_000_000 })
+            .send(FrameSinkEvent::StreamStarted {
+                binding: BindingKind::Microphone,
+                sample_rate: 48_000,
+                channels: 1,
+                nominal_frame_interval_ns: 10_000_000,
+            })
             .unwrap();
         for packet_seq in 0..3 {
-            frame_tx.send(frame_event(BindingKind::Microphone, packet_seq)).unwrap();
+            frame_tx
+                .send(frame_event(BindingKind::Microphone, packet_seq))
+                .unwrap();
         }
         drop(frame_tx); // lets collect_frames' `while let Ok(event) = rx.recv()` end
 
@@ -272,10 +343,17 @@ mod tests {
         let (stt_tx, mut stt_rx) = tokio::sync::mpsc::channel(8);
 
         frame_tx
-            .send(FrameSinkEvent::StreamStarted { binding: BindingKind::Microphone, sample_rate: 48_000, channels: 1, nominal_frame_interval_ns: 10_000_000 })
+            .send(FrameSinkEvent::StreamStarted {
+                binding: BindingKind::Microphone,
+                sample_rate: 48_000,
+                channels: 1,
+                nominal_frame_interval_ns: 10_000_000,
+            })
             .unwrap();
         for packet_seq in 0..3 {
-            frame_tx.send(frame_event(BindingKind::Microphone, packet_seq)).unwrap();
+            frame_tx
+                .send(frame_event(BindingKind::Microphone, packet_seq))
+                .unwrap();
         }
         drop(frame_tx);
 

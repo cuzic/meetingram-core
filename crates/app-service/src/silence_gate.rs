@@ -287,7 +287,9 @@ fn next_state(
     match state {
         State::Speaking => {
             if level < config.silent_rms_threshold {
-                State::Hangover { since_samples: clock_samples }
+                State::Hangover {
+                    since_samples: clock_samples,
+                }
             } else {
                 State::Speaking
             }
@@ -325,9 +327,9 @@ mod tests {
     fn test_config() -> GateConfig {
         GateConfig {
             sample_rate_hz: 100,
-            vad_window_ms: 100,  // 10 samples per window
-            hangover_ms: 300,    // 3 windows
-            pre_roll_ms: 200,    // 2 windows / 20 samples
+            vad_window_ms: 100, // 10 samples per window
+            hangover_ms: 300,   // 3 windows
+            pre_roll_ms: 200,   // 2 windows / 20 samples
             speaking_rms_threshold: 0.02,
             silent_rms_threshold: 0.01,
         }
@@ -359,9 +361,7 @@ mod tests {
         // samples) and never triggering speech: everything should resolve to Drop.
         let input = silence(100);
         let actions = gate.process(&input);
-        assert!(actions
-            .iter()
-            .all(|a| matches!(a, GateAction::Drop { .. })));
+        assert!(actions.iter().all(|a| matches!(a, GateAction::Drop { .. })));
         let dropped: u64 = actions
             .iter()
             .map(|a| match a {
@@ -395,9 +395,9 @@ mod tests {
         let mut gate = SilenceGate::new(test_config());
         let onset = speech(50);
         let _ = gate.process(&onset); // enter Speaking
-        // 900ms of silence: well past hangover_ms (300ms), and past hangover's 60
-        // remaining silent samples exceed the 20-sample pre-roll capacity too, so
-        // some of it must actually be evicted (not just buffered) -> Drop.
+                                      // 900ms of silence: well past hangover_ms (300ms), and past hangover's 60
+                                      // remaining silent samples exceed the 20-sample pre-roll capacity too, so
+                                      // some of it must actually be evicted (not just buffered) -> Drop.
         let input = silence(90);
         let actions = gate.process(&input);
         assert!(
@@ -442,8 +442,8 @@ mod tests {
         let mut gate = SilenceGate::new(test_config());
         let onset = speech(50);
         let _ = gate.process(&onset); // enter Speaking
-        // 20 samples = 200ms of silence: under hangover_ms (300ms) -> still Hangover,
-        // which still sends (no audio dropped, nothing cut off).
+                                      // 20 samples = 200ms of silence: under hangover_ms (300ms) -> still Hangover,
+                                      // which still sends (no audio dropped, nothing cut off).
         let pause = silence(20);
         let actions = gate.process(&pause);
         assert!(
@@ -500,9 +500,7 @@ mod tests {
         let actions = gate.process(&input);
 
         assert!(
-            actions
-                .iter()
-                .any(|a| matches!(a, GateAction::Drop { .. })),
+            actions.iter().any(|a| matches!(a, GateAction::Drop { .. })),
             "expected a Drop for the leading silence: {actions:?}"
         );
         assert!(

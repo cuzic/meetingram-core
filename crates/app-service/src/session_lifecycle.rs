@@ -8,7 +8,10 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use recorder_domain::{CaptureState, RemoteSession, SessionId, SessionManifest, SessionSummary, TrackKind, UploadAdapter};
+use recorder_domain::{
+    CaptureState, RemoteSession, SessionId, SessionManifest, SessionSummary, TrackKind,
+    UploadAdapter,
+};
 use session_store::SessionStore;
 
 use crate::error::AppServiceError;
@@ -28,7 +31,11 @@ const PHASE_1A_TRACKS: [TrackKind; 2] = [TrackKind::SelfMic, TrackKind::RemoteAu
 /// gives per-segment upload failures. Returns `None` in that case — the caller
 /// still proceeds to capture and commit segments locally, and `run_pipeline`
 /// gets one more chance to register a remote session before finalizing.
-pub async fn begin_session(store: &SessionStore, adapter: &dyn UploadAdapter, manifest: &SessionManifest) -> Result<Option<RemoteSession>, AppServiceError> {
+pub async fn begin_session(
+    store: &SessionStore,
+    adapter: &dyn UploadAdapter,
+    manifest: &SessionManifest,
+) -> Result<Option<RemoteSession>, AppServiceError> {
     store.create_session(manifest)?; // starts in CaptureState::Preparing
     match adapter.create_session(manifest).await {
         Ok(remote) => {
@@ -61,7 +68,16 @@ pub async fn end_session(
 ) -> Result<SessionSummary, AppServiceError> {
     store.update_capture_state(session_id, &CaptureState::Stopping)?;
     store.update_capture_state(session_id, &CaptureState::Finalizing)?;
-    finalize_and_upload(store, adapter, remote, session_id, total_duration_ms, upload_retry_interval, max_upload_passes).await
+    finalize_and_upload(
+        store,
+        adapter,
+        remote,
+        session_id,
+        total_duration_ms,
+        upload_retry_interval,
+        max_upload_passes,
+    )
+    .await
 }
 
 /// Startup crash recovery (this task's own description: wire `segment-store`'s
@@ -111,7 +127,15 @@ pub async fn recover_incomplete_sessions(
         for track in PHASE_1A_TRACKS {
             // Best-effort: a directory that was never created (e.g. that track
             // never captured anything before the crash) isn't an error.
-            let _ = segment_store::scan_and_recover(&session_dir, session_id, track, nominal_segment_duration_ms, sample_rate, channels, store);
+            let _ = segment_store::scan_and_recover(
+                &session_dir,
+                session_id,
+                track,
+                nominal_segment_duration_ms,
+                sample_rate,
+                channels,
+                store,
+            );
         }
 
         let remote_session_id = match store.remote_session_id(session_id)? {
@@ -121,10 +145,23 @@ pub async fn recover_incomplete_sessions(
                 None => continue, // still unreachable — retried again on the next restart
             },
         };
-        let remote = RemoteSession { session_id, remote_session_id };
-        let total_duration_ms = estimate_total_duration_ms(store, session_id, nominal_segment_duration_ms)?;
+        let remote = RemoteSession {
+            session_id,
+            remote_session_id,
+        };
+        let total_duration_ms =
+            estimate_total_duration_ms(store, session_id, nominal_segment_duration_ms)?;
 
-        finalize_and_upload(store, adapter, &remote, session_id, total_duration_ms, upload_retry_interval, max_upload_passes).await?;
+        finalize_and_upload(
+            store,
+            adapter,
+            &remote,
+            session_id,
+            total_duration_ms,
+            upload_retry_interval,
+            max_upload_passes,
+        )
+        .await?;
         finalized.push(session_id);
     }
 
@@ -137,7 +174,11 @@ pub async fn recover_incomplete_sessions(
 /// either an unreachable/unauthenticated remote API or a missing manifest (the
 /// latter should be unreachable in practice, since every session row is written
 /// by `store.create_session` with every field this reconstructs).
-async fn try_register_remote_session(store: &SessionStore, adapter: &dyn UploadAdapter, session_id: SessionId) -> Result<Option<String>, AppServiceError> {
+async fn try_register_remote_session(
+    store: &SessionStore,
+    adapter: &dyn UploadAdapter,
+    session_id: SessionId,
+) -> Result<Option<String>, AppServiceError> {
     let Some(manifest) = store.session_manifest(session_id)? else {
         return Ok(None);
     };
@@ -164,7 +205,15 @@ async fn finalize_and_upload(
     upload_retry_interval: Duration,
     max_upload_passes: u32,
 ) -> Result<SessionSummary, AppServiceError> {
-    run_until_drained(store, adapter, remote, session_id, upload_retry_interval, max_upload_passes).await?;
+    run_until_drained(
+        store,
+        adapter,
+        remote,
+        session_id,
+        upload_retry_interval,
+        max_upload_passes,
+    )
+    .await?;
 
     let summary = SessionSummary {
         session_id,
@@ -180,14 +229,22 @@ async fn finalize_and_upload(
 /// Derives a session's total duration from the ledger alone (no in-memory capture
 /// bookkeeping survives a crash) — the latest `timeline_start_ms + duration_ms`
 /// across every committed segment in either track.
-fn estimate_total_duration_ms(store: &SessionStore, session_id: SessionId, fallback_segment_duration_ms: u64) -> Result<u64, AppServiceError> {
+fn estimate_total_duration_ms(
+    store: &SessionStore,
+    session_id: SessionId,
+    fallback_segment_duration_ms: u64,
+) -> Result<u64, AppServiceError> {
     let mut latest_ms = 0u64;
     for track in PHASE_1A_TRACKS {
         if let Some(last) = store.segments_for_track(session_id, track)?.last() {
             latest_ms = latest_ms.max(last.timeline_start_ms + last.duration_ms as u64);
         }
     }
-    Ok(if latest_ms == 0 { fallback_segment_duration_ms } else { latest_ms })
+    Ok(if latest_ms == 0 {
+        fallback_segment_duration_ms
+    } else {
+        latest_ms
+    })
 }
 
 fn session_dir_for(sessions_root: &Path, session_id: SessionId) -> PathBuf {

@@ -67,7 +67,8 @@ fn generate(config: &PseudoSourceConfig, duration_secs: f64) -> Vec<AudioPacket>
     let mut rng = SimpleRng::new(config.seed);
     let actual_rate_hz = config.nominal_rate_hz as f64 * (1.0 + config.drift_ppm / 1_000_000.0);
     let nominal_duration_ns = config.packet_duration_ms as u64 * 1_000_000;
-    let total_packets = ((duration_secs * 1000.0) / config.packet_duration_ms as f64).round() as u64;
+    let total_packets =
+        ((duration_secs * 1000.0) / config.packet_duration_ms as f64).round() as u64;
 
     let mut packets = Vec::with_capacity(total_packets as usize);
     let mut host_time_ns: u64 = 0;

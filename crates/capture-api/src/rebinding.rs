@@ -65,7 +65,10 @@ pub enum BindingSelection {
     /// Process loopback has no endpoint selection; `pid` is updated by the caller as
     /// process discovery (finding the target executable, watching for restarts)
     /// resolves it.
-    Process { exe_name: String, pid: Option<u32> },
+    Process {
+        exe_name: String,
+        pid: Option<u32>,
+    },
 }
 
 /// The concrete target `decide` has resolved a binding's selection to, passed to
@@ -157,10 +160,16 @@ impl CaptureBindingState {
             | CaptureBindingState::Running { .. }
             | CaptureBindingState::Stopping { .. } => BindingHealth::Ok,
             CaptureBindingState::Waiting { reason } => match reason {
-                WaitReason::DeviceUnavailable | WaitReason::ProcessNotFound => BindingHealth::Unavailable,
-                WaitReason::RetryableFailure { attempt } => BindingHealth::Retrying { attempt: *attempt },
+                WaitReason::DeviceUnavailable | WaitReason::ProcessNotFound => {
+                    BindingHealth::Unavailable
+                }
+                WaitReason::RetryableFailure { attempt } => {
+                    BindingHealth::Retrying { attempt: *attempt }
+                }
             },
-            CaptureBindingState::Failed { cause } => BindingHealth::Failed { reason: cause.clone() },
+            CaptureBindingState::Failed { cause } => BindingHealth::Failed {
+                reason: cause.clone(),
+            },
         }
     }
 }
@@ -314,7 +323,10 @@ pub enum DecisionInput {
     UserIntent(UserIntent),
     /// A timer firing for [`Effect::ScheduleRetry`]. Ignored if `retry_id` doesn't
     /// match the current state (guards against a stale timer firing late).
-    RetryTimerFired { binding: BindingKind, retry_id: u64 },
+    RetryTimerFired {
+        binding: BindingKind,
+        retry_id: u64,
+    },
     ShutdownRequested,
 }
 
@@ -406,7 +418,9 @@ pub fn decide(state: &mut DecisionState, input: DecisionInput) -> Vec<Effect> {
             for kind in kinds {
                 let binding = state.bindings.get(&kind).unwrap();
                 if let CaptureBindingState::Running {
-                    operation_id, epoch, ..
+                    operation_id,
+                    epoch,
+                    ..
                 } = binding.lifecycle
                 {
                     let effect_id = state.alloc_effect_id();
@@ -416,11 +430,12 @@ pub fn decide(state: &mut DecisionState, input: DecisionInput) -> Vec<Effect> {
                         operation_id,
                         epoch,
                     });
-                    state.bindings.get_mut(&kind).unwrap().lifecycle = CaptureBindingState::Stopping {
-                        operation_id,
-                        epoch,
-                        next: AfterStop::RemainStopped,
-                    };
+                    state.bindings.get_mut(&kind).unwrap().lifecycle =
+                        CaptureBindingState::Stopping {
+                            operation_id,
+                            epoch,
+                            next: AfterStop::RemainStopped,
+                        };
                 }
             }
             effects
@@ -489,7 +504,9 @@ fn start_binding(state: &mut DecisionState, kind: BindingKind) -> Option<Effect>
 fn stop_binding(state: &mut DecisionState, kind: BindingKind, next: AfterStop) -> Option<Effect> {
     let binding = state.bindings.get(&kind)?;
     let CaptureBindingState::Running {
-        operation_id, epoch, ..
+        operation_id,
+        epoch,
+        ..
     } = binding.lifecycle
     else {
         return None;
@@ -540,7 +557,8 @@ fn handle_observation(state: &mut DecisionState, obs: Observation) -> Vec<Effect
                         if selection_targets(&binding.selection, target, &state.default_routes) {
                             continue; // Already connected to the new default; no-op.
                         }
-                        if let Some(effect) = stop_binding(state, kind, AfterStop::ResolveAndStart) {
+                        if let Some(effect) = stop_binding(state, kind, AfterStop::ResolveAndStart)
+                        {
                             effects.push(effect);
                         }
                     }

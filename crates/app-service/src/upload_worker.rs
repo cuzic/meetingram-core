@@ -21,20 +21,43 @@ pub struct UploadPassSummary {
 /// one `upload_segment` call; this level of "retry" is for a segment that still
 /// failed after exhausting that (or a permanent error), and is what
 /// `run_until_drained`'s pass loop is for.
-pub async fn upload_pending_once(store: &session_store::SessionStore, adapter: &dyn UploadAdapter, remote: &RemoteSession, session_id: SessionId) -> Result<UploadPassSummary, StoreError> {
+pub async fn upload_pending_once(
+    store: &session_store::SessionStore,
+    adapter: &dyn UploadAdapter,
+    remote: &RemoteSession,
+    session_id: SessionId,
+) -> Result<UploadPassSummary, StoreError> {
     let pending = store.pending_uploads(session_id)?;
     let mut summary = UploadPassSummary::default();
 
     for segment in pending {
-        store.update_upload_state(session_id, segment.track, segment.sequence, &UploadState::Uploading)?;
+        store.update_upload_state(
+            session_id,
+            segment.track,
+            segment.sequence,
+            &UploadState::Uploading,
+        )?;
         match adapter.upload_segment(remote, &segment).await {
             Ok(_receipt) => {
-                store.update_upload_state(session_id, segment.track, segment.sequence, &UploadState::Completed)?;
+                store.update_upload_state(
+                    session_id,
+                    segment.track,
+                    segment.sequence,
+                    &UploadState::Completed,
+                )?;
                 summary.uploaded += 1;
             }
             Err(e) => {
                 let retryable = e.is_retryable() || e.needs_token_refresh_before_retry();
-                store.update_upload_state(session_id, segment.track, segment.sequence, &UploadState::Failed { retryable, reason: e.to_string() })?;
+                store.update_upload_state(
+                    session_id,
+                    segment.track,
+                    segment.sequence,
+                    &UploadState::Failed {
+                        retryable,
+                        reason: e.to_string(),
+                    },
+                )?;
                 summary.failed += 1;
             }
         }

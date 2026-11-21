@@ -193,7 +193,6 @@ impl ChunkBuffer {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -317,7 +316,9 @@ mod tests {
         // 15 samples = 150ms: at/above MIN_FLUSH_MS (100ms) but under min_chunk_ms
         // (200ms) — push() won't cut it, but flush() must still emit it.
         assert!(buf.push(&tone(15), 0).is_empty());
-        let chunk = buf.flush().expect("remainder at/above the flush floor is emitted");
+        let chunk = buf
+            .flush()
+            .expect("remainder at/above the flush floor is emitted");
         assert_eq!(chunk.pcm.len(), 15);
         assert_eq!((chunk.start_sample, chunk.end_sample), (0, 15));
     }

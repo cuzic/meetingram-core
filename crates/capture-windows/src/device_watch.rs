@@ -11,12 +11,12 @@ use crate::com_guard::ComApartment;
 use crate::error::CaptureError;
 use std::sync::atomic::{AtomicU64, Ordering};
 use windows::core::PCWSTR;
+use windows::Win32::Foundation::PROPERTYKEY;
 use windows::Win32::Media::Audio::{
-    IMMDeviceEnumerator, IMMNotificationClient, IMMNotificationClient_Impl, DEVICE_STATE,
-    EDataFlow, ERole, MMDeviceEnumerator,
+    EDataFlow, ERole, IMMDeviceEnumerator, IMMNotificationClient, IMMNotificationClient_Impl,
+    MMDeviceEnumerator, DEVICE_STATE,
 };
 use windows::Win32::System::Com::{CoCreateInstance, IAgileObject_Impl, CLSCTX_ALL};
-use windows::Win32::Foundation::PROPERTYKEY;
 
 /// A direct transcription of `IMMNotificationClient`'s five callbacks. Deliberately
 /// does not attempt to interpret `DEVICE_STATE_*` etc. here — see the module docs.
@@ -165,9 +165,7 @@ impl DeviceWatch {
     /// Initializes COM on the calling thread and starts receiving device-change
     /// notifications. That thread must stay alive for as long as the returned
     /// `DeviceWatch` is alive.
-    pub fn start(
-        tx: crossbeam_channel::Sender<DeviceWatchEvent>,
-    ) -> Result<Self, CaptureError> {
+    pub fn start(tx: crossbeam_channel::Sender<DeviceWatchEvent>) -> Result<Self, CaptureError> {
         let _com = ComApartment::new_mta()?;
         let enumerator: IMMDeviceEnumerator =
             unsafe { CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)? };

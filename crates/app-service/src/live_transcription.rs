@@ -79,7 +79,11 @@ pub struct TranscriptionStatus {
     pub remote_status: TrackTranscriptionStatus,
 }
 
-fn set_status(sink: &Option<Arc<Mutex<TranscriptionStatus>>>, track: TrackKind, status: TrackTranscriptionStatus) {
+fn set_status(
+    sink: &Option<Arc<Mutex<TranscriptionStatus>>>,
+    track: TrackKind,
+    status: TrackTranscriptionStatus,
+) {
     let Some(sink) = sink else { return };
     let mut guard = sink.lock().unwrap();
     match track {
@@ -88,7 +92,10 @@ fn set_status(sink: &Option<Arc<Mutex<TranscriptionStatus>>>, track: TrackKind, 
     }
 }
 
-fn set_both_status(sink: &Option<Arc<Mutex<TranscriptionStatus>>>, status: TrackTranscriptionStatus) {
+fn set_both_status(
+    sink: &Option<Arc<Mutex<TranscriptionStatus>>>,
+    status: TrackTranscriptionStatus,
+) {
     let Some(sink) = sink else { return };
     let mut guard = sink.lock().unwrap();
     guard.self_status = status.clone();
@@ -117,7 +124,9 @@ fn speaker_label(track: Option<TrackKind>, speaker: Option<u32>) -> String {
 /// SttProviderKind}` paths keep working — that module is the canonical home now,
 /// since it has no `windows-supervisor`-only dependencies and needs to be reachable
 /// from every platform (e.g. `apps/desktop`'s settings screen).
-pub use crate::stt_provider_kind::{SttProviderKind, CREDENTIAL_SERVICE, SELECTED_STT_PROVIDER_ACCOUNT};
+pub use crate::stt_provider_kind::{
+    SttProviderKind, CREDENTIAL_SERVICE, SELECTED_STT_PROVIDER_ACCOUNT,
+};
 
 #[cfg(feature = "live-transcription")]
 mod stt_wiring {
@@ -127,7 +136,9 @@ mod stt_wiring {
     use crate::timestamp_mapper::TimestampMapper;
     // LocalBrokerはモジュール直下（`super`）でimport済み（`use super::*;`で入る）。
     use session_store::TranscriptSegment;
-    use stt_api::{AudioChunk, KeepAliveEffect, SttError, SttEvent, SttProvider, SttSession, SttSessionConfig};
+    use stt_api::{
+        AudioChunk, KeepAliveEffect, SttError, SttEvent, SttProvider, SttSession, SttSessionConfig,
+    };
     use stt_assemblyai::AssemblyAIProvider;
     use stt_deepgram::DeepgramProvider;
     use stt_google::{GoogleProvider, GoogleSttCredentials};
@@ -216,32 +227,61 @@ mod stt_wiring {
     /// is listed explicitly (no `_ => ...` catch-all) so adding a fifth adapter's enum
     /// variant without a matching arm here fails to compile instead of silently
     /// falling through.
-    pub fn build_stt_provider(kind: SttProviderKind, credential_store: &dyn CredentialStore) -> Result<Box<dyn SttProvider>, SttProviderFactoryError> {
+    pub fn build_stt_provider(
+        kind: SttProviderKind,
+        credential_store: &dyn CredentialStore,
+    ) -> Result<Box<dyn SttProvider>, SttProviderFactoryError> {
         match kind {
             SttProviderKind::Deepgram => {
                 let api_key = credential_store
-                    .load(stt_deepgram::CREDENTIAL_SERVICE, stt_deepgram::DEEPGRAM_API_KEY_ACCOUNT)
-                    .map_err(|source| SttProviderFactoryError::CredentialMissing { kind, source })?;
+                    .load(
+                        stt_deepgram::CREDENTIAL_SERVICE,
+                        stt_deepgram::DEEPGRAM_API_KEY_ACCOUNT,
+                    )
+                    .map_err(|source| SttProviderFactoryError::CredentialMissing {
+                        kind,
+                        source,
+                    })?;
                 Ok(Box::new(DeepgramProvider::new(api_key)))
             }
             SttProviderKind::OpenAi => {
                 let api_key = credential_store
-                    .load(stt_openai::CREDENTIAL_SERVICE, stt_openai::OPENAI_STT_API_KEY_ACCOUNT)
-                    .map_err(|source| SttProviderFactoryError::CredentialMissing { kind, source })?;
+                    .load(
+                        stt_openai::CREDENTIAL_SERVICE,
+                        stt_openai::OPENAI_STT_API_KEY_ACCOUNT,
+                    )
+                    .map_err(|source| SttProviderFactoryError::CredentialMissing {
+                        kind,
+                        source,
+                    })?;
                 Ok(Box::new(OpenAiProvider::new(api_key)))
             }
             SttProviderKind::Google => {
                 let raw = credential_store
-                    .load(stt_google::CREDENTIAL_SERVICE, stt_google::GOOGLE_STT_CREDENTIALS_ACCOUNT)
-                    .map_err(|source| SttProviderFactoryError::CredentialMissing { kind, source })?;
+                    .load(
+                        stt_google::CREDENTIAL_SERVICE,
+                        stt_google::GOOGLE_STT_CREDENTIALS_ACCOUNT,
+                    )
+                    .map_err(|source| SttProviderFactoryError::CredentialMissing {
+                        kind,
+                        source,
+                    })?;
                 let credentials: GoogleSttCredentials =
-                    serde_json::from_str(&raw).map_err(|source| SttProviderFactoryError::InvalidCredential { kind, source })?;
+                    serde_json::from_str(&raw).map_err(|source| {
+                        SttProviderFactoryError::InvalidCredential { kind, source }
+                    })?;
                 Ok(Box::new(GoogleProvider::new(credentials)))
             }
             SttProviderKind::AssemblyAi => {
                 let api_key = credential_store
-                    .load(stt_assemblyai::CREDENTIAL_SERVICE, stt_assemblyai::ASSEMBLYAI_API_KEY_ACCOUNT)
-                    .map_err(|source| SttProviderFactoryError::CredentialMissing { kind, source })?;
+                    .load(
+                        stt_assemblyai::CREDENTIAL_SERVICE,
+                        stt_assemblyai::ASSEMBLYAI_API_KEY_ACCOUNT,
+                    )
+                    .map_err(|source| SttProviderFactoryError::CredentialMissing {
+                        kind,
+                        source,
+                    })?;
                 Ok(Box::new(AssemblyAIProvider::new(api_key)))
             }
         }
@@ -285,12 +325,24 @@ mod stt_wiring {
             }
             Ok(Err(err)) => {
                 tracing::warn!(%err, track, "live transcription: failed to start STT session");
-                set_status(status_sink, track_kind, TrackTranscriptionStatus::Error(err.to_string()));
+                set_status(
+                    status_sink,
+                    track_kind,
+                    TrackTranscriptionStatus::Error(err.to_string()),
+                );
                 None
             }
             Err(_) => {
-                tracing::warn!(track, timeout_secs = START_SESSION_TIMEOUT.as_secs(), "live transcription: start_session timed out");
-                set_status(status_sink, track_kind, TrackTranscriptionStatus::Error(stt_api::SttError::Timeout.to_string()));
+                tracing::warn!(
+                    track,
+                    timeout_secs = START_SESSION_TIMEOUT.as_secs(),
+                    "live transcription: start_session timed out"
+                );
+                set_status(
+                    status_sink,
+                    track_kind,
+                    TrackTranscriptionStatus::Error(stt_api::SttError::Timeout.to_string()),
+                );
                 None
             }
         }
@@ -378,7 +430,14 @@ mod stt_wiring {
 
     impl ReconnectState {
         fn new() -> Self {
-            Self { attempt: 0, retry_at: None, disconnected_at: None, in_flight: None, open_gap_id: None, open_gap_start_ms: None }
+            Self {
+                attempt: 0,
+                retry_at: None,
+                disconnected_at: None,
+                in_flight: None,
+                open_gap_id: None,
+                open_gap_start_ms: None,
+            }
         }
 
         /// Arms (or re-arms, after another failed attempt) a retry.
@@ -462,14 +521,22 @@ mod stt_wiring {
     /// be offered for later manual re-transcription — no different in spirit
     /// from any other best-effort persistence call in this module (e.g.
     /// `persist_event`'s `store.insert_transcript_segment` callers).
-    fn open_gap(store: &SessionStore, session_id: SessionId, recording_started: Instant, track_kind: TrackKind, reconnect: &mut ReconnectState) {
+    fn open_gap(
+        store: &SessionStore,
+        session_id: SessionId,
+        recording_started: Instant,
+        track_kind: TrackKind,
+        reconnect: &mut ReconnectState,
+    ) {
         let start_ms = ms_since_start(recording_started);
         match store.record_gap_start(session_id, track_kind, start_ms) {
             Ok(id) => {
                 reconnect.open_gap_id = Some(id);
                 reconnect.open_gap_start_ms = Some(start_ms);
             }
-            Err(err) => tracing::warn!(%err, ?track_kind, "live transcription: failed to record gap start"),
+            Err(err) => {
+                tracing::warn!(%err, ?track_kind, "live transcription: failed to record gap start")
+            }
         }
     }
 
@@ -483,8 +550,17 @@ mod stt_wiring {
     /// and already logged why. Discards the row instead of recording its
     /// `end_ms` if the outage turned out shorter than
     /// [`MIN_RECORDED_GAP_MS`] — see that constant's doc comment.
-    fn close_open_gap(store: &SessionStore, session_id: SessionId, recording_started: Instant, track_kind: TrackKind, reconnect: &mut ReconnectState) {
-        let (Some(gap_id), Some(start_ms)) = (reconnect.open_gap_id.take(), reconnect.open_gap_start_ms.take()) else {
+    fn close_open_gap(
+        store: &SessionStore,
+        session_id: SessionId,
+        recording_started: Instant,
+        track_kind: TrackKind,
+        reconnect: &mut ReconnectState,
+    ) {
+        let (Some(gap_id), Some(start_ms)) = (
+            reconnect.open_gap_id.take(),
+            reconnect.open_gap_start_ms.take(),
+        ) else {
             return;
         };
         let end_ms = ms_since_start(recording_started);
@@ -525,7 +601,11 @@ mod stt_wiring {
         reconnect: &mut ReconnectState,
     ) {
         if let Some(err) = err {
-            set_status(status_sink, track_kind, TrackTranscriptionStatus::Error(err.to_string()));
+            set_status(
+                status_sink,
+                track_kind,
+                TrackTranscriptionStatus::Error(err.to_string()),
+            );
         }
         if reconnect.retry_at.is_some() || reconnect.in_flight.is_some() {
             // Already armed (or already reconnecting) for this outage: the
@@ -562,7 +642,15 @@ mod stt_wiring {
         recording_started: Instant,
     ) {
         *self_session = None;
-        note_disconnect_and_maybe_reconnect(store, session_id, recording_started, TrackKind::SelfMic, err, status_sink, reconnect);
+        note_disconnect_and_maybe_reconnect(
+            store,
+            session_id,
+            recording_started,
+            TrackKind::SelfMic,
+            err,
+            status_sink,
+            reconnect,
+        );
     }
 
     /// Attempts one reconnect for `track_kind` once its backoff timer fires (see
@@ -604,7 +692,11 @@ mod stt_wiring {
         track_kind: TrackKind,
         status_sink: Option<Arc<Mutex<TranscriptionStatus>>>,
     ) -> Option<ReconnectSessionPair> {
-        set_status(&status_sink, track_kind, TrackTranscriptionStatus::Connecting);
+        set_status(
+            &status_sink,
+            track_kind,
+            TrackTranscriptionStatus::Connecting,
+        );
         start_session_with_timeout(provider.as_ref(), config, track, track_kind, &status_sink).await
     }
 
@@ -613,7 +705,9 @@ mod stt_wiring {
     /// counterpart of [`recv_track_event`] (see that function's doc comment for
     /// why a `select!` branch needs this shape rather than an `unwrap()` behind
     /// an `if` guard).
-    async fn recv_reconnect_result(in_flight: &mut Option<JoinHandle<Option<ReconnectSessionPair>>>) -> Result<Option<ReconnectSessionPair>, JoinError> {
+    async fn recv_reconnect_result(
+        in_flight: &mut Option<JoinHandle<Option<ReconnectSessionPair>>>,
+    ) -> Result<Option<ReconnectSessionPair>, JoinError> {
         match in_flight {
             Some(handle) => handle.await,
             None => std::future::pending().await,
@@ -636,10 +730,19 @@ mod stt_wiring {
     /// new session/events themselves and call `reconnect.reset()` (Self) or
     /// `RemoteGateState::apply_reconnect_offset` (Remote), which differ enough
     /// between the two tracks that there's nothing to share there.
-    fn note_reconnect_failure(track_kind: TrackKind, join_err: Option<&JoinError>, status_sink: &Option<Arc<Mutex<TranscriptionStatus>>>, reconnect: &mut ReconnectState) {
+    fn note_reconnect_failure(
+        track_kind: TrackKind,
+        join_err: Option<&JoinError>,
+        status_sink: &Option<Arc<Mutex<TranscriptionStatus>>>,
+        reconnect: &mut ReconnectState,
+    ) {
         if let Some(join_err) = join_err {
             tracing::warn!(%join_err, ?track_kind, "live transcription: reconnect task panicked or was cancelled");
-            set_status(status_sink, track_kind, TrackTranscriptionStatus::Error(join_err.to_string()));
+            set_status(
+                status_sink,
+                track_kind,
+                TrackTranscriptionStatus::Error(join_err.to_string()),
+            );
         }
         reconnect.note_disconnect();
     }
@@ -778,7 +881,10 @@ mod stt_wiring {
         // `turn_detection: server_vad`, which the provider also uses to decide
         // where to *segment* transcripts — so silence removal can shift OpenAI's
         // segmentation behavior, not just suppress the VAD events themselves.
-        let config = SttSessionConfig::new(target_rate_hz).with_interim_results(true).with_vad_events(true).with_diarization(true);
+        let config = SttSessionConfig::new(target_rate_hz)
+            .with_interim_results(true)
+            .with_vad_events(true)
+            .with_diarization(true);
 
         set_both_status(&status_sink, TrackTranscriptionStatus::Connecting);
 
@@ -796,8 +902,20 @@ mod stt_wiring {
         // with this same config again, arbitrarily many times, for the rest of
         // this function's lifetime.
         let (self_sess, remote_sess) = tokio::join!(
-            start_session_with_timeout(provider.as_ref(), config.clone(), "self", TrackKind::SelfMic, &status_sink),
-            start_session_with_timeout(provider.as_ref(), config.clone(), "remote", TrackKind::RemoteAudio, &status_sink)
+            start_session_with_timeout(
+                provider.as_ref(),
+                config.clone(),
+                "self",
+                TrackKind::SelfMic,
+                &status_sink
+            ),
+            start_session_with_timeout(
+                provider.as_ref(),
+                config.clone(),
+                "remote",
+                TrackKind::RemoteAudio,
+                &status_sink
+            )
         );
 
         if self_sess.is_none() && remote_sess.is_none() {
@@ -817,7 +935,15 @@ mod stt_wiring {
         // (v1 scope, see this function's doc comment) — see `RemoteGateState`'s
         // own doc comment for why this replaced half a dozen loose `remote_*`
         // locals that always changed together.
-        let mut remote = RemoteGateState::new(remote_session, silence_gate_enabled, target_rate_hz, status_sink.clone(), store, session_id, recording_started);
+        let mut remote = RemoteGateState::new(
+            remote_session,
+            silence_gate_enabled,
+            target_rate_hz,
+            status_sink.clone(),
+            store,
+            session_id,
+            recording_started,
+        );
         let mut remote_keepalive_timer = tokio::time::interval(Duration::from_secs(1));
 
         // #56: the last still-unconfirmed `PartialTranscript` seen per track, cleared
@@ -1123,7 +1249,12 @@ mod stt_wiring {
         ) -> Self {
             Self {
                 session,
-                gate: silence_gate_enabled.then(|| SilenceGate::new(GateConfig { sample_rate_hz: target_rate_hz, ..GateConfig::default() })),
+                gate: silence_gate_enabled.then(|| {
+                    SilenceGate::new(GateConfig {
+                        sample_rate_hz: target_rate_hz,
+                        ..GateConfig::default()
+                    })
+                }),
                 mapper: silence_gate_enabled.then(|| TimestampMapper::new(target_rate_hz)),
                 samples_sent: 0,
                 total_injected: 0,
@@ -1185,8 +1316,13 @@ mod stt_wiring {
         /// `last_active`; callers that need those (i.e. `send_gated`) add them on
         /// top.
         async fn send_unconditional(&mut self, pcm: &[f32]) {
-            let Some(session) = self.session.as_mut() else { return };
-            let chunk = AudioChunk { pcm, start_sample: self.samples_sent };
+            let Some(session) = self.session.as_mut() else {
+                return;
+            };
+            let chunk = AudioChunk {
+                pcm,
+                start_sample: self.samples_sent,
+            };
             self.samples_sent += pcm.len() as u64;
             if let Err(err) = session.send_audio(chunk).await {
                 tracing::warn!(%err, track = ?TrackKind::RemoteAudio, "live transcription: send_audio failed");
@@ -1225,10 +1361,13 @@ mod stt_wiring {
         /// branch itself on `is_active() && gate_enabled()` to avoid polling this
         /// needlessly once neither holds.
         async fn keep_alive_if_idle(&mut self) {
-            if !self.gate_enabled() || self.last_active.elapsed() < REMOTE_KEEPALIVE_IDLE_THRESHOLD {
+            if !self.gate_enabled() || self.last_active.elapsed() < REMOTE_KEEPALIVE_IDLE_THRESHOLD
+            {
                 return;
             }
-            let Some(session) = self.session.as_mut() else { return };
+            let Some(session) = self.session.as_mut() else {
+                return;
+            };
             match session.keep_alive().await {
                 Ok(KeepAliveEffect::InjectedAudio { samples }) => {
                     self.net_offset -= samples as i64;
@@ -1238,7 +1377,10 @@ mod stt_wiring {
                     // agree on.
                     self.total_injected += samples;
                     if let Some(mapper) = self.mapper.as_mut() {
-                        mapper.record_checkpoint(self.samples_sent + self.total_injected, self.net_offset);
+                        mapper.record_checkpoint(
+                            self.samples_sent + self.total_injected,
+                            self.net_offset,
+                        );
                     }
                 }
                 Ok(KeepAliveEffect::ControlMessage | KeepAliveEffect::Noop) => {}
@@ -1268,7 +1410,15 @@ mod stt_wiring {
         /// `None`, the events-channel-closed case).
         fn note_disconnect(&mut self, err: Option<&SttError>) {
             self.session = None;
-            note_disconnect_and_maybe_reconnect(self.store, self.session_id, self.recording_started, TrackKind::RemoteAudio, err, &self.status_sink, &mut self.reconnect);
+            note_disconnect_and_maybe_reconnect(
+                self.store,
+                self.session_id,
+                self.recording_started,
+                TrackKind::RemoteAudio,
+                err,
+                &self.status_sink,
+                &mut self.reconnect,
+            );
         }
 
         /// Applied once a Remote reconnect succeeds, before any audio flows on
@@ -1309,14 +1459,22 @@ mod stt_wiring {
         /// `open_gap_id`/`open_gap_start_ms` itself — see `ReconnectState::reset`'s
         /// doc comment — so something has to).
         fn apply_reconnect_offset(&mut self, target_rate_hz: u32) {
-            close_open_gap(self.store, self.session_id, self.recording_started, TrackKind::RemoteAudio, &mut self.reconnect);
+            close_open_gap(
+                self.store,
+                self.session_id,
+                self.recording_started,
+                TrackKind::RemoteAudio,
+                &mut self.reconnect,
+            );
             if self.mapper.is_some() {
                 let outage_samples = self
                     .reconnect
                     .disconnected_at
                     .map(|at| (at.elapsed().as_secs_f64() * target_rate_hz as f64).round() as u64)
                     .unwrap_or(0);
-                let carry_over_samples = (self.samples_sent + self.total_injected) as i64 + self.net_offset + outage_samples as i64;
+                let carry_over_samples = (self.samples_sent + self.total_injected) as i64
+                    + self.net_offset
+                    + outage_samples as i64;
                 let mut fresh_mapper = TimestampMapper::new(target_rate_hz);
                 fresh_mapper.record_checkpoint(0, carry_over_samples);
                 self.mapper = Some(fresh_mapper);
@@ -1337,8 +1495,14 @@ mod stt_wiring {
     async fn finalize_with_timeout(session: Box<dyn SttSession>, track: &'static str) {
         match tokio::time::timeout(FINALIZE_TIMEOUT, session.finalize()).await {
             Ok(Ok(())) => {}
-            Ok(Err(err)) => tracing::warn!(%err, track, "live transcription: failed to finalize STT session"),
-            Err(_) => tracing::warn!(track, timeout_secs = FINALIZE_TIMEOUT.as_secs(), "live transcription: finalize timed out"),
+            Ok(Err(err)) => {
+                tracing::warn!(%err, track, "live transcription: failed to finalize STT session")
+            }
+            Err(_) => tracing::warn!(
+                track,
+                timeout_secs = FINALIZE_TIMEOUT.as_secs(),
+                "live transcription: finalize timed out"
+            ),
         }
     }
 
@@ -1350,7 +1514,9 @@ mod stt_wiring {
     /// `unwrap()` there would panic as soon as the *other* track's branch stays
     /// enabled while this one is `None`. Awaiting `pending()` for the `None` case
     /// instead means the branch simply never becomes ready, with no unwrap.
-    async fn recv_track_event(events: &mut Option<UnboundedReceiver<SttEvent>>) -> Option<SttEvent> {
+    async fn recv_track_event(
+        events: &mut Option<UnboundedReceiver<SttEvent>>,
+    ) -> Option<SttEvent> {
         match events {
             Some(rx) => rx.recv().await,
             None => std::future::pending().await,
@@ -1370,8 +1536,17 @@ mod stt_wiring {
     /// supersedes the partials leading up to it).
     fn note_event(last_interim: &mut Option<PendingInterim>, event: &SttEvent) {
         match event {
-            SttEvent::PartialTranscript { text, audio_start_ms, audio_end_ms, .. } => {
-                *last_interim = Some(PendingInterim { text: text.clone(), audio_start_ms: *audio_start_ms, audio_end_ms: *audio_end_ms });
+            SttEvent::PartialTranscript {
+                text,
+                audio_start_ms,
+                audio_end_ms,
+                ..
+            } => {
+                *last_interim = Some(PendingInterim {
+                    text: text.clone(),
+                    audio_start_ms: *audio_start_ms,
+                    audio_end_ms: *audio_end_ms,
+                });
             }
             SttEvent::FinalTranscript { .. } => *last_interim = None,
             _ => {}
@@ -1405,7 +1580,10 @@ mod stt_wiring {
         if pending.text.trim().is_empty() {
             return;
         }
-        tracing::info!(?track, "live transcription: finalizing last interim transcript after channel close");
+        tracing::info!(
+            ?track,
+            "live transcription: finalizing last interim transcript after channel close"
+        );
         let segment = TranscriptSegment {
             session_id,
             track: Some(track),
@@ -1434,27 +1612,75 @@ mod stt_wiring {
         segment_counter: &mut u64,
     ) {
         match event {
-            SttEvent::PartialTranscript { text, audio_start_ms, audio_end_ms, .. } => {
+            SttEvent::PartialTranscript {
+                text,
+                audio_start_ms,
+                audio_end_ms,
+                ..
+            } => {
                 let start_ms = corrected_ms(audio_start_ms, timestamp_mapper);
                 let end_ms = corrected_ms(audio_end_ms, timestamp_mapper);
-                let segment = TranscriptSegment { session_id, track: Some(track), speaker: None, text: text.clone(), start_ms, end_ms, is_final: false, is_retranscribed: false };
+                let segment = TranscriptSegment {
+                    session_id,
+                    track: Some(track),
+                    speaker: None,
+                    text: text.clone(),
+                    start_ms,
+                    end_ms,
+                    is_final: false,
+                    is_retranscribed: false,
+                };
                 if let Err(err) = store.insert_transcript_segment(&segment) {
                     tracing::warn!(%err, ?track, "live transcription: failed to persist partial transcript");
                 }
-                publish_transcript_event(broker, session_id, track, &segment, Finality::Interim, *segment_counter);
+                publish_transcript_event(
+                    broker,
+                    session_id,
+                    track,
+                    &segment,
+                    Finality::Interim,
+                    *segment_counter,
+                );
             }
-            SttEvent::FinalTranscript { text, words, audio_start_ms, audio_end_ms, .. } => {
-                let speaker = words.as_ref().and_then(|words| words.first()).and_then(|word| word.speaker);
+            SttEvent::FinalTranscript {
+                text,
+                words,
+                audio_start_ms,
+                audio_end_ms,
+                ..
+            } => {
+                let speaker = words
+                    .as_ref()
+                    .and_then(|words| words.first())
+                    .and_then(|word| word.speaker);
                 let start_ms = corrected_ms(audio_start_ms, timestamp_mapper);
                 let end_ms = corrected_ms(audio_end_ms, timestamp_mapper);
-                let segment = TranscriptSegment { session_id, track: Some(track), speaker, text: text.clone(), start_ms, end_ms, is_final: true, is_retranscribed: false };
+                let segment = TranscriptSegment {
+                    session_id,
+                    track: Some(track),
+                    speaker,
+                    text: text.clone(),
+                    start_ms,
+                    end_ms,
+                    is_final: true,
+                    is_retranscribed: false,
+                };
                 if let Err(err) = store.insert_transcript_segment(&segment) {
                     tracing::warn!(%err, ?track, "live transcription: failed to persist final transcript");
                 }
-                publish_transcript_event(broker, session_id, track, &segment, Finality::Final, *segment_counter);
+                publish_transcript_event(
+                    broker,
+                    session_id,
+                    track,
+                    &segment,
+                    Finality::Final,
+                    *segment_counter,
+                );
                 *segment_counter += 1;
             }
-            SttEvent::SpeechStarted => tracing::debug!(?track, "live transcription: speech started"),
+            SttEvent::SpeechStarted => {
+                tracing::debug!(?track, "live transcription: speech started")
+            }
             SttEvent::SpeechEnded => tracing::debug!(?track, "live transcription: speech ended"),
             SttEvent::Error(err) => tracing::warn!(?track, %err, "live transcription: STT error"),
         }
@@ -1494,10 +1720,7 @@ mod stt_wiring {
             tracing::warn!(%err, ?track, "live transcription: failed to publish SegmentUpdated");
         }
         if matches!(finality, Finality::Final) {
-            let finalized = TranscriptEvent::SegmentFinalized {
-                session_id,
-                data,
-            };
+            let finalized = TranscriptEvent::SegmentFinalized { session_id, data };
             let subject = transcript_event::subject_for(&finalized, session_id);
             let envelope = EventEnvelope::new(session_id, finalized);
             if let Err(err) = broker.publish(&subject, &envelope) {
@@ -1537,10 +1760,17 @@ mod stt_wiring {
         #[test]
         fn set_status_updates_only_the_named_track() {
             let sink = Arc::new(Mutex::new(TranscriptionStatus::default()));
-            set_status(&Some(sink.clone()), TrackKind::SelfMic, TrackTranscriptionStatus::Connected);
+            set_status(
+                &Some(sink.clone()),
+                TrackKind::SelfMic,
+                TrackTranscriptionStatus::Connected,
+            );
             let status = sink.lock().unwrap().clone();
             assert_eq!(status.self_status, TrackTranscriptionStatus::Connected);
-            assert_eq!(status.remote_status, TrackTranscriptionStatus::NotConfigured);
+            assert_eq!(
+                status.remote_status,
+                TrackTranscriptionStatus::NotConfigured
+            );
         }
 
         #[test]
@@ -1555,9 +1785,26 @@ mod stt_wiring {
         #[test]
         fn note_event_tracks_the_latest_partial_and_clears_on_final() {
             let mut last_interim = None;
-            note_event(&mut last_interim, &SttEvent::PartialTranscript { text: "hel".to_string(), audio_start_ms: Some(0), audio_end_ms: Some(100), extra: Default::default() });
+            note_event(
+                &mut last_interim,
+                &SttEvent::PartialTranscript {
+                    text: "hel".to_string(),
+                    audio_start_ms: Some(0),
+                    audio_end_ms: Some(100),
+                    extra: Default::default(),
+                },
+            );
             assert!(last_interim.is_some());
-            note_event(&mut last_interim, &SttEvent::FinalTranscript { text: "hello".to_string(), words: None, audio_start_ms: Some(0), audio_end_ms: Some(200), extra: Default::default() });
+            note_event(
+                &mut last_interim,
+                &SttEvent::FinalTranscript {
+                    text: "hello".to_string(),
+                    words: None,
+                    audio_start_ms: Some(0),
+                    audio_end_ms: Some(200),
+                    extra: Default::default(),
+                },
+            );
             assert!(last_interim.is_none());
         }
 
@@ -1612,7 +1859,10 @@ mod stt_wiring {
 
         #[async_trait::async_trait]
         impl SttSession for HangingFinalizeSession {
-            async fn send_audio(&mut self, _chunk: AudioChunk<'_>) -> Result<(), stt_api::SttError> {
+            async fn send_audio(
+                &mut self,
+                _chunk: AudioChunk<'_>,
+            ) -> Result<(), stt_api::SttError> {
                 Ok(())
             }
 
@@ -1638,7 +1888,11 @@ mod stt_wiring {
 
         #[async_trait::async_trait]
         impl SttProvider for HangingStartSessionProvider {
-            async fn start_session(&self, _config: SttSessionConfig) -> Result<(Box<dyn SttSession>, UnboundedReceiver<SttEvent>), stt_api::SttError> {
+            async fn start_session(
+                &self,
+                _config: SttSessionConfig,
+            ) -> Result<(Box<dyn SttSession>, UnboundedReceiver<SttEvent>), stt_api::SttError>
+            {
                 std::future::pending().await
             }
         }
@@ -1662,7 +1916,11 @@ mod stt_wiring {
                 "a timed-out start_session must report Error, not leave the track stuck on Connecting: {:?}",
                 status.self_status
             );
-            assert_eq!(status.remote_status, TrackTranscriptionStatus::NotConfigured, "only the named track's status is touched");
+            assert_eq!(
+                status.remote_status,
+                TrackTranscriptionStatus::NotConfigured,
+                "only the named track's status is touched"
+            );
         }
 
         /// A fresh in-memory store with one session already created — just
@@ -1705,14 +1963,28 @@ mod stt_wiring {
         #[tokio::test]
         async fn remote_gate_state_send_gated_advances_and_checkpoints() {
             let (store, session_id) = test_store_and_session();
-            let mut remote = test_remote_gate_state(&store, session_id, Some(Box::new(MockSttSession::new())), 10, 0, 0, Instant::now() - Duration::from_secs(10));
+            let mut remote = test_remote_gate_state(
+                &store,
+                session_id,
+                Some(Box::new(MockSttSession::new())),
+                10,
+                0,
+                0,
+                Instant::now() - Duration::from_secs(10),
+            );
             let before_call = remote.last_active;
 
             let pcm = vec![0.5f32; 5];
             remote.send_gated(&pcm).await;
 
-            assert_eq!(remote.samples_sent, 15, "samples_sent must advance by the chunk length");
-            assert!(remote.last_active > before_call, "a real send must refresh the idle-keepalive clock");
+            assert_eq!(
+                remote.samples_sent, 15,
+                "samples_sent must advance by the chunk length"
+            );
+            assert!(
+                remote.last_active > before_call,
+                "a real send must refresh the idle-keepalive clock"
+            );
 
             // The checkpoint recorded after this send should apply a net offset of
             // 0 (no drop/heartbeat yet) from this point on.
@@ -1721,7 +1993,8 @@ mod stt_wiring {
         }
 
         #[tokio::test]
-        async fn remote_gate_state_send_gated_checkpoints_at_the_provider_clock_including_injected_samples() {
+        async fn remote_gate_state_send_gated_checkpoints_at_the_provider_clock_including_injected_samples(
+        ) {
             // Regression test for a Codex review finding: `send_gated` used to
             // checkpoint at `samples_sent` alone, ignoring how many samples
             // `keep_alive`'s `KeepAliveEffect::InjectedAudio` had already pushed
@@ -1735,7 +2008,15 @@ mod stt_wiring {
             // a non-zero net offset, so the bug's effect on `to_wallclock_ms` is
             // observable (an offset of 0 would look identical either way).
             let (store, session_id) = test_store_and_session();
-            let mut remote = test_remote_gate_state(&store, session_id, Some(Box::new(MockSttSession::new())), 0, 200, -50, Instant::now());
+            let mut remote = test_remote_gate_state(
+                &store,
+                session_id,
+                Some(Box::new(MockSttSession::new())),
+                0,
+                200,
+                -50,
+                Instant::now(),
+            );
 
             let pcm = vec![0.5f32; 10];
             remote.send_gated(&pcm).await;
@@ -1768,16 +2049,23 @@ mod stt_wiring {
             assert_eq!(reconnect_backoff(2), Duration::from_millis(2_000));
             // 500ms * 2^6 = 32s, already past the 30s cap.
             assert_eq!(reconnect_backoff(6), Duration::from_millis(30_000));
-            assert_eq!(reconnect_backoff(20), Duration::from_millis(30_000), "later attempts stay capped, not overflow");
+            assert_eq!(
+                reconnect_backoff(20),
+                Duration::from_millis(30_000),
+                "later attempts stay capped, not overflow"
+            );
         }
 
         #[tokio::test(start_paused = true)]
-        async fn reconnect_state_note_disconnect_grows_backoff_and_keeps_the_original_outage_start() {
+        async fn reconnect_state_note_disconnect_grows_backoff_and_keeps_the_original_outage_start()
+        {
             let mut reconnect = ReconnectState::new();
             assert!(reconnect.retry_at.is_none());
 
             reconnect.note_disconnect();
-            let first_disconnect = reconnect.disconnected_at.expect("the first note_disconnect must record when the outage started");
+            let first_disconnect = reconnect
+                .disconnected_at
+                .expect("the first note_disconnect must record when the outage started");
             assert_eq!(reconnect.attempt, 1);
             let first_retry_at = reconnect.retry_at.expect("armed after a disconnect");
 
@@ -1789,7 +2077,10 @@ mod stt_wiring {
             reconnect.note_disconnect();
             assert_eq!(reconnect.attempt, 2);
             assert_eq!(reconnect.disconnected_at, Some(first_disconnect));
-            assert!(reconnect.retry_at.unwrap() > first_retry_at, "backoff must grow after another failed attempt");
+            assert!(
+                reconnect.retry_at.unwrap() > first_retry_at,
+                "backoff must grow after another failed attempt"
+            );
 
             reconnect.reset();
             assert!(reconnect.retry_at.is_none());
@@ -1798,53 +2089,121 @@ mod stt_wiring {
         }
 
         #[test]
-        fn is_disconnect_retryable_matches_stt_error_and_defaults_true_for_a_silent_channel_close() {
+        fn is_disconnect_retryable_matches_stt_error_and_defaults_true_for_a_silent_channel_close()
+        {
             assert!(is_disconnect_retryable(None), "a channel close with no explicit error (e.g. AssemblyAI's hard cap) must default to retryable");
-            assert!(is_disconnect_retryable(Some(&SttError::Transport("boom".to_string()))));
+            assert!(is_disconnect_retryable(Some(&SttError::Transport(
+                "boom".to_string()
+            ))));
             assert!(is_disconnect_retryable(Some(&SttError::Timeout)));
             assert!(is_disconnect_retryable(Some(&SttError::RateLimited)));
-            assert!(!is_disconnect_retryable(Some(&SttError::AuthenticationFailed("bad key".to_string()))));
-            assert!(!is_disconnect_retryable(Some(&SttError::PermanentError("rejected".to_string()))));
+            assert!(!is_disconnect_retryable(Some(
+                &SttError::AuthenticationFailed("bad key".to_string())
+            )));
+            assert!(!is_disconnect_retryable(Some(&SttError::PermanentError(
+                "rejected".to_string()
+            ))));
             assert!(!is_disconnect_retryable(Some(&SttError::SessionClosed)));
         }
 
         #[test]
-        fn note_disconnect_and_maybe_reconnect_arms_for_retryable_and_gives_up_for_permanent_errors() {
+        fn note_disconnect_and_maybe_reconnect_arms_for_retryable_and_gives_up_for_permanent_errors(
+        ) {
             let sink = Arc::new(Mutex::new(TranscriptionStatus::default()));
             let (store, session_id) = test_store_and_session();
 
             let mut retryable = ReconnectState::new();
-            note_disconnect_and_maybe_reconnect(&store, session_id, Instant::now(), TrackKind::SelfMic, Some(&SttError::Timeout), &Some(sink.clone()), &mut retryable);
-            assert!(retryable.retry_at.is_some(), "a retryable error must arm a reconnect");
-            assert!(matches!(sink.lock().unwrap().self_status, TrackTranscriptionStatus::Error(_)));
-            assert!(retryable.open_gap_id.is_some(), "a genuinely new outage must open a transcription_gaps row");
+            note_disconnect_and_maybe_reconnect(
+                &store,
+                session_id,
+                Instant::now(),
+                TrackKind::SelfMic,
+                Some(&SttError::Timeout),
+                &Some(sink.clone()),
+                &mut retryable,
+            );
+            assert!(
+                retryable.retry_at.is_some(),
+                "a retryable error must arm a reconnect"
+            );
+            assert!(matches!(
+                sink.lock().unwrap().self_status,
+                TrackTranscriptionStatus::Error(_)
+            ));
+            assert!(
+                retryable.open_gap_id.is_some(),
+                "a genuinely new outage must open a transcription_gaps row"
+            );
 
             let mut permanent = ReconnectState::new();
-            note_disconnect_and_maybe_reconnect(&store, session_id, Instant::now(), TrackKind::SelfMic, Some(&SttError::AuthenticationFailed("bad key".to_string())), &Some(sink.clone()), &mut permanent);
-            assert!(permanent.retry_at.is_none(), "a non-retryable error must not arm a reconnect");
+            note_disconnect_and_maybe_reconnect(
+                &store,
+                session_id,
+                Instant::now(),
+                TrackKind::SelfMic,
+                Some(&SttError::AuthenticationFailed("bad key".to_string())),
+                &Some(sink.clone()),
+                &mut permanent,
+            );
+            assert!(
+                permanent.retry_at.is_none(),
+                "a non-retryable error must not arm a reconnect"
+            );
             assert!(permanent.open_gap_id.is_some(), "a non-retryable give-up must still open a gap — it's closed at recording end, not here");
         }
 
         #[test]
         fn note_self_disconnect_clears_the_session_and_classifies_retryability() {
             let (store, session_id) = test_store_and_session();
-            let mut self_session: Option<Box<dyn SttSession>> = Some(Box::new(MockSttSession::new()));
+            let mut self_session: Option<Box<dyn SttSession>> =
+                Some(Box::new(MockSttSession::new()));
             let mut reconnect = ReconnectState::new();
-            note_self_disconnect(&mut self_session, &mut reconnect, &None, Some(&SttError::RateLimited), &store, session_id, Instant::now());
-            assert!(self_session.is_none(), "the dead session must be cleared immediately");
+            note_self_disconnect(
+                &mut self_session,
+                &mut reconnect,
+                &None,
+                Some(&SttError::RateLimited),
+                &store,
+                session_id,
+                Instant::now(),
+            );
+            assert!(
+                self_session.is_none(),
+                "the dead session must be cleared immediately"
+            );
             assert!(reconnect.retry_at.is_some());
 
             let mut self_session = Some(Box::new(MockSttSession::new()) as Box<dyn SttSession>);
             let mut reconnect = ReconnectState::new();
-            note_self_disconnect(&mut self_session, &mut reconnect, &None, Some(&SttError::PermanentError("nope".to_string())), &store, session_id, Instant::now());
+            note_self_disconnect(
+                &mut self_session,
+                &mut reconnect,
+                &None,
+                Some(&SttError::PermanentError("nope".to_string())),
+                &store,
+                session_id,
+                Instant::now(),
+            );
             assert!(self_session.is_none());
-            assert!(reconnect.retry_at.is_none(), "a non-retryable error must not arm a reconnect");
+            assert!(
+                reconnect.retry_at.is_none(),
+                "a non-retryable error must not arm a reconnect"
+            );
         }
 
         #[tokio::test]
-        async fn remote_gate_state_note_disconnect_clears_session_and_arms_reconnect_when_retryable() {
+        async fn remote_gate_state_note_disconnect_clears_session_and_arms_reconnect_when_retryable(
+        ) {
             let (store, session_id) = test_store_and_session();
-            let mut remote = test_remote_gate_state(&store, session_id, Some(Box::new(MockSttSession::new())), 0, 0, 0, Instant::now());
+            let mut remote = test_remote_gate_state(
+                &store,
+                session_id,
+                Some(Box::new(MockSttSession::new())),
+                0,
+                0,
+                0,
+                Instant::now(),
+            );
             remote.note_disconnect(Some(&SttError::Transport("dropped".to_string())));
             assert!(remote.session.is_none(), "a dead session must be cleared immediately so send_audio/keep_alive stop being called against it");
             assert!(remote.reconnect.retry_at.is_some());
@@ -1853,18 +2212,38 @@ mod stt_wiring {
         #[tokio::test]
         async fn remote_gate_state_note_disconnect_gives_up_on_a_permanent_error() {
             let (store, session_id) = test_store_and_session();
-            let mut remote = test_remote_gate_state(&store, session_id, Some(Box::new(MockSttSession::new())), 0, 0, 0, Instant::now());
+            let mut remote = test_remote_gate_state(
+                &store,
+                session_id,
+                Some(Box::new(MockSttSession::new())),
+                0,
+                0,
+                0,
+                Instant::now(),
+            );
             remote.note_disconnect(Some(&SttError::AuthenticationFailed("bad key".to_string())));
             assert!(remote.session.is_none());
-            assert!(remote.reconnect.retry_at.is_none(), "a non-retryable disconnect must not arm a reconnect");
+            assert!(
+                remote.reconnect.retry_at.is_none(),
+                "a non-retryable disconnect must not arm a reconnect"
+            );
         }
 
         #[tokio::test(start_paused = true)]
-        async fn remote_gate_state_apply_reconnect_offset_preserves_timestamp_continuity_across_a_reconnect() {
+        async fn remote_gate_state_apply_reconnect_offset_preserves_timestamp_continuity_across_a_reconnect(
+        ) {
             // Old session: 1_000 samples (10s @ 100Hz) sent with no drops/injects,
             // then disconnects.
             let (store, session_id) = test_store_and_session();
-            let mut remote = test_remote_gate_state(&store, session_id, Some(Box::new(MockSttSession::new())), 1_000, 0, 0, Instant::now());
+            let mut remote = test_remote_gate_state(
+                &store,
+                session_id,
+                Some(Box::new(MockSttSession::new())),
+                1_000,
+                0,
+                0,
+                Instant::now(),
+            );
             remote.note_disconnect(Some(&SttError::Transport("dropped".to_string())));
             assert!(remote.session.is_none());
 
@@ -1874,7 +2253,10 @@ mod stt_wiring {
             remote.session = Some(Box::new(MockSttSession::new()));
             remote.apply_reconnect_offset(100);
 
-            assert_eq!(remote.samples_sent, 0, "the new session's own send counter must restart at 0");
+            assert_eq!(
+                remote.samples_sent, 0,
+                "the new session's own send counter must restart at 0"
+            );
             assert_eq!(remote.total_injected, 0);
 
             // The new session's own clock restarts at 0, but its very first event
@@ -1895,7 +2277,11 @@ mod stt_wiring {
 
         #[async_trait::async_trait]
         impl SttProvider for ImmediateSttProvider {
-            async fn start_session(&self, _config: SttSessionConfig) -> Result<(Box<dyn SttSession>, UnboundedReceiver<SttEvent>), stt_api::SttError> {
+            async fn start_session(
+                &self,
+                _config: SttSessionConfig,
+            ) -> Result<(Box<dyn SttSession>, UnboundedReceiver<SttEvent>), stt_api::SttError>
+            {
                 let (_tx, rx) = tokio::sync::mpsc::unbounded_channel();
                 Ok((Box::new(MockSttSession::new()), rx))
             }
@@ -1914,10 +2300,20 @@ mod stt_wiring {
             let sink = Arc::new(Mutex::new(TranscriptionStatus::default()));
             let provider: Arc<dyn SttProvider> = Arc::new(ImmediateSttProvider);
 
-            let result = attempt_reconnect(provider, SttSessionConfig::new(16_000), "self", TrackKind::SelfMic, Some(sink.clone())).await;
+            let result = attempt_reconnect(
+                provider,
+                SttSessionConfig::new(16_000),
+                "self",
+                TrackKind::SelfMic,
+                Some(sink.clone()),
+            )
+            .await;
 
             assert!(result.is_some());
-            assert_eq!(sink.lock().unwrap().self_status, TrackTranscriptionStatus::Connected);
+            assert_eq!(
+                sink.lock().unwrap().self_status,
+                TrackTranscriptionStatus::Connected
+            );
         }
 
         #[tokio::test(start_paused = true)]
@@ -1933,13 +2329,28 @@ mod stt_wiring {
             // `attempt_reconnect` entirely and so never exercised this), this
             // test drives the exact same two calls the `select!` arm makes.
             let (store, session_id) = test_store_and_session();
-            let mut remote = test_remote_gate_state(&store, session_id, Some(Box::new(MockSttSession::new())), 1_000, 0, 0, Instant::now());
+            let mut remote = test_remote_gate_state(
+                &store,
+                session_id,
+                Some(Box::new(MockSttSession::new())),
+                1_000,
+                0,
+                0,
+                Instant::now(),
+            );
             remote.note_disconnect(Some(&SttError::Transport("dropped".to_string())));
             assert!(remote.session.is_none());
 
             tokio::time::advance(Duration::from_secs(5)).await;
             let provider: Arc<dyn SttProvider> = Arc::new(ImmediateSttProvider);
-            let result = attempt_reconnect(provider, SttSessionConfig::new(100), "remote", TrackKind::RemoteAudio, None).await;
+            let result = attempt_reconnect(
+                provider,
+                SttSessionConfig::new(100),
+                "remote",
+                TrackKind::RemoteAudio,
+                None,
+            )
+            .await;
             let (session, _events) = result.expect("ImmediateSttProvider always succeeds");
             remote.session = Some(session);
             remote.apply_reconnect_offset(100);
@@ -1955,7 +2366,8 @@ mod stt_wiring {
 
         #[tokio::test]
         async fn recv_reconnect_result_resolves_once_the_spawned_task_completes() {
-            let mut in_flight: Option<JoinHandle<Option<ReconnectSessionPair>>> = Some(tokio::spawn(async { None }));
+            let mut in_flight: Option<JoinHandle<Option<ReconnectSessionPair>>> =
+                Some(tokio::spawn(async { None }));
             let result = recv_reconnect_result(&mut in_flight).await;
             assert!(matches!(result, Ok(None)));
         }
@@ -1966,8 +2378,15 @@ mod stt_wiring {
             // a `select!` branch guarded by `in_flight.is_some()` must never see
             // this future spuriously ready when there is no task to await.
             let mut in_flight: Option<JoinHandle<Option<ReconnectSessionPair>>> = None;
-            let timed_out = tokio::time::timeout(Duration::from_secs(60), recv_reconnect_result(&mut in_flight)).await;
-            assert!(timed_out.is_err(), "recv_reconnect_result(&mut None) must never resolve");
+            let timed_out = tokio::time::timeout(
+                Duration::from_secs(60),
+                recv_reconnect_result(&mut in_flight),
+            )
+            .await;
+            assert!(
+                timed_out.is_err(),
+                "recv_reconnect_result(&mut None) must never resolve"
+            );
         }
 
         #[test]
@@ -1976,22 +2395,40 @@ mod stt_wiring {
             // `start_session_with_timeout` already reported `Error` status
             // itself, so this must not overwrite it — just arm the next backoff.
             let sink = Arc::new(Mutex::new(TranscriptionStatus::default()));
-            set_status(&Some(sink.clone()), TrackKind::SelfMic, TrackTranscriptionStatus::Error("original".to_string()));
+            set_status(
+                &Some(sink.clone()),
+                TrackKind::SelfMic,
+                TrackTranscriptionStatus::Error("original".to_string()),
+            );
             let mut reconnect = ReconnectState::new();
 
-            note_reconnect_failure(TrackKind::SelfMic, None, &Some(sink.clone()), &mut reconnect);
+            note_reconnect_failure(
+                TrackKind::SelfMic,
+                None,
+                &Some(sink.clone()),
+                &mut reconnect,
+            );
 
-            assert!(reconnect.retry_at.is_some(), "a failed attempt must arm another backoff");
-            assert_eq!(sink.lock().unwrap().self_status, TrackTranscriptionStatus::Error("original".to_string()), "must not overwrite a status start_session_with_timeout already reported");
+            assert!(
+                reconnect.retry_at.is_some(),
+                "a failed attempt must arm another backoff"
+            );
+            assert_eq!(
+                sink.lock().unwrap().self_status,
+                TrackTranscriptionStatus::Error("original".to_string()),
+                "must not overwrite a status start_session_with_timeout already reported"
+            );
         }
 
         #[tokio::test]
-        async fn note_reconnect_failure_from_a_panicked_task_reports_error_status_and_arms_backoff() {
+        async fn note_reconnect_failure_from_a_panicked_task_reports_error_status_and_arms_backoff()
+        {
             // The `Err(join_err)` case: unlike a plain `Ok(None)`, nothing has
             // reported `Error` status yet (the task never got to
             // `start_session_with_timeout`'s own reporting), so this must do so
             // itself before arming the backoff.
-            let handle: JoinHandle<Option<ReconnectSessionPair>> = tokio::spawn(async { panic!("simulated reconnect task panic") });
+            let handle: JoinHandle<Option<ReconnectSessionPair>> =
+                tokio::spawn(async { panic!("simulated reconnect task panic") });
             // `Result::expect_err` needs `T: Debug`, but `ReconnectSessionPair`
             // contains `Box<dyn SttSession>` which isn't — match instead.
             let join_err = match handle.await {
@@ -2001,33 +2438,63 @@ mod stt_wiring {
 
             let sink = Arc::new(Mutex::new(TranscriptionStatus::default()));
             let mut reconnect = ReconnectState::new();
-            note_reconnect_failure(TrackKind::RemoteAudio, Some(&join_err), &Some(sink.clone()), &mut reconnect);
+            note_reconnect_failure(
+                TrackKind::RemoteAudio,
+                Some(&join_err),
+                &Some(sink.clone()),
+                &mut reconnect,
+            );
 
             assert!(reconnect.retry_at.is_some());
-            assert!(matches!(sink.lock().unwrap().remote_status, TrackTranscriptionStatus::Error(_)), "a panicked task has nothing else to report Error status, so this must");
+            assert!(
+                matches!(
+                    sink.lock().unwrap().remote_status,
+                    TrackTranscriptionStatus::Error(_)
+                ),
+                "a panicked task has nothing else to report Error status, so this must"
+            );
         }
 
         #[tokio::test]
-        async fn note_disconnect_and_maybe_reconnect_does_not_rearm_while_a_reconnect_is_already_in_flight() {
+        async fn note_disconnect_and_maybe_reconnect_does_not_rearm_while_a_reconnect_is_already_in_flight(
+        ) {
             // Task #87's multi-reconnect guard: a stray disconnect signal
             // arriving while a reconnect task is already running for this track
             // (see this function's doc comment) must not stack a second backoff
             // on top, mirroring the existing `retry_at.is_some()` guard.
             let (store, session_id) = test_store_and_session();
             let mut reconnect = ReconnectState::new();
-            reconnect.in_flight = Some(tokio::spawn(std::future::pending::<Option<ReconnectSessionPair>>()));
+            reconnect.in_flight = Some(tokio::spawn(std::future::pending::<
+                Option<ReconnectSessionPair>,
+            >()));
 
-            note_disconnect_and_maybe_reconnect(&store, session_id, Instant::now(), TrackKind::SelfMic, Some(&SttError::Timeout), &None, &mut reconnect);
+            note_disconnect_and_maybe_reconnect(
+                &store,
+                session_id,
+                Instant::now(),
+                TrackKind::SelfMic,
+                Some(&SttError::Timeout),
+                &None,
+                &mut reconnect,
+            );
 
-            assert!(reconnect.retry_at.is_none(), "must not arm a new backoff while a reconnect task is already in flight");
-            assert!(reconnect.open_gap_id.is_none(), "an already-armed outage must not open a second gap either");
+            assert!(
+                reconnect.retry_at.is_none(),
+                "must not arm a new backoff while a reconnect task is already in flight"
+            );
+            assert!(
+                reconnect.open_gap_id.is_none(),
+                "an already-armed outage must not open a second gap either"
+            );
             reconnect.abort_in_flight();
         }
 
         #[tokio::test]
         async fn abort_in_flight_clears_the_handle() {
             let mut reconnect = ReconnectState::new();
-            reconnect.in_flight = Some(tokio::spawn(std::future::pending::<Option<ReconnectSessionPair>>()));
+            reconnect.in_flight = Some(tokio::spawn(std::future::pending::<
+                Option<ReconnectSessionPair>,
+            >()));
 
             reconnect.abort_in_flight();
 
@@ -2064,7 +2531,13 @@ mod stt_wiring {
             // reproduced here directly (rather than driving the full function,
             // which would require a live provider connection) so the gate ->
             // mapper wiring itself is under test without any network I/O.
-            fn apply(gate: &mut SilenceGate, samples: &[f32], net_offset: &mut i64, samples_sent: &mut u64, mapper: &mut TimestampMapper) {
+            fn apply(
+                gate: &mut SilenceGate,
+                samples: &[f32],
+                net_offset: &mut i64,
+                samples_sent: &mut u64,
+                mapper: &mut TimestampMapper,
+            ) {
                 for action in gate.process(samples) {
                     match action {
                         GateAction::Send(pcm) => {
@@ -2086,15 +2559,36 @@ mod stt_wiring {
             // 1s of leading silence: per `silence_gate`'s own
             // `starts_silent_and_drops_leading_silence` test, this drops 80 of the
             // 100 samples (the trailing 20 stay buffered as pre-roll).
-            apply(&mut gate, &[0.0; 100], &mut net_offset, &mut samples_sent, &mut mapper);
-            assert_eq!(net_offset, 80, "800ms of leading silence must be counted as dropped");
+            apply(
+                &mut gate,
+                &[0.0; 100],
+                &mut net_offset,
+                &mut samples_sent,
+                &mut mapper,
+            );
+            assert_eq!(
+                net_offset, 80,
+                "800ms of leading silence must be counted as dropped"
+            );
             assert_eq!(samples_sent, 0, "nothing was actually sent yet");
 
             // Then 500ms of speech: triggers Silent -> Speaking (stitching the
             // 20-sample pre-roll on) and keeps sending thereafter.
-            apply(&mut gate, &[0.5; 50], &mut net_offset, &mut samples_sent, &mut mapper);
-            assert_eq!(samples_sent, 70, "20 pre-roll samples + 50 speech samples were sent");
-            assert_eq!(net_offset, 80, "no further silence was dropped once speech started");
+            apply(
+                &mut gate,
+                &[0.5; 50],
+                &mut net_offset,
+                &mut samples_sent,
+                &mut mapper,
+            );
+            assert_eq!(
+                samples_sent, 70,
+                "20 pre-roll samples + 50 speech samples were sent"
+            );
+            assert_eq!(
+                net_offset, 80,
+                "no further silence was dropped once speech started"
+            );
 
             // A transcript segment reported by the provider at
             // [300ms, 700ms) provider-relative time must come back shifted by the
@@ -2115,7 +2609,15 @@ mod stt_wiring {
                 audio_end_ms: Some(700),
                 extra: Default::default(),
             };
-            persist_event(&store, None, manifest.session_id, TrackKind::RemoteAudio, event, Some(&mapper), &mut 0);
+            persist_event(
+                &store,
+                None,
+                manifest.session_id,
+                TrackKind::RemoteAudio,
+                event,
+                Some(&mapper),
+                &mut 0,
+            );
             let segments = store.list_transcript_segments(manifest.session_id).unwrap();
             assert_eq!(segments.len(), 1);
             assert_eq!(segments[0].start_ms, Some(1_100));
@@ -2128,8 +2630,18 @@ mod stt_wiring {
             let manifest = test_manifest();
             store.create_session(&manifest).unwrap();
 
-            let pending = PendingInterim { text: "こんにち".to_string(), audio_start_ms: Some(10), audio_end_ms: Some(500) };
-            persist_pending_interim(&store, manifest.session_id, TrackKind::SelfMic, Some(pending), None);
+            let pending = PendingInterim {
+                text: "こんにち".to_string(),
+                audio_start_ms: Some(10),
+                audio_end_ms: Some(500),
+            };
+            persist_pending_interim(
+                &store,
+                manifest.session_id,
+                TrackKind::SelfMic,
+                Some(pending),
+                None,
+            );
 
             let segments = store.list_transcript_segments(manifest.session_id).unwrap();
             assert_eq!(segments.len(), 1);
@@ -2145,9 +2657,22 @@ mod stt_wiring {
             store.create_session(&manifest).unwrap();
 
             persist_pending_interim(&store, manifest.session_id, TrackKind::SelfMic, None, None);
-            persist_pending_interim(&store, manifest.session_id, TrackKind::SelfMic, Some(PendingInterim { text: "   ".to_string(), audio_start_ms: None, audio_end_ms: None }), None);
+            persist_pending_interim(
+                &store,
+                manifest.session_id,
+                TrackKind::SelfMic,
+                Some(PendingInterim {
+                    text: "   ".to_string(),
+                    audio_start_ms: None,
+                    audio_end_ms: None,
+                }),
+                None,
+            );
 
-            assert!(store.list_transcript_segments(manifest.session_id).unwrap().is_empty());
+            assert!(store
+                .list_transcript_segments(manifest.session_id)
+                .unwrap()
+                .is_empty());
         }
 
         fn test_manifest() -> recorder_domain::SessionManifest {
@@ -2163,17 +2688,36 @@ mod stt_wiring {
                     remote_source_id: "default".to_string(),
                     remote_source_kind: recorder_domain::RemoteSourceKind::EndpointLoopback,
                 },
-                audio: recorder_domain::AudioManifest { sample_rate: 48_000, segment_duration_ms: 30_000, tracks: vec![TrackKind::SelfMic, TrackKind::RemoteAudio] },
-                consent: recorder_domain::ConsentManifest { confirmed_by_user: true, confirmed_at: chrono::Utc::now() },
+                audio: recorder_domain::AudioManifest {
+                    sample_rate: 48_000,
+                    segment_duration_ms: 30_000,
+                    tracks: vec![TrackKind::SelfMic, TrackKind::RemoteAudio],
+                },
+                consent: recorder_domain::ConsentManifest {
+                    confirmed_by_user: true,
+                    confirmed_at: chrono::Utc::now(),
+                },
             }
         }
 
         #[test]
         fn target_sample_rate_hz_pins_openai_and_assemblyai_leaves_others_at_capture_rate() {
-            assert_eq!(target_sample_rate_hz(SttProviderKind::OpenAi, 48_000), 24_000);
-            assert_eq!(target_sample_rate_hz(SttProviderKind::AssemblyAi, 48_000), 16_000);
-            assert_eq!(target_sample_rate_hz(SttProviderKind::Deepgram, 48_000), 48_000);
-            assert_eq!(target_sample_rate_hz(SttProviderKind::Google, 48_000), 48_000);
+            assert_eq!(
+                target_sample_rate_hz(SttProviderKind::OpenAi, 48_000),
+                24_000
+            );
+            assert_eq!(
+                target_sample_rate_hz(SttProviderKind::AssemblyAi, 48_000),
+                16_000
+            );
+            assert_eq!(
+                target_sample_rate_hz(SttProviderKind::Deepgram, 48_000),
+                48_000
+            );
+            assert_eq!(
+                target_sample_rate_hz(SttProviderKind::Google, 48_000),
+                48_000
+            );
         }
 
         /// Minimal in-memory `CredentialStore` for exercising `build_stt_provider`
@@ -2185,22 +2729,41 @@ mod stt_wiring {
         impl InMemoryCredentialStore {
             fn with(service: &str, account: &str, secret: &str) -> Self {
                 let mut map = std::collections::HashMap::new();
-                map.insert((service.to_string(), account.to_string()), secret.to_string());
+                map.insert(
+                    (service.to_string(), account.to_string()),
+                    secret.to_string(),
+                );
                 Self(map)
             }
         }
 
         impl CredentialStore for InMemoryCredentialStore {
-            fn save(&self, _service: &str, _account: &str, _secret: &str) -> Result<(), credential_store::StoreError> {
+            fn save(
+                &self,
+                _service: &str,
+                _account: &str,
+                _secret: &str,
+            ) -> Result<(), credential_store::StoreError> {
                 unimplemented!("not needed by these tests")
             }
-            fn load(&self, service: &str, account: &str) -> Result<String, credential_store::StoreError> {
-                self.0.get(&(service.to_string(), account.to_string())).cloned().ok_or_else(|| credential_store::StoreError::NotFound {
-                    service: service.to_string(),
-                    account: account.to_string(),
-                })
+            fn load(
+                &self,
+                service: &str,
+                account: &str,
+            ) -> Result<String, credential_store::StoreError> {
+                self.0
+                    .get(&(service.to_string(), account.to_string()))
+                    .cloned()
+                    .ok_or_else(|| credential_store::StoreError::NotFound {
+                        service: service.to_string(),
+                        account: account.to_string(),
+                    })
             }
-            fn delete(&self, _service: &str, _account: &str) -> Result<(), credential_store::StoreError> {
+            fn delete(
+                &self,
+                _service: &str,
+                _account: &str,
+            ) -> Result<(), credential_store::StoreError> {
                 unimplemented!("not needed by these tests")
             }
         }
@@ -2208,18 +2771,35 @@ mod stt_wiring {
         #[test]
         fn build_stt_provider_reports_credential_missing_for_every_kind_when_store_is_empty() {
             let store = InMemoryCredentialStore(std::collections::HashMap::new());
-            for kind in [SttProviderKind::Deepgram, SttProviderKind::OpenAi, SttProviderKind::Google, SttProviderKind::AssemblyAi] {
-                let Err(err) = build_stt_provider(kind, &store) else { panic!("expected CredentialMissing for {kind:?}") };
-                assert!(matches!(err, SttProviderFactoryError::CredentialMissing { kind: k, .. } if k == kind));
+            for kind in [
+                SttProviderKind::Deepgram,
+                SttProviderKind::OpenAi,
+                SttProviderKind::Google,
+                SttProviderKind::AssemblyAi,
+            ] {
+                let Err(err) = build_stt_provider(kind, &store) else {
+                    panic!("expected CredentialMissing for {kind:?}")
+                };
+                assert!(
+                    matches!(err, SttProviderFactoryError::CredentialMissing { kind: k, .. } if k == kind)
+                );
             }
         }
 
         #[test]
         fn build_stt_provider_constructs_openai_and_assemblyai_from_a_bare_api_key() {
-            let store = InMemoryCredentialStore::with(stt_openai::CREDENTIAL_SERVICE, stt_openai::OPENAI_STT_API_KEY_ACCOUNT, "sk-test");
+            let store = InMemoryCredentialStore::with(
+                stt_openai::CREDENTIAL_SERVICE,
+                stt_openai::OPENAI_STT_API_KEY_ACCOUNT,
+                "sk-test",
+            );
             assert!(build_stt_provider(SttProviderKind::OpenAi, &store).is_ok());
 
-            let store = InMemoryCredentialStore::with(stt_assemblyai::CREDENTIAL_SERVICE, stt_assemblyai::ASSEMBLYAI_API_KEY_ACCOUNT, "aai-test");
+            let store = InMemoryCredentialStore::with(
+                stt_assemblyai::CREDENTIAL_SERVICE,
+                stt_assemblyai::ASSEMBLYAI_API_KEY_ACCOUNT,
+                "aai-test",
+            );
             assert!(build_stt_provider(SttProviderKind::AssemblyAi, &store).is_ok());
         }
 
@@ -2227,15 +2807,31 @@ mod stt_wiring {
         fn build_stt_provider_constructs_google_from_valid_credentials_json() {
             let credentials = GoogleSttCredentials::new("my-project", "global");
             let json = serde_json::to_string(&credentials).unwrap();
-            let store = InMemoryCredentialStore::with(stt_google::CREDENTIAL_SERVICE, stt_google::GOOGLE_STT_CREDENTIALS_ACCOUNT, &json);
+            let store = InMemoryCredentialStore::with(
+                stt_google::CREDENTIAL_SERVICE,
+                stt_google::GOOGLE_STT_CREDENTIALS_ACCOUNT,
+                &json,
+            );
             assert!(build_stt_provider(SttProviderKind::Google, &store).is_ok());
         }
 
         #[test]
         fn build_stt_provider_reports_invalid_credential_for_malformed_google_json() {
-            let store = InMemoryCredentialStore::with(stt_google::CREDENTIAL_SERVICE, stt_google::GOOGLE_STT_CREDENTIALS_ACCOUNT, "not json");
-            let Err(err) = build_stt_provider(SttProviderKind::Google, &store) else { panic!("expected InvalidCredential") };
-            assert!(matches!(err, SttProviderFactoryError::InvalidCredential { kind: SttProviderKind::Google, .. }));
+            let store = InMemoryCredentialStore::with(
+                stt_google::CREDENTIAL_SERVICE,
+                stt_google::GOOGLE_STT_CREDENTIALS_ACCOUNT,
+                "not json",
+            );
+            let Err(err) = build_stt_provider(SttProviderKind::Google, &store) else {
+                panic!("expected InvalidCredential")
+            };
+            assert!(matches!(
+                err,
+                SttProviderFactoryError::InvalidCredential {
+                    kind: SttProviderKind::Google,
+                    ..
+                }
+            ));
         }
     }
 }

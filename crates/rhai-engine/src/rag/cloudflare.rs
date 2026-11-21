@@ -39,7 +39,10 @@ pub async fn search(
     credential_store: &Arc<credential_store::FallbackCredentialStore>,
     _settings: &dyn SettingsProvider,
 ) -> Result<rhai::Dynamic, String> {
-    let max_results = options.get("max_results").and_then(|v| v.as_int().ok()).unwrap_or(5) as usize;
+    let max_results = options
+        .get("max_results")
+        .and_then(|v| v.as_int().ok())
+        .unwrap_or(5) as usize;
 
     let credentials = load_credentials(credential_store)?;
     let url = format!(
@@ -66,7 +69,10 @@ pub async fn search(
         return Err(format!("Cloudflare AI Search returned {status}: {text}"));
     }
 
-    let json: serde_json::Value = resp.json().await.map_err(|e| format!("failed to parse response: {e}"))?;
+    let json: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("failed to parse response: {e}"))?;
 
     let mut results = rhai::Array::new();
     for chunk in extract_chunks(&json).into_iter().take(max_results) {
@@ -95,7 +101,9 @@ pub async fn index(
     Ok(rhai::Dynamic::from_map(m))
 }
 
-fn load_credentials(credential_store: &Arc<credential_store::FallbackCredentialStore>) -> Result<CloudflareCredentials, String> {
+fn load_credentials(
+    credential_store: &Arc<credential_store::FallbackCredentialStore>,
+) -> Result<CloudflareCredentials, String> {
     let raw = credential_store
         .load(CREDENTIAL_SERVICE, CLOUDFLARE_AI_SEARCH_ACCOUNT)
         .map_err(|_| "Cloudflare AI Search credentials not configured".to_string())?;
@@ -108,7 +116,12 @@ fn load_credentials(credential_store: &Arc<credential_store::FallbackCredentialS
 /// locations rather than committing to one exact shape, since this hasn't been
 /// verified against a live response (see this module's doc comment).
 fn extract_chunks(json: &serde_json::Value) -> Vec<&serde_json::Value> {
-    for path in [&["result", "data"][..], &["result", "chunks"][..], &["data"][..], &["chunks"][..]] {
+    for path in [
+        &["result", "data"][..],
+        &["result", "chunks"][..],
+        &["data"][..],
+        &["chunks"][..],
+    ] {
         let mut cur = json;
         let mut ok = true;
         for key in path {
@@ -135,10 +148,21 @@ fn extract_chunks(json: &serde_json::Value) -> Vec<&serde_json::Value> {
 /// `item.key`) are best-effort per Cloudflare's docs, not confirmed live.
 fn parse_chunk(chunk: &serde_json::Value) -> rhai::Map {
     let mut m = rhai::Map::new();
-    let text = chunk.get("text").or_else(|| chunk.get("content")).and_then(|v| v.as_str()).unwrap_or("");
+    let text = chunk
+        .get("text")
+        .or_else(|| chunk.get("content"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     m.insert("text".into(), rhai::Dynamic::from(text.to_string()));
-    m.insert("score".into(), rhai::Dynamic::from(chunk.get("score").and_then(|v| v.as_f64()).unwrap_or(0.0)));
-    let source = chunk.get("item").and_then(|item| item.get("key")).and_then(|v| v.as_str()).unwrap_or("");
+    m.insert(
+        "score".into(),
+        rhai::Dynamic::from(chunk.get("score").and_then(|v| v.as_f64()).unwrap_or(0.0)),
+    );
+    let source = chunk
+        .get("item")
+        .and_then(|item| item.get("key"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     m.insert("source".into(), rhai::Dynamic::from(source.to_string()));
     m
 }

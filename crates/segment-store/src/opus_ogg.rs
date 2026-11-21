@@ -39,7 +39,10 @@ fn opus_tags_packet() -> Vec<u8> {
 /// is zero-padded to `FRAME_SAMPLES`. The final packet's granule position (total
 /// encoded sample count) is what `recovery::read_total_samples` later reads back to
 /// reconstruct a segment's exact duration without decoding audio.
-pub fn encode_segment_to_ogg_opus(pcm: &[f32], bitrate_bps: i32) -> Result<Vec<u8>, SegmentStoreError> {
+pub fn encode_segment_to_ogg_opus(
+    pcm: &[f32],
+    bitrate_bps: i32,
+) -> Result<Vec<u8>, SegmentStoreError> {
     let mut encoder = Encoder::new(SAMPLE_RATE_HZ, Channels::Mono, Application::Audio)?;
     encoder.set_bitrate(opus::Bitrate::Bits(bitrate_bps))?;
 

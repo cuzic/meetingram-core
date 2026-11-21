@@ -2,8 +2,8 @@
 
 use std::sync::{Arc, Mutex};
 
-use rhai::Scope;
 use recorder_domain::SessionId;
+use rhai::Scope;
 
 pub struct ScopeStore {
     scopes: dashmap::DashMap<(usize, SessionId), Arc<Mutex<Scope<'static>>>>,
@@ -11,7 +11,9 @@ pub struct ScopeStore {
 
 impl ScopeStore {
     pub fn new() -> Self {
-        Self { scopes: dashmap::DashMap::new() }
+        Self {
+            scopes: dashmap::DashMap::new(),
+        }
     }
 
     /// Initialize scopes from ASTs (no CompiledScript needed).
@@ -26,19 +28,31 @@ impl ScopeStore {
     /// function and never runs the AST's own body on its own. This mirrors
     /// what `engine::load_plugins`'s `on_load` step already does for its own
     /// (unrelated, load-time-only) throwaway scope.
-    pub fn start_session_asts(&self, engine: &rhai::Engine, asts: &[rhai::AST], session_id: SessionId) {
+    pub fn start_session_asts(
+        &self,
+        engine: &rhai::Engine,
+        asts: &[rhai::AST],
+        session_id: SessionId,
+    ) {
         for (idx, ast) in asts.iter().enumerate() {
             let mut scope = Scope::new();
             scope.push("session_id", session_id.to_string());
             if let Err(err) = engine.run_ast_with_scope(&mut scope, ast) {
                 tracing::warn!(script_idx = idx, %session_id, %err, "rhai: failed to initialize script scope for session");
             }
-            self.scopes.insert((idx, session_id), Arc::new(Mutex::new(scope)));
+            self.scopes
+                .insert((idx, session_id), Arc::new(Mutex::new(scope)));
         }
     }
 
-    pub fn get(&self, script_idx: usize, session_id: SessionId) -> Option<Arc<Mutex<Scope<'static>>>> {
-        self.scopes.get(&(script_idx, session_id)).map(|r| r.clone())
+    pub fn get(
+        &self,
+        script_idx: usize,
+        session_id: SessionId,
+    ) -> Option<Arc<Mutex<Scope<'static>>>> {
+        self.scopes
+            .get(&(script_idx, session_id))
+            .map(|r| r.clone())
     }
 }
 
@@ -72,14 +86,23 @@ mod tests {
         let scope_arc = store.get(0, session_id).expect("scope was stored");
         {
             let mut scope = scope_arc.lock().unwrap();
-            let _ = engine.call_fn::<rhai::Dynamic>(&mut scope, &ast, "on_segment", ("a".to_string(),)).expect("first call");
+            let _ = engine
+                .call_fn::<rhai::Dynamic>(&mut scope, &ast, "on_segment", ("a".to_string(),))
+                .expect("first call");
         }
         {
             let mut scope = scope_arc.lock().unwrap();
-            let _ = engine.call_fn::<rhai::Dynamic>(&mut scope, &ast, "on_segment", ("b".to_string(),)).expect("second call");
+            let _ = engine
+                .call_fn::<rhai::Dynamic>(&mut scope, &ast, "on_segment", ("b".to_string(),))
+                .expect("second call");
         }
         let mut scope = scope_arc.lock().unwrap();
-        let count: i64 = engine.call_fn(&mut scope, &ast, "count", ()).expect("count call");
-        assert_eq!(count, 2, "turns should have accumulated across both on_segment calls");
+        let count: i64 = engine
+            .call_fn(&mut scope, &ast, "count", ())
+            .expect("count call");
+        assert_eq!(
+            count, 2,
+            "turns should have accumulated across both on_segment calls"
+        );
     }
 }

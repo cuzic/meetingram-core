@@ -1,6 +1,7 @@
 use chrono::Utc;
 use recorder_domain::{
-    AudioManifest, CaptureManifest, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest, TrackKind,
+    AudioManifest, CaptureManifest, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest,
+    TrackKind,
 };
 use session_store::{SessionStore, TranscriptionGap};
 
@@ -44,12 +45,20 @@ fn record_gap_start_leaves_end_ms_none_until_record_gap_end_is_called() {
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
 
-    let gap_id = store.record_gap_start(session_id, TrackKind::RemoteAudio, 10_000).unwrap();
+    let gap_id = store
+        .record_gap_start(session_id, TrackKind::RemoteAudio, 10_000)
+        .unwrap();
 
     let gaps = store.gaps_for_session(session_id).unwrap();
     assert_eq!(
         gaps,
-        vec![TranscriptionGap { id: gap_id, session_id, track: TrackKind::RemoteAudio, start_ms: 10_000, end_ms: None }]
+        vec![TranscriptionGap {
+            id: gap_id,
+            session_id,
+            track: TrackKind::RemoteAudio,
+            start_ms: 10_000,
+            end_ms: None
+        }]
     );
 
     store.record_gap_end(gap_id, 15_000).unwrap();
@@ -57,7 +66,13 @@ fn record_gap_start_leaves_end_ms_none_until_record_gap_end_is_called() {
     let gaps = store.gaps_for_session(session_id).unwrap();
     assert_eq!(
         gaps,
-        vec![TranscriptionGap { id: gap_id, session_id, track: TrackKind::RemoteAudio, start_ms: 10_000, end_ms: Some(15_000) }]
+        vec![TranscriptionGap {
+            id: gap_id,
+            session_id,
+            track: TrackKind::RemoteAudio,
+            start_ms: 10_000,
+            end_ms: Some(15_000)
+        }]
     );
 }
 
@@ -67,8 +82,12 @@ fn gaps_for_session_returns_every_track_oldest_first() {
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
 
-    let self_gap = store.record_gap_start(session_id, TrackKind::SelfMic, 1_000).unwrap();
-    let remote_gap = store.record_gap_start(session_id, TrackKind::RemoteAudio, 2_000).unwrap();
+    let self_gap = store
+        .record_gap_start(session_id, TrackKind::SelfMic, 1_000)
+        .unwrap();
+    let remote_gap = store
+        .record_gap_start(session_id, TrackKind::RemoteAudio, 2_000)
+        .unwrap();
     store.record_gap_end(self_gap, 1_500).unwrap();
     store.record_gap_end(remote_gap, 4_000).unwrap();
 
@@ -86,14 +105,27 @@ fn discard_gap_removes_it_without_ever_recording_an_end() {
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
 
-    let short_gap = store.record_gap_start(session_id, TrackKind::RemoteAudio, 1_000).unwrap();
-    let real_gap = store.record_gap_start(session_id, TrackKind::RemoteAudio, 5_000).unwrap();
+    let short_gap = store
+        .record_gap_start(session_id, TrackKind::RemoteAudio, 1_000)
+        .unwrap();
+    let real_gap = store
+        .record_gap_start(session_id, TrackKind::RemoteAudio, 5_000)
+        .unwrap();
     store.record_gap_end(real_gap, 20_000).unwrap();
 
     store.discard_gap(short_gap).unwrap();
 
     let gaps = store.gaps_for_session(session_id).unwrap();
-    assert_eq!(gaps, vec![TranscriptionGap { id: real_gap, session_id, track: TrackKind::RemoteAudio, start_ms: 5_000, end_ms: Some(20_000) }]);
+    assert_eq!(
+        gaps,
+        vec![TranscriptionGap {
+            id: real_gap,
+            session_id,
+            track: TrackKind::RemoteAudio,
+            start_ms: 5_000,
+            end_ms: Some(20_000)
+        }]
+    );
 }
 
 #[test]
@@ -109,5 +141,8 @@ fn record_gap_start_without_a_session_is_rejected_by_the_foreign_key() {
     let session_id = SessionId::new();
 
     let result = store.record_gap_start(session_id, TrackKind::SelfMic, 0);
-    assert!(result.is_err(), "expected foreign key violation, got {result:?}");
+    assert!(
+        result.is_err(),
+        "expected foreign key violation, got {result:?}"
+    );
 }

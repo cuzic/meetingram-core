@@ -52,7 +52,10 @@ fn create_session_registers_session_and_declared_tracks() {
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
 
-    assert_eq!(store.capture_state(session_id).unwrap(), CaptureState::Preparing);
+    assert_eq!(
+        store.capture_state(session_id).unwrap(),
+        CaptureState::Preparing
+    );
 }
 
 #[test]
@@ -65,7 +68,9 @@ fn register_segment_creates_matching_not_started_upload_status() {
     store.register_segment(&segment).unwrap();
 
     assert_eq!(
-        store.upload_state(session_id, TrackKind::SelfMic, 0).unwrap(),
+        store
+            .upload_state(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
         UploadState::NotStarted
     );
 }
@@ -79,7 +84,10 @@ fn register_segment_without_a_session_is_rejected_by_the_foreign_key() {
     // creating an orphaned segment tied to a session that doesn't exist in `sessions`.
     let segment = sample_segment(session_id, TrackKind::SelfMic, 0);
     let result = store.register_segment(&segment);
-    assert!(result.is_err(), "expected foreign key violation, got {result:?}");
+    assert!(
+        result.is_err(),
+        "expected foreign key violation, got {result:?}"
+    );
 }
 
 #[test]
@@ -89,7 +97,9 @@ fn pending_uploads_excludes_completed_and_permanently_failed_segments() {
     store.create_session(&sample_manifest(session_id)).unwrap();
 
     for seq in 0..4 {
-        store.register_segment(&sample_segment(session_id, TrackKind::SelfMic, seq)).unwrap();
+        store
+            .register_segment(&sample_segment(session_id, TrackKind::SelfMic, seq))
+            .unwrap();
     }
 
     // seq 0: left NotStarted (should still be pending)
@@ -101,7 +111,10 @@ fn pending_uploads_excludes_completed_and_permanently_failed_segments() {
             session_id,
             TrackKind::SelfMic,
             2,
-            &UploadState::Failed { retryable: true, reason: "timeout".to_string() },
+            &UploadState::Failed {
+                retryable: true,
+                reason: "timeout".to_string(),
+            },
         )
         .unwrap();
     store
@@ -109,7 +122,10 @@ fn pending_uploads_excludes_completed_and_permanently_failed_segments() {
             session_id,
             TrackKind::SelfMic,
             3,
-            &UploadState::Failed { retryable: false, reason: "400 bad request".to_string() },
+            &UploadState::Failed {
+                retryable: false,
+                reason: "400 bad request".to_string(),
+            },
         )
         .unwrap();
 
@@ -125,37 +141,77 @@ fn update_upload_state_counts_attempts_only_on_entering_uploading() {
     let store = SessionStore::open_in_memory().unwrap();
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
-    store.register_segment(&sample_segment(session_id, TrackKind::SelfMic, 0)).unwrap();
+    store
+        .register_segment(&sample_segment(session_id, TrackKind::SelfMic, 0))
+        .unwrap();
 
     // Pending -> Uploading -> Failed(retryable) -> Uploading -> Completed: two
     // attempts (the two `Uploading` transitions). Neither outcome
     // (Failed/Completed) adds a further increment on top of the attempt that
     // produced it, so `Uploading -> {Completed, Failed}` never double-counts one
     // real upload call.
-    store.update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Pending).unwrap();
-    assert_eq!(store.upload_attempt_count(session_id, TrackKind::SelfMic, 0).unwrap(), 0);
+    store
+        .update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Pending)
+        .unwrap();
+    assert_eq!(
+        store
+            .upload_attempt_count(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
+        0
+    );
 
-    store.update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Uploading).unwrap();
-    assert_eq!(store.upload_attempt_count(session_id, TrackKind::SelfMic, 0).unwrap(), 1);
+    store
+        .update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Uploading)
+        .unwrap();
+    assert_eq!(
+        store
+            .upload_attempt_count(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
+        1
+    );
 
     store
         .update_upload_state(
             session_id,
             TrackKind::SelfMic,
             0,
-            &UploadState::Failed { retryable: true, reason: "timeout".to_string() },
+            &UploadState::Failed {
+                retryable: true,
+                reason: "timeout".to_string(),
+            },
         )
         .unwrap();
-    assert_eq!(store.upload_attempt_count(session_id, TrackKind::SelfMic, 0).unwrap(), 1);
+    assert_eq!(
+        store
+            .upload_attempt_count(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
+        1
+    );
 
-    store.update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Uploading).unwrap();
-    assert_eq!(store.upload_attempt_count(session_id, TrackKind::SelfMic, 0).unwrap(), 2);
+    store
+        .update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Uploading)
+        .unwrap();
+    assert_eq!(
+        store
+            .upload_attempt_count(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
+        2
+    );
 
-    store.update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Completed).unwrap();
-    assert_eq!(store.upload_attempt_count(session_id, TrackKind::SelfMic, 0).unwrap(), 2);
+    store
+        .update_upload_state(session_id, TrackKind::SelfMic, 0, &UploadState::Completed)
+        .unwrap();
+    assert_eq!(
+        store
+            .upload_attempt_count(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
+        2
+    );
 
     assert_eq!(
-        store.upload_state(session_id, TrackKind::SelfMic, 0).unwrap(),
+        store
+            .upload_state(session_id, TrackKind::SelfMic, 0)
+            .unwrap(),
         UploadState::Completed
     );
 }
@@ -165,23 +221,40 @@ fn reconcile_on_startup_fails_sessions_left_mid_flight_and_leaves_terminal_ones_
     let store = SessionStore::open_in_memory().unwrap();
 
     let crashed_while_recording = SessionId::new();
-    store.create_session(&sample_manifest(crashed_while_recording)).unwrap();
-    store.update_capture_state(crashed_while_recording, &CaptureState::Recording).unwrap();
+    store
+        .create_session(&sample_manifest(crashed_while_recording))
+        .unwrap();
+    store
+        .update_capture_state(crashed_while_recording, &CaptureState::Recording)
+        .unwrap();
 
     let crashed_while_finalizing = SessionId::new();
-    store.create_session(&sample_manifest(crashed_while_finalizing)).unwrap();
-    store.update_capture_state(crashed_while_finalizing, &CaptureState::Finalizing).unwrap();
+    store
+        .create_session(&sample_manifest(crashed_while_finalizing))
+        .unwrap();
+    store
+        .update_capture_state(crashed_while_finalizing, &CaptureState::Finalizing)
+        .unwrap();
 
     let cleanly_finished = SessionId::new();
-    store.create_session(&sample_manifest(cleanly_finished)).unwrap();
-    store.update_capture_state(cleanly_finished, &CaptureState::Finalized).unwrap();
+    store
+        .create_session(&sample_manifest(cleanly_finished))
+        .unwrap();
+    store
+        .update_capture_state(cleanly_finished, &CaptureState::Finalized)
+        .unwrap();
 
     let already_failed = SessionId::new();
-    store.create_session(&sample_manifest(already_failed)).unwrap();
+    store
+        .create_session(&sample_manifest(already_failed))
+        .unwrap();
     store
         .update_capture_state(
             already_failed,
-            &CaptureState::Failed { recoverable: false, reason: "device permission denied".to_string() },
+            &CaptureState::Failed {
+                recoverable: false,
+                reason: "device permission denied".to_string(),
+            },
         )
         .unwrap();
 
@@ -197,10 +270,15 @@ fn reconcile_on_startup_fails_sessions_left_mid_flight_and_leaves_terminal_ones_
             other => panic!("expected Failed{{recoverable: true}}, got {other:?}"),
         }
     }
-    assert_eq!(store.capture_state(cleanly_finished).unwrap(), CaptureState::Finalized);
+    assert_eq!(
+        store.capture_state(cleanly_finished).unwrap(),
+        CaptureState::Finalized
+    );
     match store.capture_state(already_failed).unwrap() {
         CaptureState::Failed { recoverable, .. } => assert!(!recoverable),
-        other => panic!("expected the pre-existing Failed{{recoverable: false}} untouched, got {other:?}"),
+        other => panic!(
+            "expected the pre-existing Failed{{recoverable: false}} untouched, got {other:?}"
+        ),
     }
 
     // A second reconciliation pass must be a no-op: both sessions are now `failed`
@@ -216,8 +294,13 @@ fn remote_session_id_is_none_until_set_and_then_persists() {
 
     assert_eq!(store.remote_session_id(session_id).unwrap(), None);
 
-    store.set_remote_session_id(session_id, "remote-abc123").unwrap();
-    assert_eq!(store.remote_session_id(session_id).unwrap(), Some("remote-abc123".to_string()));
+    store
+        .set_remote_session_id(session_id, "remote-abc123")
+        .unwrap();
+    assert_eq!(
+        store.remote_session_id(session_id).unwrap(),
+        Some("remote-abc123".to_string())
+    );
 }
 
 #[test]
@@ -226,9 +309,15 @@ fn segment_counts_by_track_reflects_committed_segments_only() {
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
 
-    store.register_segment(&sample_segment(session_id, TrackKind::SelfMic, 0)).unwrap();
-    store.register_segment(&sample_segment(session_id, TrackKind::SelfMic, 1)).unwrap();
-    store.register_segment(&sample_segment(session_id, TrackKind::RemoteAudio, 0)).unwrap();
+    store
+        .register_segment(&sample_segment(session_id, TrackKind::SelfMic, 0))
+        .unwrap();
+    store
+        .register_segment(&sample_segment(session_id, TrackKind::SelfMic, 1))
+        .unwrap();
+    store
+        .register_segment(&sample_segment(session_id, TrackKind::RemoteAudio, 0))
+        .unwrap();
 
     let counts = store.segment_counts_by_track(session_id).unwrap();
     assert_eq!(counts.get(&TrackKind::SelfMic), Some(&2));

@@ -48,12 +48,12 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use crate::capture_health::CaptureHealth;
 use capture_api::rebinding::{
     decide, BindingKind, BindingSelection, CaptureBinding, DecisionInput, DecisionState,
     DeviceRole, Effect, EndpointId, EndpointSelection, Observation, OperationId, ResolvedTarget,
     StreamEpoch, UserIntent,
 };
-use crate::capture_health::CaptureHealth;
 use capture_macos::device_watch::DeviceWatchEvent;
 use capture_macos::sc_stream::{ScreenCaptureKitStream, StreamOutputs};
 use capture_macos::{
@@ -172,9 +172,22 @@ impl MacosSupervisor {
     /// See `windows_supervisor::WindowsSupervisor::capture_health`'s doc comment —
     /// identical rationale.
     pub fn capture_health(&self) -> CaptureHealth {
-        let self_health = self.state.bindings.get(&BindingKind::Microphone).map(|b| b.lifecycle.health().into()).unwrap_or_default();
-        let remote_health = self.state.bindings.get(&BindingKind::EndpointLoopback).map(|b| b.lifecycle.health().into()).unwrap_or_default();
-        CaptureHealth { self_health, remote_health }
+        let self_health = self
+            .state
+            .bindings
+            .get(&BindingKind::Microphone)
+            .map(|b| b.lifecycle.health().into())
+            .unwrap_or_default();
+        let remote_health = self
+            .state
+            .bindings
+            .get(&BindingKind::EndpointLoopback)
+            .map(|b| b.lifecycle.health().into())
+            .unwrap_or_default();
+        CaptureHealth {
+            self_health,
+            remote_health,
+        }
     }
 
     fn publish_health(&self) {
@@ -260,7 +273,9 @@ impl MacosSupervisor {
 
     /// The union of capture+render device ids right now — see `device_snapshot`'s
     /// doc comment on why one merged set (not two per-flow sets) is correct.
-    fn enumerate_device_snapshot(&self) -> Result<capture_api::device_diff::DeviceSnapshot, CaptureError> {
+    fn enumerate_device_snapshot(
+        &self,
+    ) -> Result<capture_api::device_diff::DeviceSnapshot, CaptureError> {
         let capture_devices = capture_macos::device_select::enumerate_capture_devices()?;
         let render_devices = capture_macos::device_select::enumerate_render_devices()?;
         let ids = capture_devices
@@ -303,10 +318,16 @@ impl MacosSupervisor {
         // another (a rare but possible single-diff scenario) processes the loss
         // first.
         for endpoint_id in delta.removed {
-            effects.extend(decide(&mut self.state, DecisionInput::Observation(Observation::EndpointRemoved { endpoint_id })));
+            effects.extend(decide(
+                &mut self.state,
+                DecisionInput::Observation(Observation::EndpointRemoved { endpoint_id }),
+            ));
         }
         for endpoint_id in delta.added {
-            effects.extend(decide(&mut self.state, DecisionInput::Observation(Observation::EndpointAdded { endpoint_id })));
+            effects.extend(decide(
+                &mut self.state,
+                DecisionInput::Observation(Observation::EndpointAdded { endpoint_id }),
+            ));
         }
         self.execute(effects)
     }
@@ -486,7 +507,10 @@ impl MacosSupervisor {
         // ever started in the same `reconcile_active_stream` generation (i.e. every
         // normal session with both Microphone and EndpointLoopback active). See
         // docs/adr/0012-accepts-epoch-guard-never-called.md.
-        let microphone_epoch = self.workers.get(&BindingKind::Microphone).map(|w| w.epoch.0);
+        let microphone_epoch = self
+            .workers
+            .get(&BindingKind::Microphone)
+            .map(|w| w.epoch.0);
         let system_audio_epoch = self.workers.get(&system_audio_binding).map(|w| w.epoch.0);
 
         // Phase 1A only ever pins endpoints (see `pin_devices`) — `ProcessLoopback`'s
@@ -544,7 +568,10 @@ impl MacosSupervisor {
                 // flight from a shared SCStream `reconcile_active_stream` just tore
                 // down to rebuild) rather than forwarding them as if they belonged
                 // to the binding's current generation.
-                if self.state.accepts_epoch(record.stream, StreamEpoch(record.capture_epoch)) {
+                if self
+                    .state
+                    .accepts_epoch(record.stream, StreamEpoch(record.capture_epoch))
+                {
                     if let Some(tx) = &self.frame_tx {
                         let _ = tx.send(FrameSinkEvent::Frame { record, samples });
                     }

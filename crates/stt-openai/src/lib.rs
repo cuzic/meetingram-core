@@ -253,8 +253,7 @@ impl SttSession for OpenAiSession {
 fn send_error_to_stt_error(err: mpsc::error::TrySendError<WsCommand>) -> SttError {
     match err {
         mpsc::error::TrySendError::Full(_) => SttError::Transport(
-            "openai realtime writer task is backlogged: audio command queue is full"
-                .to_string(),
+            "openai realtime writer task is backlogged: audio command queue is full".to_string(),
         ),
         mpsc::error::TrySendError::Closed(_) => SttError::SessionClosed,
     }
@@ -368,7 +367,10 @@ async fn reader_task(
                     });
                 }
             }
-            Ok(OpenAiServerEvent::TranscriptionCompleted { item_id, transcript }) => {
+            Ok(OpenAiServerEvent::TranscriptionCompleted {
+                item_id,
+                transcript,
+            }) => {
                 partials.remove(&item_id);
                 let _ = events.send(SttEvent::FinalTranscript {
                     text: transcript,
@@ -426,8 +428,7 @@ async fn reader_task(
 
     if let Some(tx) = drained.take() {
         let _ = tx.send(Err(SttError::Transport(
-            "connection closed before the commit-triggered transcription drained"
-                .to_string(),
+            "connection closed before the commit-triggered transcription drained".to_string(),
         )));
     }
 }

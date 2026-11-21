@@ -26,11 +26,11 @@ pub use error::CaptureError;
 pub use frame::CapturedFrameRecord;
 
 use capture_api::rebinding::BindingKind;
+use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Media::Audio::{WAVEFORMATEX, WAVEFORMATEXTENSIBLE};
 use windows::Win32::Media::KernelStreaming::WAVE_FORMAT_EXTENSIBLE;
 use windows::Win32::Media::Multimedia::WAVE_FORMAT_IEEE_FLOAT;
 use windows::Win32::System::Com::CoTaskMemFree;
-use windows::Win32::Foundation::HANDLE;
 
 /// KSDATAFORMAT_SUBTYPE_IEEE_FLOAT. Unlike KSDATAFORMAT_SUBTYPE_PCM, the `windows`
 /// crate's generated bindings don't include this GUID, so it's hardcoded here from
@@ -122,11 +122,9 @@ impl AudioFormatInfo {
     /// `WAVEFORMATEXTENSIBLE` when `wFormatTag` indicates it.
     pub fn from_waveformatex(wfx: &WAVEFORMATEX) -> Self {
         let block_align = wfx.nBlockAlign;
-        let bytes_per_sample = if wfx.nChannels > 0 {
-            block_align / wfx.nChannels
-        } else {
-            wfx.wBitsPerSample / 8
-        };
+        let bytes_per_sample = block_align
+            .checked_div(wfx.nChannels)
+            .unwrap_or(wfx.wBitsPerSample / 8);
 
         // Only reinterpret as WAVEFORMATEXTENSIBLE once cbSize confirms there's
         // actually room for its extra fields; a too-small cbSize (a malformed format
@@ -189,6 +187,10 @@ impl WaveFormatBox {
         Self { ptr }
     }
 
+    #[allow(
+        clippy::should_implement_trait,
+        reason = "Keep the existing public inherent method and trait implementations unchanged"
+    )]
     pub fn as_ref(&self) -> &WAVEFORMATEX {
         unsafe { &*self.ptr }
     }
@@ -216,7 +218,8 @@ unsafe impl Sync for StopSignal {}
 impl StopSignal {
     pub fn new() -> windows::core::Result<Self> {
         // manual_reset=true, initial_state=false, unnamed event.
-        let event = unsafe { windows::Win32::System::Threading::CreateEventW(None, true, false, None)? };
+        let event =
+            unsafe { windows::Win32::System::Threading::CreateEventW(None, true, false, None)? };
         Ok(Self { event })
     }
 
@@ -253,8 +256,14 @@ pub trait CaptureStream: Send {
 /// caller should treat this — not `CaptureEvent::StreamStopped` delivered over the
 /// shared channel — as the source of truth for rebinding decisions.
 pub enum CaptureThreadOutcome {
-    Stopped { exit: CaptureExit, mmcss_applied: bool },
-    Errored { error: CaptureError, mmcss_applied: bool },
+    Stopped {
+        exit: CaptureExit,
+        mmcss_applied: bool,
+    },
+    Errored {
+        error: CaptureError,
+        mmcss_applied: bool,
+    },
 }
 
 pub fn spawn_capture_thread(
@@ -276,7 +285,10 @@ pub fn spawn_capture_thread(
                         exit,
                         mmcss_applied,
                     });
-                    CaptureThreadOutcome::Stopped { exit, mmcss_applied }
+                    CaptureThreadOutcome::Stopped {
+                        exit,
+                        mmcss_applied,
+                    }
                 }
                 Err(e) => {
                     let _ = tx.send(CaptureEvent::StreamError {

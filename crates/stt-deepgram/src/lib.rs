@@ -262,8 +262,11 @@ async fn reader_task(
 /// and doesn't carry a `SttSessionConfig::sample_rate_hz`.
 fn common_query_params(model: &str, config: &SttSessionConfig) -> Vec<(&'static str, String)> {
     let language = config.language.clone().unwrap_or_else(|| "ja".to_string());
-    let mut params: Vec<(&'static str, String)> =
-        vec![("model", model.to_string()), ("language", language), ("punctuate", "true".to_string())];
+    let mut params: Vec<(&'static str, String)> = vec![
+        ("model", model.to_string()),
+        ("language", language),
+        ("punctuate", "true".to_string()),
+    ];
     if config.diarization {
         params.push(("diarize", "true".to_string()));
     }

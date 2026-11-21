@@ -12,7 +12,9 @@
 use std::io;
 use std::path::PathBuf;
 
-use interprocess::local_socket::{GenericFilePath, GenericNamespaced, Name, NameType, ToFsName, ToNsName};
+use interprocess::local_socket::{
+    GenericFilePath, GenericNamespaced, Name, NameType, ToFsName, ToNsName,
+};
 use serde::{Deserialize, Serialize};
 
 /// Same base `apps/desktop/src/main.rs::app_data_dir()` uses. Re-derived here
@@ -21,7 +23,9 @@ use serde::{Deserialize, Serialize};
 /// migration from an old Tauri-era path, which is main.rs-specific and
 /// irrelevant to where the control socket lives.
 pub fn app_data_dir() -> PathBuf {
-    dirs::data_dir().unwrap_or_else(std::env::temp_dir).join("meetingram")
+    dirs::data_dir()
+        .unwrap_or_else(std::env::temp_dir)
+        .join("meetingram")
 }
 
 pub fn control_socket_path() -> PathBuf {
@@ -65,7 +69,10 @@ pub enum Response {
     /// `stop` still lets the caller see real state without a second
     /// round-trip — every response confirms actual state, never just a bare
     /// pass/fail.
-    Err { message: String, status: StatusDto },
+    Err {
+        message: String,
+        status: StatusDto,
+    },
 }
 
 /// Serde-friendly mirror of `apps/desktop/src/status.rs`'s `Status` — kept as
@@ -147,7 +154,11 @@ mod tests {
 
     #[test]
     fn response_roundtrips_through_json() {
-        let ok = Response::Ok(StatusDto { recording: true, elapsed_ms: 42, ..Default::default() });
+        let ok = Response::Ok(StatusDto {
+            recording: true,
+            elapsed_ms: 42,
+            ..Default::default()
+        });
         let json = serde_json::to_string(&ok).unwrap();
         let back: Response = serde_json::from_str(&json).unwrap();
         match back {
@@ -158,7 +169,10 @@ mod tests {
             Response::Err { .. } => panic!("expected Ok"),
         }
 
-        let err = Response::Err { message: "not recording".to_string(), status: StatusDto::default() };
+        let err = Response::Err {
+            message: "not recording".to_string(),
+            status: StatusDto::default(),
+        };
         let json = serde_json::to_string(&err).unwrap();
         let back: Response = serde_json::from_str(&json).unwrap();
         match back {

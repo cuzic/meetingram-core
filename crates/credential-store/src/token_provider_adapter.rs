@@ -25,14 +25,20 @@ pub struct CredentialStoreTokenProvider<S: CredentialStore + Send + Sync> {
 
 impl<S: CredentialStore + Send + Sync> CredentialStoreTokenProvider<S> {
     pub fn new(store: Arc<S>, service: impl Into<String>, account: impl Into<String>) -> Self {
-        Self { store, service: service.into(), account: account.into() }
+        Self {
+            store,
+            service: service.into(),
+            account: account.into(),
+        }
     }
 }
 
 #[async_trait]
 impl<S: CredentialStore + Send + Sync> TokenProvider for CredentialStoreTokenProvider<S> {
     async fn access_token(&self) -> Result<String, UploadError> {
-        self.store.load(&self.service, &self.account).map_err(|e| UploadError::Transport(format!("credential store: {e}")))
+        self.store
+            .load(&self.service, &self.account)
+            .map_err(|e| UploadError::Transport(format!("credential store: {e}")))
     }
 
     async fn refresh(&self) -> Result<(), UploadError> {

@@ -44,7 +44,11 @@ impl Subscription {
     pub fn new(broker: LocalBroker, subject: impl Into<String>) -> Self {
         let subject = subject.into();
         let rx = broker.subscribe(&subject);
-        Self { broker, subject, rx }
+        Self {
+            broker,
+            subject,
+            rx,
+        }
     }
 
     /// Receives the next message. On `Lagged`, resubscribes to `subject` before
@@ -67,10 +71,7 @@ mod tests {
 
     #[test]
     fn session_stopped_subject_matches_the_convention_recording_rs_publishes_to() {
-        assert_eq!(
-            session_stopped_subject("abc123"),
-            "session.abc123.stopped"
-        );
+        assert_eq!(session_stopped_subject("abc123"), "session.abc123.stopped");
     }
 
     #[tokio::test]

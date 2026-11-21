@@ -49,7 +49,15 @@ pub async fn run_macos_capture_session(
     health_sink: Option<Arc<Mutex<CaptureHealth>>>,
 ) -> Result<SessionSummary, AppServiceError> {
     let collected = tokio::task::spawn_blocking(move || {
-        run_capture_blocking(sample_rate_hz, channels, shutdown_rx, level_sink, mic_device_id, render_device_id, health_sink)
+        run_capture_blocking(
+            sample_rate_hz,
+            channels,
+            shutdown_rx,
+            level_sink,
+            mic_device_id,
+            render_device_id,
+            health_sink,
+        )
     })
     .await
     .expect("capture supervisor thread panicked")
@@ -166,15 +174,22 @@ fn run_capture_blocking(
     // a track actually needs it) for the same reason as the Windows counterpart —
     // see `resolve_pinned_capture_endpoint`'s doc comment here.
     let needs_defaults = mic_device_id.is_none() || render_device_id.is_none();
-    let defaults = if needs_defaults { Some(supervisor.resolve_current_defaults()?) } else { None };
+    let defaults = if needs_defaults {
+        Some(supervisor.resolve_current_defaults()?)
+    } else {
+        None
+    };
     let mic_endpoint_id = resolve_pinned_capture_endpoint(mic_device_id, || match &defaults {
         Some((mic, _)) => Ok(mic.clone()),
         None => supervisor.resolve_current_defaults().map(|(mic, _)| mic),
     })?;
-    let render_endpoint_id = resolve_pinned_render_endpoint(render_device_id, || match &defaults {
-        Some((_, render)) => Ok(render.clone()),
-        None => supervisor.resolve_current_defaults().map(|(_, render)| render),
-    })?;
+    let render_endpoint_id =
+        resolve_pinned_render_endpoint(render_device_id, || match &defaults {
+            Some((_, render)) => Ok(render.clone()),
+            None => supervisor
+                .resolve_current_defaults()
+                .map(|(_, render)| render),
+        })?;
     supervisor.pin_devices(mic_endpoint_id, render_endpoint_id);
     supervisor.start_all()?;
 

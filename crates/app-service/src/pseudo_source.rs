@@ -25,8 +25,10 @@ pub struct PseudoSourceConfig {
 /// the pipeline's wiring, not re-prove the alignment math.
 pub fn generate_frames(track: TrackKind, config: &PseudoSourceConfig) -> Vec<CapturedFrame> {
     let interval_ns = config.frame_interval_ms as u64 * 1_000_000;
-    let samples_per_frame = (config.sample_rate as u64 * config.frame_interval_ms as u64 / 1000) as usize;
-    let total_frames = (config.duration_secs as u64 * 1000 / config.frame_interval_ms as u64) as usize;
+    let samples_per_frame =
+        (config.sample_rate as u64 * config.frame_interval_ms as u64 / 1000) as usize;
+    let total_frames =
+        (config.duration_secs as u64 * 1000 / config.frame_interval_ms as u64) as usize;
     let channels = config.channels.max(1) as usize;
 
     let mut frames = Vec::with_capacity(total_frames);

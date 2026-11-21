@@ -150,7 +150,10 @@ mod tests {
             audio: AudioManifest {
                 sample_rate: 48_000,
                 segment_duration_ms: 30_000,
-                tracks: vec![crate::track::TrackKind::SelfMic, crate::track::TrackKind::RemoteAudio],
+                tracks: vec![
+                    crate::track::TrackKind::SelfMic,
+                    crate::track::TrackKind::RemoteAudio,
+                ],
             },
             consent: ConsentManifest {
                 confirmed_by_user: true,

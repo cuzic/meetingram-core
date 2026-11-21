@@ -31,7 +31,10 @@ pub struct TimestampMapper {
 
 impl TimestampMapper {
     pub fn new(sample_rate_hz: u32) -> Self {
-        Self { checkpoints: Vec::new(), sample_rate_hz }
+        Self {
+            checkpoints: Vec::new(),
+            sample_rate_hz,
+        }
     }
 
     /// Records a checkpoint: as of `provider_samples_sent` cumulative samples having
@@ -54,7 +57,8 @@ impl TimestampMapper {
                 return;
             }
         }
-        self.checkpoints.push((provider_samples_sent, net_offset_samples));
+        self.checkpoints
+            .push((provider_samples_sent, net_offset_samples));
     }
 
     /// Corrects a provider-relative millisecond timestamp (`audio_start_ms`/
@@ -80,7 +84,9 @@ impl TimestampMapper {
         // `partition_point` returns the index of the first checkpoint whose
         // `provider_samples_sent` exceeds the query, so the applicable checkpoint
         // (if any) is one before that.
-        let idx = self.checkpoints.partition_point(|&(sent, _)| sent <= provider_relative_samples);
+        let idx = self
+            .checkpoints
+            .partition_point(|&(sent, _)| sent <= provider_relative_samples);
 
         let net_offset_samples = match idx {
             0 => 0, // predates the first checkpoint: no correction yet.
@@ -134,7 +140,11 @@ mod tests {
         for dropped in [1_600u64, 3_200, 4_800] {
             mapper.record_checkpoint(5_000, dropped as i64);
         }
-        assert_eq!(mapper.checkpoints.len(), 1, "same-position checkpoints should overwrite, not accumulate");
+        assert_eq!(
+            mapper.checkpoints.len(),
+            1,
+            "same-position checkpoints should overwrite, not accumulate"
+        );
 
         // A later, different position still appends normally.
         mapper.record_checkpoint(6_000, 6_400);
@@ -174,8 +184,8 @@ mod tests {
         // First silence: 500ms dropped, recorded at provider_samples_sent = 16_000
         // (i.e. 1s of provider-relative audio sent so far).
         mapper.record_checkpoint(16_000, 8_000); // 500ms worth of samples
-        // Second silence: another 300ms dropped, recorded at provider_samples_sent =
-        // 32_000 (2s of provider-relative audio sent so far). Net offset accumulates.
+                                                 // Second silence: another 300ms dropped, recorded at provider_samples_sent =
+                                                 // 32_000 (2s of provider-relative audio sent so far). Net offset accumulates.
         mapper.record_checkpoint(32_000, 8_000 + 4_800); // +300ms worth of samples
 
         // A transcript segment that starts within the first checkpoint's window and

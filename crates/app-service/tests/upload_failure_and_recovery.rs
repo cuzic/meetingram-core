@@ -34,8 +34,15 @@ fn manifest(session_id: SessionId) -> SessionManifest {
             remote_source_id: "pseudo-speaker".to_string(),
             remote_source_kind: RemoteSourceKind::EndpointLoopback,
         },
-        audio: AudioManifest { sample_rate: SAMPLE_RATE, segment_duration_ms: SEGMENT_DURATION_MS, tracks: vec![TrackKind::SelfMic, TrackKind::RemoteAudio] },
-        consent: ConsentManifest { confirmed_by_user: true, confirmed_at: Utc::now() },
+        audio: AudioManifest {
+            sample_rate: SAMPLE_RATE,
+            segment_duration_ms: SEGMENT_DURATION_MS,
+            tracks: vec![TrackKind::SelfMic, TrackKind::RemoteAudio],
+        },
+        consent: ConsentManifest {
+            confirmed_by_user: true,
+            confirmed_at: Utc::now(),
+        },
     }
 }
 
@@ -45,9 +52,19 @@ async fn upload_failures_during_recording_are_drained_at_finalize_instead_of_abo
     // fail their in-pipeline upload attempt. The pipeline must still commit every
     // segment and reach finalize, catching failed ones up via the upload-drain
     // pass baked into `end_session`.
-    let fault_config = FaultConfig { pre_process_fault_probability: 0.4, post_process_fault_probability: 0.2, timeout_simulation_probability: 0.0, timeout_sleep: Duration::from_millis(0) };
+    let fault_config = FaultConfig {
+        pre_process_fault_probability: 0.4,
+        post_process_fault_probability: 0.2,
+        timeout_simulation_probability: 0.0,
+        timeout_sleep: Duration::from_millis(0),
+    };
     let (base_url, server_state) = spawn_test_server(fault_config).await;
-    let adapter = HttpUploadClient::new(base_url, Duration::from_secs(5), Arc::new(StaticTokenProvider("test-token".to_string()))).with_max_attempts(1);
+    let adapter = HttpUploadClient::new(
+        base_url,
+        Duration::from_secs(5),
+        Arc::new(StaticTokenProvider("test-token".to_string())),
+    )
+    .with_max_attempts(1);
 
     let store = SessionStore::open_in_memory().unwrap();
     let session_dir = tempfile::tempdir().unwrap();
@@ -55,7 +72,13 @@ async fn upload_failures_during_recording_are_drained_at_finalize_instead_of_abo
     let manifest = manifest(session_id);
 
     let duration_secs = 60u32; // 2 segments per track
-    let config = PseudoSourceConfig { duration_secs, frame_interval_ms: 20, sample_rate: SAMPLE_RATE, channels: 1, tone_freq_hz: 440.0 };
+    let config = PseudoSourceConfig {
+        duration_secs,
+        frame_interval_ms: 20,
+        sample_rate: SAMPLE_RATE,
+        channels: 1,
+        tone_freq_hz: 440.0,
+    };
     let self_frames = generate_frames(TrackKind::SelfMic, &config);
     let remote_frames = generate_frames(TrackKind::RemoteAudio, &config);
     let total_duration_ns = duration_secs as u64 * 1_000_000_000;
@@ -75,9 +98,18 @@ async fn upload_failures_during_recording_are_drained_at_finalize_instead_of_abo
     .await
     .expect("pipeline should reach finalize despite in-pipeline upload faults");
 
-    assert_eq!(summary.segment_counts_by_track.get(&TrackKind::SelfMic), Some(&2));
-    assert_eq!(summary.segment_counts_by_track.get(&TrackKind::RemoteAudio), Some(&2));
-    assert_eq!(store.capture_state(session_id).unwrap(), CaptureState::Finalized);
+    assert_eq!(
+        summary.segment_counts_by_track.get(&TrackKind::SelfMic),
+        Some(&2)
+    );
+    assert_eq!(
+        summary.segment_counts_by_track.get(&TrackKind::RemoteAudio),
+        Some(&2)
+    );
+    assert_eq!(
+        store.capture_state(session_id).unwrap(),
+        CaptureState::Finalized
+    );
 
     // Every segment ends up uploaded, whether it succeeded on the first in-pipeline
     // attempt or was drained afterward by end_session's retry pass.
@@ -91,8 +123,18 @@ async fn upload_failures_during_recording_are_drained_at_finalize_instead_of_abo
 
 #[tokio::test]
 async fn a_session_interrupted_mid_commit_is_recovered_uploaded_and_finalized_at_startup() {
-    let (base_url, server_state) = spawn_test_server(FaultConfig { pre_process_fault_probability: 0.0, post_process_fault_probability: 0.0, timeout_simulation_probability: 0.0, timeout_sleep: Duration::from_millis(0) }).await;
-    let adapter = HttpUploadClient::new(base_url, Duration::from_secs(5), Arc::new(StaticTokenProvider("test-token".to_string())));
+    let (base_url, server_state) = spawn_test_server(FaultConfig {
+        pre_process_fault_probability: 0.0,
+        post_process_fault_probability: 0.0,
+        timeout_simulation_probability: 0.0,
+        timeout_sleep: Duration::from_millis(0),
+    })
+    .await;
+    let adapter = HttpUploadClient::new(
+        base_url,
+        Duration::from_secs(5),
+        Arc::new(StaticTokenProvider("test-token".to_string())),
+    );
 
     let store = SessionStore::open_in_memory().unwrap();
     let sessions_root = tempfile::tempdir().unwrap();
@@ -106,20 +148,56 @@ async fn a_session_interrupted_mid_commit_is_recovered_uploaded_and_finalized_at
     // but never reached DB registration before the process died.
     {
         store.create_session(&manifest).unwrap();
-        let remote = adapter.create_session(&manifest).await.expect("create_session failed");
-        store.set_remote_session_id(session_id, &remote.remote_session_id).unwrap();
-        store.update_capture_state(session_id, &CaptureState::Recording).unwrap();
+        let remote = adapter
+            .create_session(&manifest)
+            .await
+            .expect("create_session failed");
+        store
+            .set_remote_session_id(session_id, &remote.remote_session_id)
+            .unwrap();
+        store
+            .update_capture_state(session_id, &CaptureState::Recording)
+            .unwrap();
 
         let pcm = vec![0.0f32; SAMPLE_RATE as usize]; // 1s of silence per segment, content doesn't matter here
         let encoded = encode_segment_to_ogg_opus(&pcm, 32_000).unwrap();
 
-        let seq0 = SegmentRequest { session_id, track: TrackKind::SelfMic, sequence: 0, timeline_start_ms: 0, sample_rate: SAMPLE_RATE, channels: 1 };
+        let seq0 = SegmentRequest {
+            session_id,
+            track: TrackKind::SelfMic,
+            sequence: 0,
+            timeline_start_ms: 0,
+            sample_rate: SAMPLE_RATE,
+            channels: 1,
+        };
         commit_segment(&encoded, &session_dir, &seq0, &store, CrashPoint::None).unwrap();
 
-        let seq1 = SegmentRequest { session_id, track: TrackKind::SelfMic, sequence: 1, timeline_start_ms: SEGMENT_DURATION_MS as u64, sample_rate: SAMPLE_RATE, channels: 1 };
-        let crashed = commit_segment(&encoded, &session_dir, &seq1, &store, CrashPoint::AfterRename).unwrap();
-        assert!(crashed.is_none(), "CrashPoint::AfterRename should short-circuit before registration");
-        assert!(!store.segment_exists(session_id, TrackKind::SelfMic, 1).unwrap(), "segment 1 must not be registered yet — that's the point of the crash simulation");
+        let seq1 = SegmentRequest {
+            session_id,
+            track: TrackKind::SelfMic,
+            sequence: 1,
+            timeline_start_ms: SEGMENT_DURATION_MS as u64,
+            sample_rate: SAMPLE_RATE,
+            channels: 1,
+        };
+        let crashed = commit_segment(
+            &encoded,
+            &session_dir,
+            &seq1,
+            &store,
+            CrashPoint::AfterRename,
+        )
+        .unwrap();
+        assert!(
+            crashed.is_none(),
+            "CrashPoint::AfterRename should short-circuit before registration"
+        );
+        assert!(
+            !store
+                .segment_exists(session_id, TrackKind::SelfMic, 1)
+                .unwrap(),
+            "segment 1 must not be registered yet — that's the point of the crash simulation"
+        );
 
         // Process "dies" here: capture_state is left at Recording (non-terminal),
         // and nothing ever calls end_session.
@@ -142,12 +220,20 @@ async fn a_session_interrupted_mid_commit_is_recovered_uploaded_and_finalized_at
     .expect("recovery should succeed");
 
     assert_eq!(recovered, vec![session_id]);
-    assert_eq!(store.capture_state(session_id).unwrap(), CaptureState::Finalized);
+    assert_eq!(
+        store.capture_state(session_id).unwrap(),
+        CaptureState::Finalized
+    );
 
     // Segment 1's commit is now complete: scan_and_recover found the renamed-but-
     // unregistered .opus file and registered it.
-    let segments = store.segments_for_track(session_id, TrackKind::SelfMic).unwrap();
-    assert_eq!(segments.iter().map(|s| s.sequence).collect::<Vec<_>>(), vec![0, 1]);
+    let segments = store
+        .segments_for_track(session_id, TrackKind::SelfMic)
+        .unwrap();
+    assert_eq!(
+        segments.iter().map(|s| s.sequence).collect::<Vec<_>>(),
+        vec![0, 1]
+    );
 
     // Both segments got uploaded during recovery's drain pass.
     assert!(store.pending_uploads(session_id).unwrap().is_empty());

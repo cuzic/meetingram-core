@@ -166,7 +166,12 @@ impl TimelineAligner {
 mod tests {
     use super::*;
 
-    fn packet(host_time_ns: u64, duration_ns: u64, samples: Vec<f32>, discontinuity: bool) -> AudioPacket {
+    fn packet(
+        host_time_ns: u64,
+        duration_ns: u64,
+        samples: Vec<f32>,
+        discontinuity: bool,
+    ) -> AudioPacket {
         AudioPacket {
             host_time_ns,
             nominal_duration_ns: duration_ns,
@@ -178,7 +183,7 @@ mod tests {
     #[test]
     fn gentle_drift_is_resampled_not_dropped() {
         let mut aligner = TimelineAligner::new(1000); // 1kHz makes the arithmetic easy to read.
-        // Expect 20 frames (20ms), actually got 21 (5% deviation, right at clock-drift scale).
+                                                      // Expect 20 frames (20ms), actually got 21 (5% deviation, right at clock-drift scale).
         aligner.ingest(&packet(0, 20_000_000, vec![0.0; 21], false));
         let stats = aligner.stats();
         assert_eq!(stats.hard_jumps, 0);

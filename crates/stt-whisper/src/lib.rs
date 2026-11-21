@@ -216,7 +216,9 @@ use async_trait::async_trait;
 use chunk_buffer::{ChunkBuffer, PendingChunk};
 use stt_api::{AudioChunk, SttError, SttEvent, SttProvider, SttSession, SttSessionConfig};
 use tokio::sync::{mpsc, oneshot};
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperError};
+use whisper_rs::{
+    FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperError,
+};
 
 pub use chunk_buffer::ChunkConfig;
 

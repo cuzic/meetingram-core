@@ -117,11 +117,21 @@ pub async fn run_windows_capture_session(
     );
 
     let capture_fut = tokio::task::spawn_blocking(move || {
-        run_capture_blocking(callback_timeout_ms, shutdown_rx, level_sink, stt_tx, mic_device_id, render_device_id, health_sink)
+        run_capture_blocking(
+            callback_timeout_ms,
+            shutdown_rx,
+            level_sink,
+            stt_tx,
+            mic_device_id,
+            render_device_id,
+            health_sink,
+        )
     });
 
     let (collected, ()) = tokio::join!(capture_fut, live_transcription_fut);
-    let collected = collected.expect("capture supervisor thread panicked").map_err(|e| AppServiceError::Capture(e.to_string()))?;
+    let collected = collected
+        .expect("capture supervisor thread panicked")
+        .map_err(|e| AppServiceError::Capture(e.to_string()))?;
 
     let self_interval = collected.self_nominal_frame_interval_ns.max(1);
     let remote_interval = collected.remote_nominal_frame_interval_ns.max(1);
@@ -191,9 +201,21 @@ fn resolve_pinned_render_endpoint(
     }
 }
 
-fn latest_frame_end_ns(collected: &CollectedFrames, self_interval: u64, remote_interval: u64) -> u64 {
-    let self_end = collected.self_frames.last().map(|f| f.host_time_ns + self_interval).unwrap_or(0);
-    let remote_end = collected.remote_frames.last().map(|f| f.host_time_ns + remote_interval).unwrap_or(0);
+fn latest_frame_end_ns(
+    collected: &CollectedFrames,
+    self_interval: u64,
+    remote_interval: u64,
+) -> u64 {
+    let self_end = collected
+        .self_frames
+        .last()
+        .map(|f| f.host_time_ns + self_interval)
+        .unwrap_or(0);
+    let remote_end = collected
+        .remote_frames
+        .last()
+        .map(|f| f.host_time_ns + remote_interval)
+        .unwrap_or(0);
     self_end.max(remote_end)
 }
 
@@ -239,22 +261,30 @@ fn run_capture_blocking(
     // used) would make a perfectly valid pair of explicit picks fail the whole
     // session on any machine with no OS-designated default device.
     let needs_defaults = mic_device_id.is_none() || render_device_id.is_none();
-    let defaults = if needs_defaults { Some(supervisor.resolve_current_defaults()?) } else { None };
+    let defaults = if needs_defaults {
+        Some(supervisor.resolve_current_defaults()?)
+    } else {
+        None
+    };
     let mic_endpoint_id = resolve_pinned_capture_endpoint(mic_device_id, || match &defaults {
         Some((mic, _)) => Ok(mic.clone()),
         None => supervisor.resolve_current_defaults().map(|(mic, _)| mic),
     })?;
-    let render_endpoint_id = resolve_pinned_render_endpoint(render_device_id, || match &defaults {
-        Some((_, render)) => Ok(render.clone()),
-        None => supervisor.resolve_current_defaults().map(|(_, render)| render),
-    })?;
+    let render_endpoint_id =
+        resolve_pinned_render_endpoint(render_device_id, || match &defaults {
+            Some((_, render)) => Ok(render.clone()),
+            None => supervisor
+                .resolve_current_defaults()
+                .map(|(_, render)| render),
+        })?;
     supervisor.pin_devices(mic_endpoint_id, render_endpoint_id);
     supervisor.start_all()?;
 
     // `stt_tx` is moved into and dropped at the end of this closure (i.e. once
     // `collect_frames` returns) — see `run_windows_capture_session`'s doc comment
     // on why that's what lets `run_live_transcription` know capture is done.
-    let collector = std::thread::spawn(move || collect_frames(&frame_rx, level_sink.as_deref(), Some(&stt_tx)));
+    let collector =
+        std::thread::spawn(move || collect_frames(&frame_rx, level_sink.as_deref(), Some(&stt_tx)));
 
     supervisor.run_until_shutdown(&watch_rx, &shutdown_rx)?;
     drop(supervisor); // drops frame_tx, letting `collector` finish once drained

@@ -1,9 +1,10 @@
 use chrono::{Duration, Utc};
 use recorder_domain::{
-    AudioManifest, CaptureManifest, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest, TrackKind,
+    AudioManifest, CaptureManifest, ConsentManifest, RemoteSourceKind, SessionId, SessionManifest,
+    TrackKind,
 };
-use session_store::{Summary, TranscriptSegment};
 use session_store::SessionStore;
+use session_store::{Summary, TranscriptSegment};
 
 fn sample_manifest(session_id: SessionId) -> SessionManifest {
     SessionManifest {
@@ -119,7 +120,10 @@ fn list_transcript_segments_is_empty_for_a_session_with_none() {
     let session_id = SessionId::new();
     store.create_session(&sample_manifest(session_id)).unwrap();
 
-    assert!(store.list_transcript_segments(session_id).unwrap().is_empty());
+    assert!(store
+        .list_transcript_segments(session_id)
+        .unwrap()
+        .is_empty());
 }
 
 #[test]
@@ -138,7 +142,10 @@ fn insert_transcript_segment_without_a_session_is_rejected_by_the_foreign_key() 
     };
 
     let result = store.insert_transcript_segment(&segment);
-    assert!(result.is_err(), "expected foreign key violation, got {result:?}");
+    assert!(
+        result.is_err(),
+        "expected foreign key violation, got {result:?}"
+    );
 }
 
 #[test]

@@ -27,7 +27,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = match std::env::var("DEEPGRAM_API_KEY") {
         Ok(key) if !key.is_empty() => key,
         _ => {
-            eprintln!("DEEPGRAM_API_KEY is not set; export a real Deepgram API key to run this spike");
+            eprintln!(
+                "DEEPGRAM_API_KEY is not set; export a real Deepgram API key to run this spike"
+            );
             std::process::exit(1);
         }
     };
@@ -82,11 +84,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let chunk_samples = (SAMPLE_RATE_HZ * CHUNK_MS / 1000) as usize;
     let mut start_sample: u64 = 0;
     for chunk in samples.chunks(chunk_samples) {
-        session.send_audio(AudioChunk {
-            pcm: chunk,
-            start_sample,
-        })
-        .await?;
+        session
+            .send_audio(AudioChunk {
+                pcm: chunk,
+                start_sample,
+            })
+            .await?;
         start_sample += chunk.len() as u64;
         tokio::time::sleep(Duration::from_millis(CHUNK_MS as u64)).await;
     }

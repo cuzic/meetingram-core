@@ -72,13 +72,25 @@ fn exceeds_os_keyring_blob_limit(secret: &str) -> bool {
 /// encrypted file — `Crypto`/`Io`), that real error must be surfaced, not silently
 /// rewritten to `NotFound` — otherwise a genuinely broken stored credential would be
 /// misreported as "never configured" instead of "present but unreadable".
-fn resolve_after_primary_not_found(primary_not_found: StoreError, fallback_result: Result<String, StoreError>) -> Result<String, StoreError> {
-    fallback_result.map_err(|fallback_err| if matches!(fallback_err, StoreError::NotFound { .. }) { primary_not_found } else { fallback_err })
+fn resolve_after_primary_not_found(
+    primary_not_found: StoreError,
+    fallback_result: Result<String, StoreError>,
+) -> Result<String, StoreError> {
+    fallback_result.map_err(|fallback_err| {
+        if matches!(fallback_err, StoreError::NotFound { .. }) {
+            primary_not_found
+        } else {
+            fallback_err
+        }
+    })
 }
 
 impl FallbackCredentialStore {
     pub fn new(fallback_dir: impl Into<std::path::PathBuf>) -> Result<Self, StoreError> {
-        Ok(Self { primary: OsKeyringStore, fallback: EncryptedFileStore::new(fallback_dir)? })
+        Ok(Self {
+            primary: OsKeyringStore,
+            fallback: EncryptedFileStore::new(fallback_dir)?,
+        })
     }
 
     fn should_fallback(err: &StoreError) -> bool {
@@ -159,7 +171,9 @@ impl CredentialStore for FallbackCredentialStore {
             // doesn't exist at all — `save` may have routed it straight to the
             // fallback store (oversized secret, or the OS keyring was unavailable at
             // save time but is reachable now). Check the fallback before giving up.
-            Err(e @ StoreError::NotFound { .. }) => resolve_after_primary_not_found(e, self.fallback.load(service, account)),
+            Err(e @ StoreError::NotFound { .. }) => {
+                resolve_after_primary_not_found(e, self.fallback.load(service, account))
+            }
             Err(e) if Self::should_fallback(&e) => self.fallback.load(service, account),
             Err(e) => Err(e),
         }
@@ -199,14 +213,18 @@ mod tests {
     /// `\\n`) in the inner JSON get re-escaped, which only grows it further. This
     /// synthesizes a same-shape secret without depending on a real private key.
     fn synthetic_vertex_credentials_json() -> String {
-        let pem_body: String = (0..27).map(|_| "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n").collect();
+        let pem_body: String = (0..27)
+            .map(|_| "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n")
+            .collect();
         let service_account_json = format!(
             "{{\"type\":\"service_account\",\"project_id\":\"example-project\",\"private_key_id\":\"0123456789abcdef0123456789abcdef01234567\",\"private_key\":\"-----BEGIN PRIVATE KEY-----\\n{pem_body}-----END PRIVATE KEY-----\\n\",\"client_email\":\"svc-account@example-project.iam.gserviceaccount.com\",\"client_id\":\"123456789012345678901\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_x509_cert_url\":\"https://www.googleapis.com/robot/v1/metadata/x509/svc-account%40example-project.iam.gserviceaccount.com\",\"universe_domain\":\"googleapis.com\"}}"
         );
         // Mirrors `serde_json::to_string(&VertexCredentials{ project_id, location,
         // service_account: Json(service_account_json) })` without depending on the
         // `summarize` crate (which would be a circular dev-dependency).
-        let escaped = service_account_json.replace('\\', "\\\\").replace('"', "\\\"");
+        let escaped = service_account_json
+            .replace('\\', "\\\\")
+            .replace('"', "\\\"");
         format!("{{\"project_id\":\"example-project\",\"location\":\"global\",\"service_account\":{{\"json\":\"{escaped}\"}}}}")
     }
 
@@ -215,7 +233,11 @@ mod tests {
         let secret = synthetic_vertex_credentials_json();
         // The raw UTF-8 size alone is already in the "~2.3 KB, close to 2,560 bytes"
         // range the task description worried about...
-        assert!(secret.len() > 2_300, "expected a realistic ~2.3 KB+ secret, got {} bytes", secret.len());
+        assert!(
+            secret.len() > 2_300,
+            "expected a realistic ~2.3 KB+ secret, got {} bytes",
+            secret.len()
+        );
         // ...but on Windows the actual comparison is against the UTF-16LE-encoded
         // size, which is roughly double the UTF-8 size for ASCII content (one UTF-16
         // code unit, i.e. 2 bytes, per ASCII byte) — so this isn't a near-the-limit
@@ -227,7 +249,10 @@ mod tests {
             "expected UTF-16 size (~{expected_roughly_doubled}) to roughly double the UTF-8 size ({}), got {utf16_bytes} bytes",
             secret.len()
         );
-        assert!(utf16_bytes > WINDOWS_CRED_MAX_BLOB_BYTES, "UTF-16 size should exceed the 2,560-byte platform limit");
+        assert!(
+            utf16_bytes > WINDOWS_CRED_MAX_BLOB_BYTES,
+            "UTF-16 size should exceed the 2,560-byte platform limit"
+        );
         assert!(exceeds_os_keyring_blob_limit(&secret));
     }
 
@@ -235,7 +260,9 @@ mod tests {
     fn exceeds_os_keyring_blob_limit_is_false_for_small_ascii_secrets() {
         // A bare API key or OAuth token — the common case — must not be redirected
         // away from the OS keyring.
-        assert!(!exceeds_os_keyring_blob_limit("sk-abc123-a-normal-sized-api-key"));
+        assert!(!exceeds_os_keyring_blob_limit(
+            "sk-abc123-a-normal-sized-api-key"
+        ));
         assert!(!exceeds_os_keyring_blob_limit(""));
     }
 
@@ -256,16 +283,23 @@ mod tests {
         // BMP characters need only 900 UTF-16 code units (1,800 bytes), well under
         // the limit, even though they'd take up to 2,700 UTF-8 bytes.
         let text: String = "あ".repeat(900);
-        assert!(text.len() > WINDOWS_CRED_MAX_BLOB_BYTES, "UTF-8 byte length should exceed the limit for this test to be meaningful");
+        assert!(
+            text.len() > WINDOWS_CRED_MAX_BLOB_BYTES,
+            "UTF-8 byte length should exceed the limit for this test to be meaningful"
+        );
         assert!(!exceeds_os_keyring_blob_limit(&text));
     }
 
     #[test]
     fn fallback_store_round_trips_a_realistically_sized_vertex_credentials_secret() {
         let tmp_dir = tempfile::tempdir().expect("failed to create temp dir");
-        let store = FallbackCredentialStore::new(tmp_dir.path()).expect("failed to create fallback store");
+        let store =
+            FallbackCredentialStore::new(tmp_dir.path()).expect("failed to create fallback store");
         let secret = synthetic_vertex_credentials_json();
-        assert!(exceeds_os_keyring_blob_limit(&secret), "test secret should exceed the OS keyring limit");
+        assert!(
+            exceeds_os_keyring_blob_limit(&secret),
+            "test secret should exceed the OS keyring limit"
+        );
 
         // Whether or not the OS keyring backend is available in this environment,
         // a secret this size must be saveable and loadable — either because the
@@ -273,16 +307,28 @@ mod tests {
         // (in this sandboxed environment) because the OS keyring is unavailable and
         // `should_fallback` caught it. The important guarantee under test is that
         // `load` finds it regardless of which path `save` took.
-        store.save("vertex-test-service", "vertex-test-account", &secret).expect("save should succeed despite exceeding the OS keyring's blob limit");
-        let loaded = store.load("vertex-test-service", "vertex-test-account").expect("load should find the secret regardless of which backend save() used");
+        store
+            .save("vertex-test-service", "vertex-test-account", &secret)
+            .expect("save should succeed despite exceeding the OS keyring's blob limit");
+        let loaded = store
+            .load("vertex-test-service", "vertex-test-account")
+            .expect("load should find the secret regardless of which backend save() used");
         assert_eq!(loaded, secret);
 
-        store.delete("vertex-test-service", "vertex-test-account").expect("delete should succeed");
-        assert!(store.load("vertex-test-service", "vertex-test-account").is_err(), "credential should be gone from both backends after delete");
+        store
+            .delete("vertex-test-service", "vertex-test-account")
+            .expect("delete should succeed");
+        assert!(
+            store
+                .load("vertex-test-service", "vertex-test-account")
+                .is_err(),
+            "credential should be gone from both backends after delete"
+        );
     }
 
     #[test]
-    fn fallback_store_save_of_an_oversized_secret_is_visible_on_load_even_after_a_smaller_earlier_save() {
+    fn fallback_store_save_of_an_oversized_secret_is_visible_on_load_even_after_a_smaller_earlier_save(
+    ) {
         // Regression test for a Codex-review-caught bug: saving a small secret
         // (routed to the OS keyring when available) and later replacing it with an
         // oversized one for the same service/account (always routed to the
@@ -296,17 +342,37 @@ mod tests {
         // comment on why neither path can be assumed — but only the primary-available
         // case actually exercises the bug this guards against.
         let tmp_dir = tempfile::tempdir().expect("failed to create temp dir");
-        let store = FallbackCredentialStore::new(tmp_dir.path()).expect("failed to create fallback store");
+        let store =
+            FallbackCredentialStore::new(tmp_dir.path()).expect("failed to create fallback store");
 
-        store.save("stale-primary-test-service", "stale-primary-test-account", "small-value").expect("save of the small secret should succeed");
+        store
+            .save(
+                "stale-primary-test-service",
+                "stale-primary-test-account",
+                "small-value",
+            )
+            .expect("save of the small secret should succeed");
         let big_secret = synthetic_vertex_credentials_json();
-        assert!(exceeds_os_keyring_blob_limit(&big_secret), "test secret should exceed the OS keyring limit");
-        store.save("stale-primary-test-service", "stale-primary-test-account", &big_secret).expect("save of the oversized secret should succeed");
+        assert!(
+            exceeds_os_keyring_blob_limit(&big_secret),
+            "test secret should exceed the OS keyring limit"
+        );
+        store
+            .save(
+                "stale-primary-test-service",
+                "stale-primary-test-account",
+                &big_secret,
+            )
+            .expect("save of the oversized secret should succeed");
 
-        let loaded = store.load("stale-primary-test-service", "stale-primary-test-account").expect("load should succeed");
+        let loaded = store
+            .load("stale-primary-test-service", "stale-primary-test-account")
+            .expect("load should succeed");
         assert_eq!(loaded, big_secret, "load must return the most recently saved value, not a stale smaller one from an earlier save");
 
-        store.delete("stale-primary-test-service", "stale-primary-test-account").expect("delete should succeed");
+        store
+            .delete("stale-primary-test-service", "stale-primary-test-account")
+            .expect("delete should succeed");
     }
 
     #[test]
@@ -319,14 +385,27 @@ mod tests {
         // in the fallback file store. `FallbackCredentialStore::delete` must always
         // touch both.
         let tmp_dir = tempfile::tempdir().expect("failed to create temp dir");
-        let fallback = EncryptedFileStore::new(tmp_dir.path()).expect("failed to create fallback store");
-        fallback.save("orphan-service", "orphan-account", "left-over-secret").expect("seed the fallback store directly");
+        let fallback =
+            EncryptedFileStore::new(tmp_dir.path()).expect("failed to create fallback store");
+        fallback
+            .save("orphan-service", "orphan-account", "left-over-secret")
+            .expect("seed the fallback store directly");
 
-        let store = FallbackCredentialStore { primary: OsKeyringStore, fallback: EncryptedFileStore::new(tmp_dir.path()).expect("failed to create fallback store") };
-        store.delete("orphan-service", "orphan-account").expect("delete should succeed");
+        let store = FallbackCredentialStore {
+            primary: OsKeyringStore,
+            fallback: EncryptedFileStore::new(tmp_dir.path())
+                .expect("failed to create fallback store"),
+        };
+        store
+            .delete("orphan-service", "orphan-account")
+            .expect("delete should succeed");
 
-        let fallback = EncryptedFileStore::new(tmp_dir.path()).expect("failed to create fallback store");
-        assert!(fallback.load("orphan-service", "orphan-account").is_err(), "secret must be gone from the fallback store after delete");
+        let fallback =
+            EncryptedFileStore::new(tmp_dir.path()).expect("failed to create fallback store");
+        assert!(
+            fallback.load("orphan-service", "orphan-account").is_err(),
+            "secret must be gone from the fallback store after delete"
+        );
     }
 
     #[test]
@@ -334,23 +413,38 @@ mod tests {
         // Regression test for a bug introduced by this task's own first draft: a
         // corrupted/unreadable fallback entry (Crypto/Io) must not be reported to
         // the caller as `NotFound` just because the primary also said `NotFound`.
-        let primary_not_found = StoreError::NotFound { service: "s".to_string(), account: "a".to_string() };
+        let primary_not_found = StoreError::NotFound {
+            service: "s".to_string(),
+            account: "a".to_string(),
+        };
         let fallback_err = StoreError::Crypto("ciphertext corrupted".to_string());
         let result = resolve_after_primary_not_found(primary_not_found, Err(fallback_err));
-        assert!(matches!(result, Err(StoreError::Crypto(_))), "expected the real Crypto error to surface, got {result:?}");
+        assert!(
+            matches!(result, Err(StoreError::Crypto(_))),
+            "expected the real Crypto error to surface, got {result:?}"
+        );
     }
 
     #[test]
     fn resolve_after_primary_not_found_returns_not_found_when_fallback_also_lacks_it() {
-        let primary_not_found = StoreError::NotFound { service: "s".to_string(), account: "a".to_string() };
-        let fallback_not_found = StoreError::NotFound { service: "s".to_string(), account: "a".to_string() };
+        let primary_not_found = StoreError::NotFound {
+            service: "s".to_string(),
+            account: "a".to_string(),
+        };
+        let fallback_not_found = StoreError::NotFound {
+            service: "s".to_string(),
+            account: "a".to_string(),
+        };
         let result = resolve_after_primary_not_found(primary_not_found, Err(fallback_not_found));
         assert!(matches!(result, Err(StoreError::NotFound { .. })));
     }
 
     #[test]
     fn resolve_after_primary_not_found_returns_the_secret_when_fallback_has_it() {
-        let primary_not_found = StoreError::NotFound { service: "s".to_string(), account: "a".to_string() };
+        let primary_not_found = StoreError::NotFound {
+            service: "s".to_string(),
+            account: "a".to_string(),
+        };
         let result = resolve_after_primary_not_found(primary_not_found, Ok("secret".to_string()));
         assert_eq!(result.unwrap(), "secret");
     }

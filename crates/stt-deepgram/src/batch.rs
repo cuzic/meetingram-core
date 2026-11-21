@@ -16,7 +16,9 @@
 use async_trait::async_trait;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use stt_api::{BatchAudioInput, BatchSttProvider, BatchTranscript, SttError, SttSessionConfig, Word};
+use stt_api::{
+    BatchAudioInput, BatchSttProvider, BatchTranscript, SttError, SttSessionConfig, Word,
+};
 
 use crate::{common_query_params, encode_query, pcm_f32_to_linear16_le, DEFAULT_MODEL};
 
@@ -65,7 +67,15 @@ impl BatchSttProvider for DeepgramBatchProvider {
         audio: BatchAudioInput<'_>,
         config: SttSessionConfig,
     ) -> Result<BatchTranscript, SttError> {
-        transcribe_batch_at(&self.http, BATCH_LISTEN_URL, &self.api_key, &self.model, audio, config).await
+        transcribe_batch_at(
+            &self.http,
+            BATCH_LISTEN_URL,
+            &self.api_key,
+            &self.model,
+            audio,
+            config,
+        )
+        .await
     }
 }
 
@@ -118,7 +128,13 @@ async fn transcribe_batch_at(
         ));
     }
 
-    let url = build_batch_url(listen_url, model, &config, audio.sample_rate_hz, audio.channels);
+    let url = build_batch_url(
+        listen_url,
+        model,
+        &config,
+        audio.sample_rate_hz,
+        audio.channels,
+    );
     let body = pcm_f32_to_linear16_le(audio.pcm);
 
     let response = http
@@ -216,7 +232,9 @@ fn translate_batch_response(response: DeepgramBatchResponse) -> Result<BatchTran
         .next()
         .and_then(|channel| channel.alternatives.into_iter().next())
         .ok_or_else(|| {
-            SttError::PermanentError("deepgram batch response had no transcription alternatives".to_string())
+            SttError::PermanentError(
+                "deepgram batch response had no transcription alternatives".to_string(),
+            )
         })?;
 
     let mut transcript = BatchTranscript::new(alternative.transcript);
@@ -315,8 +333,10 @@ mod tests {
         headers: HeaderMap,
         body: axum::body::Bytes,
     ) -> impl IntoResponse {
-        *state.last_authorization.lock().unwrap() =
-            headers.get("authorization").and_then(|v| v.to_str().ok()).map(str::to_string);
+        *state.last_authorization.lock().unwrap() = headers
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_string);
         *state.last_body_len.lock().unwrap() = body.len();
 
         (
@@ -340,7 +360,9 @@ mod tests {
 
     async fn spawn_mock_server() -> (String, Arc<MockState>) {
         let state = Arc::new(MockState::default());
-        let app = Router::new().route("/v1/listen", post(mock_listen)).with_state(state.clone());
+        let app = Router::new()
+            .route("/v1/listen", post(mock_listen))
+            .with_state(state.clone());
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr: SocketAddr = listener.local_addr().unwrap();
         tokio::spawn(async move {
@@ -355,7 +377,11 @@ mod tests {
         let provider = DeepgramBatchProvider::with_base_url("mock-api-key", base_url);
 
         let pcm = vec![0.0f32; 1600]; // 0.1s of silence at 16kHz, mono
-        let audio = BatchAudioInput { pcm: &pcm, sample_rate_hz: 16_000, channels: 1 };
+        let audio = BatchAudioInput {
+            pcm: &pcm,
+            sample_rate_hz: 16_000,
+            channels: 1,
+        };
         let config = SttSessionConfig::new(16_000).with_diarization(true);
 
         let transcript = provider.transcribe_batch(audio, config).await.unwrap();
@@ -366,7 +392,10 @@ mod tests {
         assert_eq!(words[0].text, "テスト");
         assert_eq!(words[1].speaker, Some(0));
 
-        assert_eq!(*state.last_authorization.lock().unwrap(), Some("Token mock-api-key".to_string()));
+        assert_eq!(
+            *state.last_authorization.lock().unwrap(),
+            Some("Token mock-api-key".to_string())
+        );
         // 1600 f32 samples -> 1600 PCM16 samples -> 3200 bytes on the wire.
         assert_eq!(*state.last_body_len.lock().unwrap(), 3200);
     }
@@ -375,7 +404,11 @@ mod tests {
     async fn transcribe_batch_rejects_zero_sample_rate() {
         let provider = DeepgramBatchProvider::new("mock-api-key");
         let pcm = vec![0.0f32; 10];
-        let audio = BatchAudioInput { pcm: &pcm, sample_rate_hz: 0, channels: 1 };
+        let audio = BatchAudioInput {
+            pcm: &pcm,
+            sample_rate_hz: 0,
+            channels: 1,
+        };
         let err = provider
             .transcribe_batch(audio, SttSessionConfig::new(16_000))
             .await

@@ -8,14 +8,22 @@ use crate::{AudioFormatInfo, CaptureEvent, CaptureExit, StopSignal};
 use capture_api::rebinding::{BindingKind, DeviceRole};
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
-use windows::Win32::Media::Audio::{IAudioCaptureClient, IAudioClient, AUDCLNT_STREAMFLAGS_LOOPBACK};
+use windows::Win32::Media::Audio::{
+    IAudioCaptureClient, IAudioClient, AUDCLNT_STREAMFLAGS_LOOPBACK,
+};
 
 /// A microphone/render device selection kept as "string + role", never the `IMMDevice`
 /// itself (device resolution happens inside `init_and_capture`, keeping COM ownership
 /// on a single capture MTA thread).
 pub enum DeviceSelector {
-    Capture { id_or_default: String, role: DeviceRole },
-    Render { id_or_default: String, role: DeviceRole },
+    Capture {
+        id_or_default: String,
+        role: DeviceRole,
+    },
+    Render {
+        id_or_default: String,
+        role: DeviceRole,
+    },
 }
 
 pub struct WasapiInitParams {
@@ -43,23 +51,26 @@ pub fn init_and_capture(
         )?
     };
     let device = match &params.device {
-        DeviceSelector::Capture { id_or_default, role } => {
-            resolve_capture_device(&enumerator, id_or_default, *role)?
-        }
-        DeviceSelector::Render { id_or_default, role } => {
-            resolve_render_device(&enumerator, id_or_default, *role)?
-        }
+        DeviceSelector::Capture {
+            id_or_default,
+            role,
+        } => resolve_capture_device(&enumerator, id_or_default, *role)?,
+        DeviceSelector::Render {
+            id_or_default,
+            role,
+        } => resolve_render_device(&enumerator, id_or_default, *role)?,
     };
     // Read the resolved device's id/friendly_name before Activate (while `device` is
     // still local) so callers can report which device "default" actually resolved to.
     let device_id = crate::device_select::read_device_id(&device)?;
-    let device_friendly_name = crate::device_select::read_friendly_name(&device).unwrap_or_default();
+    let device_friendly_name =
+        crate::device_select::read_friendly_name(&device).unwrap_or_default();
 
     // `enumerator`/`device` are local to this function and never handed to another thread.
-    let audio_client: IAudioClient = unsafe { device.Activate(windows::Win32::System::Com::CLSCTX_ALL, None)? };
+    let audio_client: IAudioClient =
+        unsafe { device.Activate(windows::Win32::System::Com::CLSCTX_ALL, None)? };
 
-    let mix_format =
-        crate::WaveFormatBox::from_raw(unsafe { audio_client.GetMixFormat()? });
+    let mix_format = crate::WaveFormatBox::from_raw(unsafe { audio_client.GetMixFormat()? });
     let format_info = AudioFormatInfo::from_waveformatex(mix_format.as_ref());
 
     unsafe {

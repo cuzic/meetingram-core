@@ -19,11 +19,21 @@ const CHUNK_MS: u32 = 20;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = env::var("DEEPGRAM_API_KEY").expect("set DEEPGRAM_API_KEY");
-    let pcm_path = env::args().nth(1).expect("usage: streaming_smoke_test <pcm-file>");
+    let pcm_path = env::args()
+        .nth(1)
+        .expect("usage: streaming_smoke_test <pcm-file>");
 
     let raw = fs::read(&pcm_path)?;
-    let samples: Vec<f32> = raw.chunks_exact(2).map(|b| i16::from_le_bytes([b[0], b[1]]) as f32 / i16::MAX as f32).collect();
-    println!("loaded {} samples ({:.2}s)", samples.len(), samples.len() as f32 / SAMPLE_RATE_HZ as f32);
+    let (sample_bytes, _) = raw.as_chunks::<2>();
+    let samples: Vec<f32> = sample_bytes
+        .iter()
+        .map(|&b| i16::from_le_bytes(b) as f32 / i16::MAX as f32)
+        .collect();
+    println!(
+        "loaded {} samples ({:.2}s)",
+        samples.len(),
+        samples.len() as f32 / SAMPLE_RATE_HZ as f32
+    );
 
     let provider = DeepgramProvider::new(api_key);
     let config = SttSessionConfig::new(SAMPLE_RATE_HZ)
@@ -39,13 +49,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let printer = tokio::spawn(async move {
         while let Some(event) = events.recv().await {
             match event {
-                SttEvent::PartialTranscript { text, .. } if !text.is_empty() => println!("[partial] {text:?}"),
+                SttEvent::PartialTranscript { text, .. } if !text.is_empty() => {
+                    println!("[partial] {text:?}")
+                }
                 SttEvent::PartialTranscript { .. } => {}
-                SttEvent::FinalTranscript { text, .. } if !text.is_empty() => println!("[final]   {text:?}"),
+                SttEvent::FinalTranscript { text, .. } if !text.is_empty() => {
+                    println!("[final]   {text:?}")
+                }
                 SttEvent::FinalTranscript { .. } => {}
                 SttEvent::SpeechStarted => println!("[event]   SpeechStarted"),
                 SttEvent::SpeechEnded => println!("[event]   SpeechEnded"),
-                SttEvent::Error(err) => println!("[error]   {err} (retryable={})", err.is_retryable()),
+                SttEvent::Error(err) => {
+                    println!("[error]   {err} (retryable={})", err.is_retryable())
+                }
             }
         }
     });
@@ -53,7 +69,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let chunk_samples = (SAMPLE_RATE_HZ * CHUNK_MS / 1000) as usize;
     let mut start_sample: u64 = 0;
     for chunk in samples.chunks(chunk_samples) {
-        session.send_audio(AudioChunk { pcm: chunk, start_sample }).await?;
+        session
+            .send_audio(AudioChunk {
+                pcm: chunk,
+                start_sample,
+            })
+            .await?;
         start_sample += chunk.len() as u64;
         tokio::time::sleep(Duration::from_millis(CHUNK_MS as u64)).await;
     }
@@ -61,7 +82,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("pausing 2s, then calling keep_alive() mid-session...");
     tokio::time::sleep(Duration::from_secs(2)).await;
     match session.keep_alive().await {
-        Ok(KeepAliveEffect::ControlMessage) => println!("keep_alive: sent KeepAlive control frame, ok"),
+        Ok(KeepAliveEffect::ControlMessage) => {
+            println!("keep_alive: sent KeepAlive control frame, ok")
+        }
         Ok(other) => println!("keep_alive: unexpected effect {other:?}"),
         Err(err) => println!("keep_alive failed: {err}"),
     }
