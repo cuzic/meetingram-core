@@ -48,13 +48,19 @@ gh pr checks <PR> --watch                                                       
 
 - ログ・メトリクス・診断出力に、API キー、文字起こしや要約の本文、生のデバイス ID を出さない（`docs/logging-policy.md`）。
 - 実在の会議の音声やテキストを fixture にしない。テストには合成データを使う。
-- プローブや一時ファイルは repo の外に置く。コミットやコメントにマシン固有の情報を入れない。
+- プローブや一時ファイルは repo の外に置く（Codex は `$TMPDIR`、Claude はスクラッチ領域）。終わったら消す。コミットやコメントにマシン固有の情報を入れない。
 - 人の承認が要る操作: 新しい外部サービスへの送信（STT・LLM・RAG のプロバイダ追加）、ライセンスの変更。
 
 ## Git とリリース
 
-- ブランチ名、merge で追従（rebase / force-push しない）、Codex はマージしない、`Co-Authored-By:`、
-  指摘 ID の書き方は meetingram の AGENTS.md と同じ。
+- ブランチは `feat/… fix/… docs/… chore/… ci/… test/… spike/… deps/…`。1 つの作業に 1 つの clone か `git worktree`。
+  共有の checkout（`~/src/<repo>`）は他のセッションも使うので、ブランチの切り替えも pull もしない（fetch はよい）。
+- clone は ssh（`git@github.com:cuzic/<repo>.git`）で取る。https だと gh のトークンに `workflow` スコープが無く、
+  `.github/workflows` を含む push が拒否される。
+- **merge で追従し、rebase / force-push はしない**。既存 PR では `git pull --no-rebase origin <branch>`。
+- commit や push が sandbox・権限で失敗したら、clone し直す・remote や認証を変えるなどで回避せず、
+  エラー文をそのまま報告して止める（`.agents/skills/implement-task` の 1.5）。
+- Codex は PR を作って更新するが、マージしない。コミット末尾に `Co-Authored-By:`、レビュー指摘の修正には指摘 ID（`M1` など）。
 - アプリに届ける変更は、マージ後に Claude がタグを打つ（0.x の間は、公開 API・イベント・設定・保存形式が
   変わるなら minor、それ以外は patch）。タグは消したり付け替えたりしない。
 

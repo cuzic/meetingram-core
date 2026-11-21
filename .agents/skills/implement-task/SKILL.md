@@ -15,6 +15,16 @@ description: "[codex] の Issue か PR の「## [codex] タスク仕様」コメ
    この repo の `AGENTS.md` の完了の定義を読む。
 3. いまのブランチを確かめる（`git status -sb`）。既存 PR なら `git pull --no-rebase origin <branch>`。
 
+## 1.5 git が使えないとき
+
+commit や push が sandbox や権限で失敗したら（`Read-only file system`、`Permission denied`、
+`refusing to allow an OAuth App …`、`rejected` など）:
+
+- **回避しない**。別の場所に clone し直す、remote の URL や認証を変える、`.git` を作り直す、はしない。
+- 作業はこの作業ツリーに残す（commit できなければ未コミットのままでよい）。テストと確認は普段どおり回す。
+- 最後のメッセージの先頭に `Status: blocked（git）`、失敗したコマンド、エラー文をそのまま書いて止める。
+  Claude が同じ clone から commit・push・PR 作成を代行する。
+
 ## 2. 決めない
 
 仕様に無い判断（公開 API の形、外部サービスの選択、保存形式、UI の文言の方針など）が要ったら、
@@ -27,6 +37,7 @@ description: "[codex] の Issue か PR の「## [codex] タスク仕様」コメ
 - コミットは小さく、意味のまとまりごとに。レビュー指摘の修正はメッセージに指摘 ID（`M1` など）を書く。
 - 録音・文字起こしの経路では、後段（要約・ヒント・図）の失敗で録音を止めない。async の中でブロックしない。
 - API キー、文字起こし、要約の本文をログやテストに出さない。テストのデータは合成する。
+- 一時ファイルとプローブは `$TMPDIR`（`mktemp -d` など）に置く。`/tmp/…` を直接書かない。repo の中に置かない。
 - Linux でビルドできない crate（アプリ、`capture-macos`、`capture-windows` の実行）は CI で確かめる。
   `capture-windows` は `cargo check -p capture-windows --target x86_64-pc-windows-msvc --all-targets` で型だけ確かめられる。
 
@@ -54,7 +65,7 @@ description: "[codex] の Issue か PR の「## [codex] タスク仕様」コメ
 | --- | --- |
 | cargo test … | N passed |
 | 変異: <内容> | テスト X が落ちる |
-| CI app-build (Windows / macOS) | pass / fail |
+| CI（Linux / Windows / macOS） | pass / fail |
 
 ## CI でしか確かめられないこと / 実機確認が必要なこと
 <無ければ「なし」>
