@@ -7,7 +7,7 @@ mod hooks;
 mod rag;
 mod scope;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -77,6 +77,19 @@ impl RhaiEngine {
         credential_store: Arc<FallbackCredentialStore>,
         settings: Arc<dyn SettingsProvider>,
     ) -> Self {
+        Self::new_with_cli_temp_base(broker, store, credential_store, settings, None)
+    }
+
+    /// Configures the CLI working directory base used by Rhai's `ai_summarize`.
+    /// Pass an existing, application-specific directory, or `None` for the OS
+    /// temporary directory.
+    pub fn new_with_cli_temp_base(
+        broker: LocalBroker,
+        store: Arc<SessionStore>,
+        credential_store: Arc<FallbackCredentialStore>,
+        settings: Arc<dyn SettingsProvider>,
+        cli_temp_base: Option<PathBuf>,
+    ) -> Self {
         let (command_tx, command_rx) = tokio::sync::mpsc::unbounded_channel();
 
         let worker = tokio::spawn(async_worker(
@@ -85,6 +98,7 @@ impl RhaiEngine {
             store,
             credential_store,
             settings,
+            cli_temp_base,
         ));
 
         let mut engine = Engine::new();
@@ -434,6 +448,86 @@ mod tests {
         fn session_metadata(&self, _session_id: SessionId) -> rhai::Map {
             rhai::Map::new()
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn ai_summarize_uses_configured_cli_temp_base() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let fixture = tempfile::tempdir().unwrap();
+        let base = tempfile::tempdir().unwrap();
+        let cli = fixture.path().join("claude");
+        std::fs::write(
+            &cli,
+            r#"#!/bin/sh
+test "$(cd ../.. && pwd -P)" = "$MEETINGRAM_TEST_RHAI_CLI_BASE" || exit 1
+test -f system.txt || exit 2
+printf '%s\n' '{"result":"synthetic summary"}'
+"#,
+        )
+        .unwrap();
+        std::fs::set_permissions(&cli, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "tests::ai_summarize_cli_subprocess", "--ignored"])
+            .env("PATH", fixture.path())
+            .env(
+                "MEETINGRAM_TEST_RHAI_CLI_BASE",
+                base.path().canonicalize().unwrap(),
+            )
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    #[ignore = "launched by ai_summarize_uses_configured_cli_temp_base with an isolated PATH"]
+    async fn ai_summarize_cli_subprocess() {
+        struct CliSettings;
+
+        impl SettingsProvider for CliSettings {
+            fn get(&self, key: &str) -> Option<String> {
+                (key == "summary_provider_key").then(|| "claude-cli".to_owned())
+            }
+
+            fn selected_model(&self) -> String {
+                "sonnet".to_owned()
+            }
+
+            fn session_metadata(&self, _session_id: SessionId) -> rhai::Map {
+                rhai::Map::new()
+            }
+        }
+
+        let Some(base) = std::env::var_os("MEETINGRAM_TEST_RHAI_CLI_BASE") else {
+            return;
+        };
+        let fixture = tempfile::tempdir().unwrap();
+        let engine = RhaiEngine::new_with_cli_temp_base(
+            LocalBroker::new(),
+            Arc::new(SessionStore::open(&fixture.path().join("sessions.db")).unwrap()),
+            Arc::new(FallbackCredentialStore::new(fixture.path().join("credentials")).unwrap()),
+            Arc::new(CliSettings),
+            Some(base.into()),
+        );
+        let result = tokio::task::spawn_blocking(move || {
+            engine.inner.engine.eval::<String>(
+                r#"call_async("ai_summarize", #{
+                    model: "sonnet",
+                    system_prompt: "synthetic instruction",
+                    turns: [#{speaker: "fixture", text: "synthetic input"}]
+                })"#,
+            )
+        })
+        .await
+        .unwrap()
+        .unwrap();
+        assert_eq!(result, "synthetic summary");
     }
 
     /// Real, non-network end-to-end test of the entire redesign this session

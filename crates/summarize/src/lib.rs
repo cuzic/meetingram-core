@@ -282,7 +282,8 @@ pub struct CliSummarizer {
 }
 
 impl CliSummarizer {
-    /// Uses an existing directory as the base for per-request working directories.
+    /// Places per-request working directories under a per-process directory
+    /// inside the existing, application-specific base.
     /// Pass `None` to use the OS temporary directory.
     pub fn new(backend: cli_backend::CliBackend, temp_base: Option<PathBuf>) -> Self {
         Self { backend, temp_base }
