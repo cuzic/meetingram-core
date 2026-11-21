@@ -121,7 +121,7 @@ pub struct PatchResult {
 }
 
 impl PatchResult {
-    /// Revision to record for this patch, when at least one operation applied.
+    /// Graph revision when at least one operation applied.
     pub fn patch_rev(&self) -> Option<u64> {
         (!self.applied.is_empty()).then_some(self.graph.rev)
     }

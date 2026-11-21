@@ -133,8 +133,8 @@ impl GraphStore {
 
     /// Apply parsed operations. Only `input_uids` are consumed. Reference IDs
     /// can supply grounds without changing their extraction status.
-    /// With zero applied operations, consume the inputs at the current revision
-    /// (zero before the first patch).
+    /// Every stored patch advances `result.graph.rev`, including empty patches.
+    /// Use `result.applied.is_empty()` to detect a patch without graph changes.
     pub fn apply_patch(
         &mut self,
         session_id: SessionId,
@@ -157,15 +157,17 @@ impl GraphStore {
         {
             return Err(StoreError::UnknownUtterance);
         }
-        let result = apply_patch(&before, ops, &allowed);
-        if let Some(rev) = result.patch_rev() {
-            let ops_json = serde_json::to_string(&result.applied)?;
-            let rejected_ops: usize = result.rejected.values().sum();
-            tx.execute(
-                "INSERT INTO graph_patches (session_id, rev, source, provider_model, ops_json, rejected_ops)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                params![sid, rev, source.as_str(), provider_model, ops_json, rejected_ops],
-            )?;
+        let mut result = apply_patch(&before, ops, &allowed);
+        let rev = before.rev + 1;
+        result.graph.rev = rev;
+        let ops_json = serde_json::to_string(&result.applied)?;
+        let rejected_ops: usize = result.rejected.values().sum();
+        tx.execute(
+            "INSERT INTO graph_patches (session_id, rev, source, provider_model, ops_json, rejected_ops)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![sid, rev, source.as_str(), provider_model, ops_json, rejected_ops],
+        )?;
+        if !result.applied.is_empty() {
             write_changes(&tx, &sid, &before, &result.graph)?;
         }
         {
@@ -174,7 +176,7 @@ impl GraphStore {
                  WHERE session_id = ?1 AND uid = ?2 AND extracted_rev IS NULL",
             )?;
             for uid in input_uids {
-                mark.execute(params![sid, uid, result.graph.rev])?;
+                mark.execute(params![sid, uid, rev])?;
             }
         }
         tx.commit()?;

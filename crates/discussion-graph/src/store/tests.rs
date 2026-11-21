@@ -160,7 +160,7 @@ fn patches_consume_only_input_and_reviews_protect_human_decisions() {
         .apply_patch(sid, PatchSource::Live, None, &[], &["u1"], &[])
         .unwrap();
     assert_eq!(empty.patch_rev(), None);
-    assert_eq!(graph.revision(sid).unwrap(), 0);
+    assert_eq!(graph.revision(sid).unwrap(), 1);
     assert_eq!(graph.pending_count(sid).unwrap(), 1);
 
     let mut ops = add_issue();
@@ -171,17 +171,17 @@ fn patches_consume_only_input_and_reviews_protect_human_decisions() {
             PatchSource::Flush,
             Some("synthetic/model"),
             &ops,
-            &[],
+            &["u1"],
             &["u1", "u2"],
         )
         .unwrap();
-    assert_eq!(result.patch_rev(), Some(1));
+    assert_eq!(result.patch_rev(), Some(2));
     assert_eq!(graph.pending_count(sid).unwrap(), 1);
     assert_eq!(graph.load_graph(sid).unwrap(), result.graph);
     let (provider, rejected, ops_json): (String, usize, String) = graph
         .conn
         .query_row(
-            "SELECT provider_model, rejected_ops, ops_json FROM graph_patches WHERE rev = 1",
+            "SELECT provider_model, rejected_ops, ops_json FROM graph_patches WHERE rev = 2",
             [],
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
         )
@@ -197,7 +197,7 @@ fn patches_consume_only_input_and_reviews_protect_human_decisions() {
         graph
             .set_review(sid, ReviewTarget::Node("n1"), ReviewDecision::Approve)
             .unwrap(),
-        2
+        3
     );
     let update = parse_ops(
         r#"{"ops":[{"op":"set_status","nid":"n1","status":"resolved",
@@ -210,17 +210,37 @@ fn patches_consume_only_input_and_reviews_protect_human_decisions() {
     assert_eq!(result.patch_rev(), None);
     assert_eq!(result.graph.nodes["n1"].review, Review::Approved);
     assert_eq!(result.graph.nodes["n1"].status, Status::Open);
-    assert_eq!(graph.revision(sid).unwrap(), 2);
+    assert_eq!(graph.revision(sid).unwrap(), 4);
     assert_eq!(graph.pending_count(sid).unwrap(), 0);
     let source: String = graph
         .conn
         .query_row(
-            "SELECT source FROM graph_patches WHERE rev = 2",
+            "SELECT source FROM graph_patches WHERE rev = 3",
             [],
             |row| row.get(0),
         )
         .unwrap();
     assert_eq!(source, "review");
+    let (ops, rejected): (String, usize) = graph
+        .conn
+        .query_row(
+            "SELECT ops_json, rejected_ops FROM graph_patches WHERE rev = 4",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(ops, "[]");
+    assert_eq!(rejected, 1);
+    let mut stmt = graph
+        .conn
+        .prepare("SELECT extracted_rev FROM graph_utterances ORDER BY uid")
+        .unwrap();
+    let extracted = stmt
+        .query_map([], |row| row.get::<_, u64>(0))
+        .unwrap()
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .unwrap();
+    assert_eq!(extracted, [1, 4]);
 }
 
 #[test]
@@ -316,4 +336,122 @@ fn stored_budget_meeting_matches_gold_graph() {
     assert_eq!(scores.node_recall, 1.0);
     assert_eq!(scores.edge_f1, 1.0);
     assert_eq!(graph.pending_count(sid).unwrap(), 0);
+}
+
+#[test]
+fn imports_batch_in_transcript_row_order() {
+    let (_dir, session, mut graph) = stores();
+    let sid = create_session(&session);
+    for text in ["Synthetic first", "Synthetic second", "Synthetic third"] {
+        append(&session, sid, text);
+    }
+    graph
+        .conn
+        .execute(
+            "UPDATE transcript_segments SET is_retranscribed = 1 WHERE id = 2",
+            [],
+        )
+        .unwrap();
+    assert_eq!(graph.import_utterances(sid).unwrap(), 3);
+    let pending = graph.pending_utterances(sid).unwrap();
+    let ids: Vec<_> = pending.iter().map(|u| (u.uid.as_str(), u.row_id)).collect();
+    assert_eq!(ids, [("u1", 1), ("u2", 2), ("u3", 3)]);
+    let retranscribed: Vec<_> = pending.iter().map(|u| u.is_retranscribed).collect();
+    assert_eq!(retranscribed, [false, true, false]);
+}
+
+#[test]
+fn loads_utterance_without_transcript_row() {
+    let (_dir, session, mut graph) = stores();
+    let sid = create_session(&session);
+    append(&session, sid, "Synthetic turn");
+    graph.import_utterances(sid).unwrap();
+    graph
+        .conn
+        .execute(
+            "DELETE FROM transcript_segments WHERE session_id = ?1",
+            [sid.to_string()],
+        )
+        .unwrap();
+    assert!(graph.load_graph(sid).unwrap().utterances["u1"]
+        .text
+        .is_empty());
+}
+
+fn seed_merge_graph(session: &SessionStore, graph: &mut GraphStore) -> SessionId {
+    let sid = create_session(session);
+    append(session, sid, "Synthetic first");
+    append(session, sid, "Synthetic second");
+    graph.import_utterances(sid).unwrap();
+    let ops = parse_ops(r#"{"ops":[
+        {"op":"add_node","tmp":"from","kind":"issue","text":"First question","confidence":1,"grounds":[{"uid":"u1"}]},
+        {"op":"add_node","tmp":"into","kind":"issue","text":"Second question","confidence":1,"grounds":[{"uid":"u2"}]},
+        {"op":"add_node","tmp":"position","kind":"position","text":"Synthetic proposal","confidence":1,"grounds":[{"uid":"u1"}]},
+        {"op":"add_edge","src":"position","dst":"from","kind":"responds_to","confidence":1,"grounds":[{"uid":"u1"}]},
+        {"op":"add_edge","src":"position","dst":"into","kind":"responds_to","confidence":1,"grounds":[{"uid":"u2"}]}
+    ]}"#).unwrap();
+    let result = graph
+        .apply_patch(sid, PatchSource::Live, None, &ops, &["u1", "u2"], &[])
+        .unwrap();
+    assert_eq!(result.applied.len(), 5, "{:?}", result.rejected);
+    sid
+}
+
+#[test]
+fn persists_merge_status_redirect_and_grounds() {
+    let (dir, session, mut graph) = stores();
+    let sid = seed_merge_graph(&session, &mut graph);
+    let ops = parse_ops(
+        r#"{"ops":[
+        {"op":"merge","from":"n1","into":"n2","grounds":[{"uid":"u2"}]},
+        {"op":"set_status","nid":"n2","status":"resolved","grounds":[{"uid":"u2"}]}
+    ]}"#,
+    )
+    .unwrap();
+    let result = graph
+        .apply_patch(sid, PatchSource::Consolidate, None, &ops, &[], &["u2"])
+        .unwrap();
+    assert_eq!(result.applied.len(), 2, "{:?}", result.rejected);
+    drop(graph);
+    let persisted = GraphStore::open(&dir.path().join("sessions.sqlite"))
+        .unwrap()
+        .load_graph(sid)
+        .unwrap();
+    let mut expected = result.graph;
+    // SQLite returns grounds ordered by target and utterance ID.
+    expected
+        .grounds
+        .sort_by(|a, b| (&a.target, &a.uid).cmp(&(&b.target, &b.uid)));
+    assert_eq!(persisted, expected);
+    assert_eq!(persisted.nodes["n1"].status, Status::Merged);
+    assert_eq!(persisted.nodes["n1"].merged_into.as_deref(), Some("n2"));
+    assert_eq!(persisted.nodes["n2"].status, Status::Resolved);
+    assert_eq!(persisted.edges.len(), 1);
+    assert_eq!(persisted.edges["e1"].dst, "n2");
+    assert!(persisted
+        .grounds
+        .iter()
+        .any(|g| g.target == "n2" && g.uid == "u1"));
+    assert!(persisted
+        .grounds
+        .iter()
+        .all(|g| g.target != "n1" && g.target != "e2"));
+}
+
+#[test]
+fn cannot_review_a_decided_node_or_edge_again() {
+    let (_dir, session, mut graph) = stores();
+    let sid = seed_merge_graph(&session, &mut graph);
+    for target in [ReviewTarget::Node("n1"), ReviewTarget::Edge("e1")] {
+        let rev = graph
+            .set_review(sid, target, ReviewDecision::Approve)
+            .unwrap();
+        let approved = graph.load_graph(sid).unwrap();
+        assert!(matches!(
+            graph.set_review(sid, target, ReviewDecision::Reject),
+            Err(StoreError::UnreviewableTarget)
+        ));
+        assert_eq!(graph.revision(sid).unwrap(), rev);
+        assert_eq!(graph.load_graph(sid).unwrap(), approved);
+    }
 }

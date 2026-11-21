@@ -18,7 +18,8 @@ pub(super) fn read_utterances(
     pending_only: bool,
 ) -> rusqlite::Result<Vec<Utterance>> {
     let mut stmt = conn.prepare(
-        "SELECT u.uid, u.row_id, u.track, u.speaker_label, u.start_ms, u.end_ms, t.text
+        "SELECT u.uid, u.row_id, u.track, u.speaker_label, u.start_ms, u.end_ms,
+                COALESCE(t.text, ''), COALESCE(t.is_retranscribed, 0)
          FROM graph_utterances u
          LEFT JOIN transcript_segments t ON t.id = u.row_id AND t.session_id = u.session_id
          WHERE u.session_id = ?1 AND (NOT ?2 OR u.extracted_rev IS NULL)
@@ -33,6 +34,7 @@ pub(super) fn read_utterances(
             start_ms: row.get(4)?,
             end_ms: row.get(5)?,
             text: row.get(6)?,
+            is_retranscribed: row.get(7)?,
         })
     })?;
     rows.collect()
