@@ -180,17 +180,22 @@ fn baseline_matches_original_prompt_when_it_fits() {
         .unwrap()
         .remove(0);
     assert_eq!(prompt.system, include_str!("baseline-system.txt"));
+    // Use the original field order with or without serde_json's preserve_order.
+    let issue = serde_json::json!({
+        "nid":"n1", "kind":"issue", "status":"open", "text":"Synthetic n1",
+        "confidence":1.0, "ground_count":1,
+        "grounds":[{"uid":"u1","speaker_label":"A","text":"根"}],
+    });
+    let position = serde_json::json!({
+        "nid":"p1", "kind":"position", "status":"open", "text":"Synthetic p1",
+        "confidence":1.0, "ground_count":0, "grounds":[],
+    });
+    let edge = serde_json::json!({
+        "eid":"e1", "src":"p1", "dst":"n1", "kind":"responds_to", "confidence":1.0,
+    });
     assert_eq!(
         prompt.user,
-        concat!(
-            "graph nodes\n",
-            r#"{"confidence":1.0,"ground_count":1,"grounds":[{"speaker_label":"A","text":"根","uid":"u1"}],"kind":"issue","nid":"n1","status":"open","text":"Synthetic n1"}"#,
-            "\n",
-            r#"{"confidence":1.0,"ground_count":0,"grounds":[],"kind":"position","nid":"p1","status":"open","text":"Synthetic p1"}"#,
-            "\ngraph edges\n",
-            r#"{"confidence":1.0,"dst":"n1","eid":"e1","kind":"responds_to","src":"p1"}"#,
-            "\n",
-        )
+        format!("graph nodes\n{issue}\n{position}\ngraph edges\n{edge}\n")
     );
     assert_eq!(prompt.allowed_uids, ["u1"]);
 }
