@@ -1,9 +1,10 @@
-//! In-memory discussion graph extraction and evaluation.
+//! Discussion graph extraction, evaluation, and persistence.
 
 pub mod eval;
 mod model;
 mod patch;
 mod prompt;
+pub mod store;
 
 pub use model::*;
 pub use patch::{

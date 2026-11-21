@@ -9,4 +9,5 @@ mod state_codec;
 mod store;
 
 pub use error::StoreError;
+pub use schema::open_with_pragmas;
 pub use store::{SessionListItem, SessionStore, Summary, TranscriptSegment, TranscriptionGap};

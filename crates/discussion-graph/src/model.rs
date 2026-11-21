@@ -69,6 +69,8 @@ pub struct Utterance {
     pub start_ms: Option<u64>,
     pub end_ms: Option<u64>,
     pub text: String,
+    #[serde(default)]
+    pub is_retranscribed: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

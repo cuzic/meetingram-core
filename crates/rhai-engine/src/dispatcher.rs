@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use local_broker::LocalBroker;
-use recorder_domain::SessionId;
+use recorder_domain::{speaker_label, SessionId};
 use session_store::SessionStore;
 use summarize::{BuildSummarizerError, TranscriptTurn};
 
@@ -241,18 +241,6 @@ fn get_string(args: &rhai::Map, key: &str) -> Result<String, String> {
     args.get(key)
         .and_then(|v| v.clone().try_cast::<String>())
         .ok_or_else(|| format!("missing required argument: {key}"))
-}
-
-fn speaker_label(track: Option<recorder_domain::TrackKind>, speaker: Option<u32>) -> String {
-    let base = match track {
-        Some(recorder_domain::TrackKind::SelfMic) => "自分",
-        Some(recorder_domain::TrackKind::RemoteAudio) => "相手",
-        None => "不明",
-    };
-    match speaker {
-        Some(n) => format!("{base} (話者{})", n + 1),
-        None => base.to_string(),
-    }
 }
 
 /// Converts a rhai::Dynamic to a serde_json::Value for publishing.

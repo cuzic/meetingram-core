@@ -23,5 +23,6 @@ pub fn utterance(row_id: i64, text: String) -> Utterance {
         start_ms: None,
         end_ms: None,
         text,
+        is_retranscribed: false,
     }
 }
