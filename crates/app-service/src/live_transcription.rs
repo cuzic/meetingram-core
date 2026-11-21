@@ -34,7 +34,7 @@ use credential_store::CredentialStore;
 // （以前は`stt_wiring`サブモジュール内だけでimportしており、live-transcription
 // feature無効時にstub関数がこの型を解決できずコンパイルエラーになっていた）。
 use local_broker::LocalBroker;
-use recorder_domain::{speaker_label, SessionId, TrackKind};
+use recorder_domain::{SessionId, TrackKind};
 use session_store::SessionStore;
 use tokio::sync::mpsc::Receiver;
 
@@ -81,6 +81,7 @@ pub struct TranscriptionStatus {
     pub remote_status: TrackTranscriptionStatus,
 }
 
+#[cfg(feature = "live-transcription")]
 fn set_status(
     sink: &Option<Arc<Mutex<TranscriptionStatus>>>,
     track: TrackKind,
@@ -1682,7 +1683,7 @@ mod stt_wiring {
             None => return,
         };
         let segment_id = transcript_event::segment_id_for(session_id, track, counter);
-        let speaker_label = super::speaker_label(segment.track, segment.speaker);
+        let speaker_label = recorder_domain::speaker_label(segment.track, segment.speaker);
         let data = transcript_event::SegmentData {
             segment_id: segment_id.clone(),
             revision: 0,
