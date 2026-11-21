@@ -1,3 +1,4 @@
+use crate::backend::CliMode;
 use crate::graph::{Graph, RULES};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -89,6 +90,8 @@ pub fn evaluate(predicted: &Graph, gold: &Graph) -> Score {
 
 #[derive(Serialize, Deserialize)]
 pub struct Attempt {
+    #[serde(default)]
+    pub cli_mode: Option<CliMode>,
     pub window: usize,
     pub retry: bool,
     pub input_chars: usize,
@@ -109,7 +112,7 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
     );
     write!(
         report,
-        "| 実行 | 呼び出し | 上限超過 | 入力トークン/回 (件数) | 出力トークン/回 (件数) | p50 ms | p95 ms | 解析率 |"
+        "| 実行 | cli-mode | 呼び出し | 上限超過 | 入力トークン/回 (件数) | 出力トークン/回 (件数) | p50 ms | p95 ms | 解析率 |"
     )?;
     for rule in RULES {
         write!(report, " {rule} 拒否率 |")?;
@@ -118,7 +121,7 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
         report,
         " 再現率 | 適合率 | エッジ F1 | 重複 | 入力合計 | 出力合計 | 会議の長さ (分) | 呼び出し/時 | 入力トークン/時 | 出力トークン/時 |"
     )?;
-    writeln!(report, "|{}", " --- |".repeat(18 + RULES.len()))?;
+    writeln!(report, "|{}", " --- |".repeat(19 + RULES.len()))?;
     for dir in dirs {
         let score: Score = serde_json::from_slice(&fs::read(dir.join("score.json"))?)?;
         let attempts: Vec<Attempt> = fs::read_to_string(dir.join("calls.jsonl"))?
@@ -176,9 +179,11 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
             .unwrap_or(dir.as_os_str())
             .to_string_lossy()
             .replace('|', "\\|");
+        let cli_mode = attempts.first().and_then(|attempt| attempt.cli_mode);
+        let cli_mode = cli_mode.map_or("—", CliMode::label);
         write!(
             report,
-            "| {label} | {} | {} | {input} | {output} | {} | {} | {} |",
+            "| {label} | {cli_mode} | {} | {} | {input} | {output} | {} | {} | {} |",
             calls.len(),
             attempts.len() - calls.len(),
             percentile(50),
@@ -234,6 +239,7 @@ mod tests {
         assert!(
             table.contains("| 会議の長さ (分) | 呼び出し/時 | 入力トークン/時 | 出力トークン/時 |")
         );
+        assert!(table.contains(" | — | 1 | 0 |"));
         assert!(table.contains("| 15.00 | 4.0 | 40.0 | — |"));
     }
 

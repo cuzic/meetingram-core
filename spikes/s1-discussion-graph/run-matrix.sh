@@ -11,6 +11,7 @@ out=${3:-runs/$(date -u +%Y%m%dT%H%M%SZ)}
 mkdir -p "$out"
 cargo build --locked --bin s1-discussion-graph
 bin="${CARGO_TARGET_DIR:-target}/debug/s1-discussion-graph"
+cli_mode=lean
 limit=400
 budget=$(mktemp)
 trap 'rm -f "$budget"' EXIT
@@ -30,7 +31,7 @@ for setting in "${settings[@]}"; do
     total=$((total + calls))
   done
 done
-echo "基本呼び出し $total 回（再試行・入力分割を含めて最大 $limit 回）"
+echo "基本呼び出し $total 回（cli-mode=$cli_mode、再試行・入力分割を含めて最大 $limit 回）"
 if ((total > limit)); then exit 2; fi
 runs=()
 for setting in "${settings[@]}"; do
@@ -46,7 +47,7 @@ for setting in "${settings[@]}"; do
       if [[ "$model" != default ]]; then model_args=(--model "$model"); fi
     fi
     "$bin" run --input "data/$meeting.jsonl" --gold "gold/$meeting.json" \
-      --backend "$backend_arg" "${model_args[@]}" --count "$count" --seconds "$seconds" \
+      --backend "$backend_arg" --cli-mode "$cli_mode" "${model_args[@]}" --count "$count" --seconds "$seconds" \
       --k "$k" --call-budget "$budget" --out "$dir"
   done
 done

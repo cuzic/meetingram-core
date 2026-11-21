@@ -76,9 +76,35 @@ fn utterance(row: &Row, index: usize, cap: usize) -> String {
 }
 
 pub struct Input {
-    pub prompt: String,
+    pub system: &'static str,
+    pub user: String,
     pub consumed: usize,
     pub grounds: HashMap<String, u64>,
+}
+
+#[derive(Clone, Copy)]
+pub struct Prompt<'a> {
+    pub system: &'a str,
+    pub user: &'a str,
+}
+
+impl Prompt<'_> {
+    pub fn chars(self) -> usize {
+        chars(self.system) + 1 + chars(self.user)
+    }
+
+    pub fn combined(self) -> String {
+        format!("{}\n{}", self.system, self.user)
+    }
+}
+
+impl Input {
+    pub fn prompt(&self) -> Prompt<'_> {
+        Prompt {
+            system: self.system,
+            user: &self.user,
+        }
+    }
 }
 
 pub fn input(
@@ -112,14 +138,15 @@ pub fn input(
     let first = utterance(&rows[start], start, limit / 3);
     let render = |context: &[String], reference: &[String], fresh: &[String]| {
         format!(
-            "{SYSTEM}\n{{\"context\":[{}],\"reference\":[{}],\"new\":[{}]}}",
+            "{{\"context\":[{}],\"reference\":[{}],\"new\":[{}]}}",
             context.join(","),
             reference.join(","),
             fresh.join(",")
         )
     };
+    let user_limit = limit.saturating_sub(chars(SYSTEM) + 1);
     let first_only = std::slice::from_ref(&first);
-    while chars(&render(&[], &reference, first_only)) > limit && !reference.is_empty() {
+    while chars(&render(&[], &reference, first_only)) > user_limit && !reference.is_empty() {
         reference.remove(0);
     }
     for index in &mut priority {
@@ -135,7 +162,7 @@ pub fn input(
             break;
         }
         context.push(line);
-        if chars(&render(&context, &reference, first_only)) > limit {
+        if chars(&render(&context, &reference, first_only)) > user_limit {
             context.pop();
             break;
         }
@@ -143,7 +170,7 @@ pub fn input(
     }
     for index in pending {
         fresh.push(utterance(&rows[index], index, limit / 3));
-        if chars(&render(&context, &reference, &fresh)) > limit {
+        if chars(&render(&context, &reference, &fresh)) > user_limit {
             fresh.pop();
             break;
         }
@@ -152,13 +179,14 @@ pub fn input(
     let grounds = (start - reference.len()..start + consumed)
         .map(|index| (format!("u{}", index + 1), rows[index].row_id))
         .collect();
-    let prompt = if consumed == 0 {
+    let user = if consumed == 0 {
         render(&context, &reference, first_only)
     } else {
         render(&context, &reference, &fresh)
     };
     Input {
-        prompt,
+        system: SYSTEM,
+        user,
         consumed,
         grounds,
     }
@@ -184,6 +212,28 @@ pub fn parse(text: &str) -> Result<Vec<Value>, &'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn system_is_fixed_and_counts_toward_the_input_limit() {
+        let graph = Graph::default();
+        let mut rows = [Row {
+            row_id: 1,
+            speaker_label: "自分".into(),
+            start_ms: 0,
+            end_ms: 1,
+            text: "最初の会議".into(),
+        }];
+        let first = input(&rows, 0..1, &graph, &[], 24_000);
+        rows[0].text = "次の会議".into();
+        let second = input(&rows, 0..1, &graph, &[], 24_000);
+        assert_eq!(first.system, SYSTEM);
+        assert_eq!(first.system, second.system);
+        assert!(second.user.contains("次の会議"));
+        assert!(!second.user.contains(SYSTEM));
+        let limit = second.prompt().chars();
+        assert_eq!(input(&rows, 0..1, &graph, &[], limit).consumed, 1);
+        assert_eq!(input(&rows, 0..1, &graph, &[], limit - 1).consumed, 0);
+    }
 
     #[test]
     fn parses_prose_and_fences() {

@@ -4,7 +4,7 @@ mod replay;
 mod report;
 
 use anyhow::{Context, Result, ensure};
-use backend::Backend;
+use backend::{Backend, CliMode};
 use clap::{Args, Parser, Subcommand};
 use graph::Graph;
 use report::Attempt;
@@ -29,6 +29,7 @@ enum Command {
         window: Window,
     },
     Run(Run),
+    Probe(Probe),
     Aggregate {
         #[arg(long)]
         out: PathBuf,
@@ -41,11 +42,28 @@ enum Command {
 struct Window {
     #[arg(long)]
     input: PathBuf,
-    #[arg(long, default_value_t = 6, value_parser = clap::value_parser!(u32).range(1..))]
+    #[arg(long, default_value_t = DEFAULT_COUNT, value_parser = clap::value_parser!(u32).range(1..))]
     count: u32,
-    #[arg(long, default_value_t = 45, value_parser = clap::value_parser!(u32).range(1..))]
+    #[arg(long, default_value_t = DEFAULT_SECONDS, value_parser = clap::value_parser!(u32).range(1..))]
     seconds: u32,
 }
+
+#[derive(Args)]
+struct Probe {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    backend: Backend,
+    #[arg(long)]
+    model: Option<String>,
+    #[arg(long)]
+    cli_mode: CliMode,
+}
+
+const DEFAULT_COUNT: u32 = 6;
+const DEFAULT_SECONDS: u32 = 45;
+const DEFAULT_INPUT_LIMIT: usize = 24_000;
+const DEFAULT_TIMEOUT: u32 = 60;
 
 #[derive(Args)]
 struct Run {
@@ -57,11 +75,13 @@ struct Run {
     backend: Backend,
     #[arg(long)]
     model: Option<String>,
+    #[arg(long, value_enum, default_value = "lean")]
+    cli_mode: CliMode,
     #[arg(long, default_value_t = 3)]
     k: usize,
-    #[arg(long, default_value_t = 24_000)]
+    #[arg(long, default_value_t = DEFAULT_INPUT_LIMIT)]
     input_limit: usize,
-    #[arg(long, default_value_t = 60, value_parser = clap::value_parser!(u32).range(1..))]
+    #[arg(long, default_value_t = DEFAULT_TIMEOUT, value_parser = clap::value_parser!(u32).range(1..))]
     timeout: u32,
     #[arg(long)]
     out: PathBuf,
@@ -105,22 +125,25 @@ async fn run(args: Run) -> Result<()> {
             let mut consumed = false;
             let mut parse_error = None;
             for retry in [false, true] {
-                let prompt = match parse_error {
-                    Some(error) => format!(
+                let mut prompt = input.prompt();
+                let retry_user;
+                if let Some(error) = parse_error {
+                    retry_user = format!(
                         "{}\n前回の解析エラー: {error}。正しい JSON オブジェクトを返してください。",
-                        input.prompt
-                    ),
-                    None => input.prompt.clone(),
-                };
-                let input_chars = prompt.chars().count();
+                        prompt.user
+                    );
+                    prompt.user = &retry_user;
+                }
+                let input_chars = prompt.chars();
                 let allowed = input_chars <= args.input_limit && input.consumed > 0;
                 let start = Instant::now();
                 let reply = if allowed {
                     spend(args.call_budget.as_ref())?;
                     backend::call(
                         args.backend,
+                        args.cli_mode,
                         args.model.as_deref(),
-                        &prompt,
+                        prompt,
                         Duration::from_secs(args.timeout.into()),
                     )
                     .await
@@ -132,6 +155,7 @@ async fn run(args: Run) -> Result<()> {
                 };
                 let parsed = reply.text.as_deref().map(replay::parse).transpose();
                 let mut attempt = Attempt {
+                    cli_mode: Some(args.cli_mode),
                     window: index + 1,
                     retry,
                     input_chars,
@@ -199,6 +223,40 @@ async fn run(args: Run) -> Result<()> {
     Ok(())
 }
 
+async fn probe(args: Probe) -> Result<()> {
+    let window = Window {
+        input: args.input,
+        count: DEFAULT_COUNT,
+        seconds: DEFAULT_SECONDS,
+    };
+    let (rows, boundaries) = window.load()?;
+    let &end = boundaries.first().context("入力に発話がありません")?;
+    let input = replay::input(&rows, 0..end, &Graph::default(), &[], DEFAULT_INPUT_LIMIT);
+    ensure!(input.consumed == end, "最初の窓が入力上限に収まりません");
+    let reply = backend::call(
+        args.backend,
+        args.cli_mode,
+        args.model.as_deref(),
+        input.prompt(),
+        Duration::from_secs(DEFAULT_TIMEOUT.into()),
+    )
+    .await;
+    let tokens = |value: Option<u64>| value.map_or("—".into(), |n| n.to_string());
+    println!(
+        "cli-mode={} input_tokens={} output_tokens={}",
+        args.cli_mode.label(),
+        tokens(reply.input_tokens),
+        tokens(reply.output_tokens)
+    );
+    if let Some(error) = reply.error {
+        anyhow::bail!("CLI の呼び出しに失敗しました ({error})");
+    }
+    if let Some(text) = reply.text {
+        println!("{}", text.chars().take(200).collect::<String>());
+    }
+    Ok(())
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     match Cli::parse().command {
@@ -207,6 +265,7 @@ async fn main() -> Result<()> {
             Ok(())
         }
         Command::Run(args) => run(args).await,
+        Command::Probe(args) => probe(args).await,
         Command::Aggregate { out, runs } => report::aggregate(out, &runs),
     }
 }
