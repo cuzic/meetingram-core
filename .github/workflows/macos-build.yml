@@ -1,0 +1,196 @@
+name: macOS Build & Test
+
+# Tier 0 (`build`) is a blocking gate: compiles/lints/tests the main workspace with
+# macOS's real capture backend (capture-macos, app-service's macos-supervisor
+# feature) enabled. No TCC grant or real audio hardware is needed for this —
+# see stt-transcription-architecture.md-style caveats throughout crates/capture-macos
+# for what has and hasn't been verified.
+#
+# Tier 1 (`e2e-best-effort`) is explicitly NOT a reliable gate — see its own
+# comments below. Real ScreenCaptureKit capture + TCC automation is genuinely
+# fragile across macOS versions; even the `screencapturekit` crate's own upstream
+# CI doesn't attempt this. Confident end-to-end verification still depends on a
+# manual real-Mac pass (see the project's task list — the macOS analogue of
+# Windows's task #9).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".cargo/config.toml"
+      - ".github/workflows/macos-build.yml"
+  pull_request:
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".cargo/config.toml"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # stt-google's build.rs (tonic-build/prost-build, task #42) shells out to
+      # `protoc` to compile its vendored .proto file; macos-latest doesn't ship it,
+      # so every build/clippy/test step below failed with "Could not find `protoc`"
+      # from the moment stt-google was added until this step existed.
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build (capture-macos + app-service macos-supervisor feature)
+        run: |
+          cargo build -p capture-macos --target aarch64-apple-darwin
+          cargo build -p app-service --features macos-supervisor --target aarch64-apple-darwin
+
+      - name: Clippy
+        # --no-deps scopes linting to capture-macos/app-service themselves, not
+        # every workspace-local path dependency clippy walks into while building
+        # them (e.g. audio-timeline) — this job's -D warnings gate is meant for
+        # this macOS work specifically, not as a first-ever blanket clippy pass
+        # over pre-existing, previously-unlinted code elsewhere in the workspace.
+        run: |
+          cargo clippy -p capture-macos --target aarch64-apple-darwin --no-deps -- -D warnings
+          cargo clippy -p app-service --features macos-supervisor --target aarch64-apple-darwin --no-deps -- -D warnings
+
+      - name: Test
+        # No TCC grant or real audio hardware needed here: capture-macos's own
+        # unit tests (e.g. timestamp::cmtime_to_ns) are pure arithmetic, and
+        # app-service's macos_frame_collector tests construct fixture
+        # CapturedFrameRecords directly rather than driving real ScreenCaptureKit.
+        #
+        # DYLD_LIBRARY_PATH=/usr/lib/swift: the screencapturekit/apple-cf crates'
+        # Swift bridge links against libswift_Concurrency.dylib via an @rpath entry
+        # that doesn't resolve at test-binary run time on the CI image, even though
+        # the OS-shipped Swift runtime (present on macOS 12+) has it at this path —
+        # a known class of issue with Rust binaries linking Swift-compiled code
+        # (see e.g. https://forums.swift.org/t/42111). Pointing the dynamic linker
+        # at the system runtime directly as a fallback resolves it without needing
+        # to vendor/ship the library ourselves.
+        env:
+          DYLD_LIBRARY_PATH: /usr/lib/swift
+        run: |
+          cargo test -p capture-macos --target aarch64-apple-darwin
+          cargo test -p app-service --features macos-supervisor --target aarch64-apple-darwin
+
+  e2e-best-effort:
+    runs-on: macos-latest
+    needs: build
+    # Job-level `permissions:` replaces (not adds to) the default token scopes —
+    # `contents: read` must be listed explicitly or `actions/checkout` below (which
+    # needs it to clone this private repo) fails with 403, silently, since this
+    # whole job is `continue-on-error: true`.
+    permissions:
+      contents: read
+      issues: write
+    # This job is allowed to fail without turning the overall check red — real
+    # ScreenCaptureKit capture requires TCC (Screen & System Audio Recording +
+    # Microphone) permissions that cannot be granted through any documented,
+    # stable API. The TCC.db sqlite3 approach below is a known community
+    # workaround (see actions/runner-images#9529 and similar issues), not an
+    # Apple-supported mechanism — its schema differs across macOS versions and it
+    # has been reported to not reliably take effect depending on which process
+    # actually invokes the capture. Treat a red/skipped result here as "unable to
+    # verify automatically today", not as a real regression signal.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same reason as Tier 0's identical step: stt-google's build.rs shells
+      # out to `protoc`, and this job doesn't inherit Tier 0's protoc setup
+      # (they're separate jobs/runners).
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install BlackHole (virtual audio loopback, no kext required)
+        run: brew install blackhole-2ch
+
+      - name: Install switchaudio-osx (deterministic default-device selection)
+        # The runner is a real Mac (built-in speakers exist), so BlackHole never
+        # becomes the default output on its own the way it might on a device-less
+        # headless box. `SwitchAudioSource` pins BlackHole as the default so the
+        # smoke test below captures from it instead of the real speakers.
+        run: brew install switchaudio-osx
+
+      - name: Restart coreaudiod so BlackHole is picked up
+        # BlackHole's own install docs describe a "restart when prompted" step,
+        # which doesn't translate directly to a headless CI runner. Restarting
+        # coreaudiod is the commonly-suggested non-reboot substitute — not yet
+        # confirmed to reliably work in this specific CI environment.
+        run: sudo killall coreaudiod || true
+
+      - name: Set BlackHole as the default output device
+        # Gives the smoke test below a stable, controllable output rather than
+        # whatever real hardware the runner happens to have.
+        run: SwitchAudioSource -s "BlackHole 2ch"
+
+      - name: Pre-seed TCC permissions (best-effort, version-fragile)
+        run: ./scripts/ci/seed-tcc-permissions.sh
+
+      - name: Build smoke-test example
+        run: cargo build -p capture-macos --example smoke_test --target aarch64-apple-darwin
+
+      - name: Run capture smoke test
+        id: smoke_test
+        # See Tier 0's "Test" step for why DYLD_LIBRARY_PATH=/usr/lib/swift is
+        # needed (screencapturekit/apple-cf's Swift bridge).
+        env:
+          DYLD_LIBRARY_PATH: /usr/lib/swift
+        run: |
+          ./target/aarch64-apple-darwin/debug/examples/smoke_test \
+            --duration-secs 10 \
+            --out /tmp/capture-macos-smoke-test.raw
+
+      - name: Assert audio data was actually captured
+        run: ./scripts/ci/assert-segment-written.sh /tmp/capture-macos-smoke-test.raw
+
+      - name: File an issue on failure (this job is continue-on-error, so nothing else surfaces this)
+        # This job's own `continue-on-error: true` (see the comment at the top of
+        # this job) means a real regression here produces no red check on the
+        # PR/push — only a job log nobody opens unless they go looking. See
+        # docs/adr/0002-macos-e2e-best-effort-job-silently-non-blocking.md for why
+        # that's a problem this step exists to fix. Skipped on `pull_request`
+        # (including from forks, where `GITHUB_TOKEN` is read-only anyway) to
+        # avoid filing from untrusted/duplicate PR runs; `push`/`workflow_dispatch`
+        # only. This step just makes sure someone looks at the job log.
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Fixed (no date suffix) so repeated failures dedupe against this exact
+          # title instead of relying on a `--label` this repo doesn't have (and
+          # this step deliberately doesn't create one — a missing/misspelled label
+          # makes `gh issue create --label` fail outright, which is worse than not
+          # labeling at all) or on GitHub's search-index-backed `gh issue list
+          # --search`, which can lag.
+          ISSUE_TITLE: "macOS e2e-best-effort job is failing"
+        run: |
+          set -euo pipefail
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --json title \
+            --jq --arg title "$ISSUE_TITLE" '[.[] | select(.title == $title)] | length')
+          if [ "$existing" -gt 0 ]; then
+            echo "\"$ISSUE_TITLE\" is already open; not filing another."
+            exit 0
+          fi
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "$ISSUE_TITLE" \
+            --body "The \`e2e-best-effort\` job in \`macos-build.yml\` failed on [this run]($run_url) ($(date -u +%Y-%m-%dT%H:%MZ)). This job is \`continue-on-error: true\`, so it did not block the PR/push. Could be a real capture regression or CI-environment flake (TCC seeding, BlackHole install timing) — check the run log to tell which. Close this issue once triaged; a future failure will only file a new one once this title is no longer open."

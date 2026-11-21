@@ -1,0 +1,23 @@
+[package]
+name = "summarize"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Thin wrapper over the genai crate for summarizing diarized meeting transcripts (multi-provider: Anthropic/OpenAI/Gemini/etc. via a model string)."
+
+[dependencies]
+async-trait = "0.1"
+credential-store = { path = "../credential-store" }
+gcp_auth = { version = "0.12", default-features = false, features = ["ring"] }
+genai = "0.7.0-beta.13"
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = "3"
+thiserror = { workspace = true }
+# "process" for `summarize_via_cli` (#59) spawning the `claude`/`codex` CLIs as
+# subprocesses; "fs" for async-reading codex's `-o` output file.
+tokio = { version = "1", features = ["process", "fs"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }

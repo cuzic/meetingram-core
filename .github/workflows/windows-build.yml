@@ -1,0 +1,208 @@
+name: Windows Build & Test
+
+# Tier 0 (`build`) is a blocking gate: compiles/lints/tests the main workspace with
+# Windows's real capture backend (capture-windows, app-service's
+# windows-supervisor/live-transcription features) enabled. No real audio hardware is needed for this — see
+# crates/capture-windows/README.md-style caveats for what has and hasn't been
+# verified against real WASAPI devices.
+#
+# This is the windows-latest analogue of macos-build.yml's Tier 0 job.
+# Tier 1 (`e2e-best-effort`) is the windows-latest analogue of macos-build.yml's
+# own `e2e-best-effort` job — same non-gating philosophy, see its comments below.
+# Confident end-to-end verification still depends on a manual real-Windows pass
+# (see the project's task list, task #9).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".cargo/config.toml"
+      - ".github/workflows/windows-build.yml"
+  pull_request:
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".cargo/config.toml"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # stt-google's build.rs (tonic-build/prost-build, task #42) shells out to
+      # `protoc` to compile its vendored .proto file; windows-latest doesn't ship it,
+      # so every check/build/test step below failed with "Could not find `protoc`"
+      # from the moment stt-google was added until this step existed.
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Keep dependency artifacts even if a later step (clippy/test) fails, so
+          # the next run isn't back to a fully cold cache over one red run.
+          cache-on-failure: true
+
+      - name: Check (capture-windows + app-service windows-supervisor/live-transcription features)
+        # `cargo check` (not `build`): this step exists to fail fast on plain
+        # compile errors before the slower clippy/test steps. The two separate app-service invocations are still both worth
+        # keeping despite live-transcription being a superset: they confirm a
+        # plain `windows-supervisor` build stays isolated from stt-deepgram's
+        # websocket/TLS stack (see that feature's own Cargo.toml doc comment),
+        # which a live-transcription-only check wouldn't catch on its own.
+        run: |
+          cargo check -p capture-windows --target x86_64-pc-windows-msvc
+          cargo check -p app-service --features windows-supervisor --target x86_64-pc-windows-msvc
+          cargo check -p app-service --features live-transcription --target x86_64-pc-windows-msvc
+
+      - name: Clippy
+        # --no-deps scopes linting to capture-windows/app-service themselves,
+        # not every workspace-local path dependency clippy walks into while building
+        # them — this job's -D warnings gate is meant for this Windows work
+        # specifically, not as a first-ever blanket clippy pass over pre-existing,
+        # previously-unlinted code elsewhere in the workspace.
+        run: |
+          cargo clippy -p capture-windows --target x86_64-pc-windows-msvc --no-deps -- -D warnings
+          cargo clippy -p app-service --features live-transcription --target x86_64-pc-windows-msvc --no-deps -- -D warnings
+
+      - name: Test
+        # No real WASAPI device or Deepgram connection needed here: capture-windows's
+        # own unit tests are pure arithmetic/fixture-driven, and app-service's
+        # windows_frame_collector/live_transcription tests construct fixture events
+        # directly rather than driving real WASAPI or a real Deepgram connection.
+        run: |
+          cargo test -p capture-windows --target x86_64-pc-windows-msvc
+          cargo test -p app-service --features live-transcription --target x86_64-pc-windows-msvc
+
+      - name: Test OS-independent crates (segment-store, session-store, stt-api, stt-deepgram)
+        # These are pure Rust, OS-independent crates with no Windows-specific
+        # dependencies — until now they were only ever compiled transitively as
+        # app-service's path dependencies (via the Check/Test steps above), never
+        # `cargo test`ed by any CI workflow (this repo has no general-purpose Linux
+        # CI job either). That silently meant their own `#[test]`s never ran
+        # anywhere, discovered when task #88-91 (gap-retranscription feature) added
+        # real coverage to them: segment-store's Opus encode/decode round-trip,
+        # stt-deepgram's batch-transcription mock-server tests, and session-store's
+        # transcription-gap tracking tests. Kept on windows-latest rather than a new
+        # Linux job, to avoid fragmenting CI into another runner/cache to maintain
+        # for four crates.
+        run: |
+          cargo check -p segment-store -p session-store -p stt-api -p stt-deepgram --target x86_64-pc-windows-msvc
+          cargo clippy -p segment-store -p session-store -p stt-api -p stt-deepgram --target x86_64-pc-windows-msvc --no-deps -- -D warnings
+          cargo test -p segment-store -p session-store -p stt-api -p stt-deepgram --target x86_64-pc-windows-msvc
+
+  e2e-best-effort:
+    runs-on: windows-latest
+    needs: build
+    # This job is allowed to fail without turning the overall check red — the
+    # windows-latest runner image ships with no audio device at all (no sound card
+    # in the VM: WASAPI has no default capture/render endpoint until something
+    # provides one), so this installs VB-CABLE, a third-party virtual audio driver,
+    # and rebinds the default recording device to it via AudioDeviceCmdlets (a
+    # community PowerShell module) — all in one CI step, with no reboot. Neither is
+    # a Microsoft- or VB-Audio-supported CI mechanism, and whether the driver is
+    # actually usable without a reboot on this runner image is exactly what this
+    # job exists to find out. Treat a red/skipped result here as "unable to verify
+    # automatically today", not as a real regression signal — same philosophy as
+    # macos-build.yml's own e2e-best-effort job.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same reason as Tier 0's identical step: stt-google's build.rs shells
+      # out to `protoc`, and this job doesn't inherit Tier 0's protoc setup
+      # (they're separate jobs/runners).
+      - uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install VB-CABLE (virtual audio device)
+        # Downloaded directly from VB-Audio's own site (not a third-party-bundled
+        # redistribution of the driver pack) for supply-chain trust. Installs a
+        # linked "CABLE Input" (playback) / "CABLE Output" (recording) pair — `-i -h`
+        # is VB-CABLE's own documented silent-install switch pair (`-u -h` to
+        # uninstall), not a Windows-standard convention.
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip" -OutFile vbcable.zip
+          Expand-Archive -Path vbcable.zip -DestinationPath vbcable
+          Start-Process -FilePath "vbcable\VBCABLE_Setup_x64.exe" -ArgumentList "-i","-h" -Wait -NoNewWindow
+
+      - name: Set CABLE Output as the default recording device
+        # No official CLI ships with VB-CABLE for this; AudioDeviceCmdlets
+        # (community module, frgnca/AudioDeviceCmdlets) is the commonly used
+        # workaround. `Set-AudioDevice` without `-DefaultOnly` sets both the plain
+        # default and the default-communications role, matching every `DeviceRole`
+        # capture-windows's `resolve_capture_device` can be asked to resolve.
+        #
+        # shell: powershell (Windows PowerShell 5.1), not pwsh (7): pwsh's
+        # PackageManagement doesn't have the legacy NuGet provider bootstrapped by
+        # default, so `Install-PackageProvider -Name NuGet` fails there with "No
+        # match was found for the specified search criteria for the provider
+        # 'NuGet'" — a well-known pwsh-vs-Windows-PowerShell gap, not specific to
+        # this package. 5.1's built-in bootstrap handles it.
+        shell: powershell
+        run: |
+          try {
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
+          } catch {
+            Write-Host "Install-PackageProvider failed, continuing (Install-Module -Force below should still bootstrap it): $_"
+          }
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name AudioDeviceCmdlets -Force -Scope CurrentUser
+          Import-Module AudioDeviceCmdlets
+          Get-AudioDevice -List
+          $recording = Get-AudioDevice -List | Where-Object { $_.Type -eq "Recording" -and $_.Name -like "*CABLE Output*" }
+          if (-not $recording) { throw "CABLE Output recording device not found" }
+          Set-AudioDevice -ID $recording.ID
+
+      - name: Build smoke-test example
+        run: cargo build -p capture-windows --example smoke_test --target x86_64-pc-windows-msvc
+
+      - name: Ensure Windows Audio services are running
+        # Cheap and safe to call even if they're already running. Confirmed by a
+        # prior run of this job that these were already both `Running` on this
+        # runner image — kept as a diagnostic/defensive step, but the actual fix
+        # for the "Access is denied" failure below turned out to be the next step.
+        shell: pwsh
+        run: |
+          Get-Service AudioEndpointBuilder, Audiosrv | Format-Table -AutoSize
+          Start-Service AudioEndpointBuilder -ErrorAction SilentlyContinue
+          Start-Service Audiosrv -ErrorAction SilentlyContinue
+          Get-Service AudioEndpointBuilder, Audiosrv | Format-Table -AutoSize
+
+      - name: Grant desktop apps microphone access (privacy consent)
+        # Two prior attempts at this job failed `IAudioClient::Activate`/
+        # `Initialize` with "Access is denied (0x80070005)" even with the audio
+        # services confirmed running — Windows's Settings > Privacy & security >
+        # Microphone > "Let desktop apps access your microphone" toggle (which this
+        # runner image apparently ships OFF by default) blocks classic Win32 apps
+        # like this smoke test at the WASAPI layer regardless. See
+        # scripts/ci/seed-windows-microphone-consent.ps1's own header for why this
+        # is a best-effort community workaround, not a supported CI mechanism.
+        shell: pwsh
+        run: .\scripts\ci\seed-windows-microphone-consent.ps1
+
+      - name: Run capture smoke test
+        shell: pwsh
+        run: .\target\x86_64-pc-windows-msvc\debug\examples\smoke_test.exe --duration-secs 10 --out smoke-test.raw
+
+      - name: Assert audio data was actually captured
+        shell: bash
+        run: ./scripts/ci/assert-segment-written.sh smoke-test.raw
