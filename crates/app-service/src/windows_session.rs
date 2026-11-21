@@ -21,6 +21,7 @@ use crate::live_transcription::{run_live_transcription, TranscriptionStatus};
 use crate::pipeline::run_pipeline;
 use crate::windows_frame_collector::{collect_frames, CollectedFrames, LevelSnapshot};
 use crate::windows_supervisor::WindowsSupervisor;
+use crate::LiveTranscriptionOptions;
 
 /// Runs one real Windows capture session end to end and blocks the calling thread
 /// for the whole session's duration: starts `WindowsSupervisor`, waits for
@@ -35,25 +36,15 @@ use crate::windows_supervisor::WindowsSupervisor;
 /// cross-compile-checked, never run on real Windows hardware — see this crate's
 /// README.
 ///
-/// `credential_store`, if given, is where `live_transcription` looks up a
-/// Deepgram API key (see that module) to stream real-time transcription
-/// alongside the batch capture this function already does — `None`, or no key
-/// found under it, just means no live transcription for this session (recording
-/// itself is unaffected either way). Wired up unconditionally (not only under the
-/// `live-transcription` feature) so this function's signature doesn't need its
-/// own `#[cfg]`; without that feature, `live_transcription::run_live_transcription`
-/// is a stub that ignores it (and reports `Unavailable` on `transcription_status_sink`
-/// — see that module).
+/// When no provider override is supplied, live transcription uses `credential_store`
+/// to select a provider and read its key. Without the `live-transcription` feature,
+/// the stub reports `Unavailable` on `transcription_status_sink`.
 ///
-/// `transcription_status_sink`, if given, is `live_transcription`'s #52 side
-/// channel — kept up to date with each track's Deepgram connection state so the
-/// desktop UI can tell "STT not connected" apart from "nobody has spoken yet".
+/// `transcription_status_sink`, if given, reports each track's STT connection state
+/// so the desktop UI can tell "STT not connected" apart from "nobody has spoken yet".
 ///
-/// `silence_gate_enabled` is passed straight through to `run_live_transcription`
-/// (see that function's parameter doc comment) — this function doesn't interpret
-/// it itself, it just plumbs the caller's (`apps/desktop`'s) resolved
-/// `AppSettings::silence_gate_enabled` value down to where the gate actually
-/// lives.
+/// `options` configures the Remote track's silence gate and can supply a live
+/// transcription provider for each track.
 ///
 /// `mic_device_id`/`render_device_id`, if given, pin the Microphone/EndpointLoopback
 /// bindings to those exact `capture_windows::device_select::DeviceInfo::id` values
@@ -78,7 +69,7 @@ pub async fn run_windows_capture_session(
     level_sink: Option<Arc<Mutex<LevelSnapshot>>>,
     credential_store: Option<Arc<dyn credential_store::CredentialStore + Send + Sync>>,
     transcription_status_sink: Option<Arc<Mutex<TranscriptionStatus>>>,
-    silence_gate_enabled: bool,
+    options: LiveTranscriptionOptions,
     broker: Option<&LocalBroker>,
     mic_device_id: Option<String>,
     render_device_id: Option<String>,
@@ -112,7 +103,7 @@ pub async fn run_windows_capture_session(
         stt_rx,
         store,
         transcription_status_sink,
-        silence_gate_enabled,
+        options,
         broker,
     );
 

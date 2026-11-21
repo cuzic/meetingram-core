@@ -10,7 +10,6 @@ description = "Orchestrates capture -> align -> segment -> upload for the meetin
 audio-timeline = { path = "../audio-timeline" }
 capture-api = { path = "../capture-api", optional = true }
 capture-macos = { path = "../capture-macos", optional = true }
-capture-windows = { path = "../capture-windows", optional = true }
 chrono = "0.4"
 credential-store = { path = "../credential-store", optional = true }
 crossbeam-channel = { version = "0.5", optional = true }
@@ -37,6 +36,9 @@ tokio = { version = "1", features = ["time", "sync"] }
 tracing = "0.1"
 transcript-event = { path = "../transcript-event", optional = true }
 upload-client = { path = "../upload-client" }
+
+[target.'cfg(windows)'.dependencies]
+capture-windows = { path = "../capture-windows", optional = true }
 windows = { version = "0.62", features = ["Win32_Media_Audio", "Win32_System_Com"], optional = true }
 
 [dev-dependencies]
@@ -83,6 +85,9 @@ macos-supervisor = ["dep:capture-api", "dep:capture-macos", "dep:crossbeam-chann
 # would need the identical `stt_sink`/`live_transcription` extension point once
 # that crate is ever actually compiled/run (see its own crate doc comment) — not
 # done here since macOS capture itself isn't in scope yet.
+#
+# The transcription loop can also run on Linux for tests. The capture backend
+# and Windows bindings are target-specific dependencies.
 #
 # Task #48: all four `stt-*` adapters are pulled in together (rather than one
 # feature per provider) since `SttProviderKind` is a single runtime-selected enum —

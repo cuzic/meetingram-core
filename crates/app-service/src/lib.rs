@@ -37,15 +37,44 @@ pub mod timestamp_mapper;
 
 pub mod pseudo_source;
 
+/// Settings for live transcription during a capture session.
+#[derive(Default)]
+#[non_exhaustive]
+pub struct LiveTranscriptionOptions {
+    pub silence_gate_enabled: bool,
+    #[cfg(feature = "live-transcription")]
+    pub stt_override: Option<SttOverride>,
+}
+
+impl LiveTranscriptionOptions {
+    pub fn with_silence_gate(mut self, enabled: bool) -> Self {
+        self.silence_gate_enabled = enabled;
+        self
+    }
+
+    #[cfg(feature = "live-transcription")]
+    pub fn with_stt_override(mut self, stt_override: SttOverride) -> Self {
+        self.stt_override = Some(stt_override);
+        self
+    }
+}
+
+/// Caller-supplied providers for the Self and Remote live transcription tracks.
+#[cfg(feature = "live-transcription")]
+pub struct SttOverride {
+    pub self_track: std::sync::Arc<dyn stt_api::SttProvider>,
+    pub remote_track: std::sync::Arc<dyn stt_api::SttProvider>,
+}
+
 #[cfg(feature = "windows-supervisor")]
 pub mod live_transcription;
-#[cfg(feature = "windows-supervisor")]
+#[cfg(all(windows, feature = "windows-supervisor"))]
 pub mod windows_device_watch;
-#[cfg(feature = "windows-supervisor")]
+#[cfg(all(windows, feature = "windows-supervisor"))]
 pub mod windows_frame_collector;
-#[cfg(feature = "windows-supervisor")]
+#[cfg(all(windows, feature = "windows-supervisor"))]
 pub mod windows_session;
-#[cfg(feature = "windows-supervisor")]
+#[cfg(all(windows, feature = "windows-supervisor"))]
 pub mod windows_supervisor;
 
 // Only re-exported when `macos-supervisor` is off: both this and
@@ -55,9 +84,13 @@ pub mod windows_supervisor;
 // which nothing stops even though the two are only ever meaningful on their own
 // respective OS). Callers building with `macos-supervisor` reach the macOS type via
 // `app_service::macos_frame_collector::LevelSnapshot` instead of a root re-export.
-#[cfg(all(feature = "windows-supervisor", not(feature = "macos-supervisor")))]
+#[cfg(all(
+    windows,
+    feature = "windows-supervisor",
+    not(feature = "macos-supervisor")
+))]
 pub use windows_frame_collector::LevelSnapshot;
-#[cfg(feature = "windows-supervisor")]
+#[cfg(all(windows, feature = "windows-supervisor"))]
 pub use windows_session::run_windows_capture_session;
 // Same collision rationale as `LevelSnapshot` above: `capture_windows`/
 // `capture_macos`'s `device_select::DeviceInfo` are structurally identical (both
@@ -69,7 +102,11 @@ pub use windows_session::run_windows_capture_session;
 pub use capture_macos::device_select::{
     enumerate_capture_devices, enumerate_render_devices, DeviceInfo,
 };
-#[cfg(all(feature = "windows-supervisor", not(feature = "macos-supervisor")))]
+#[cfg(all(
+    windows,
+    feature = "windows-supervisor",
+    not(feature = "macos-supervisor")
+))]
 pub use capture_windows::device_select::{
     enumerate_capture_devices, enumerate_render_devices, DeviceInfo,
 };
@@ -78,7 +115,11 @@ pub use capture_windows::device_select::{
 // device list (see `windows_device_watch`/`macos_device_watch`'s doc comments).
 #[cfg(feature = "macos-supervisor")]
 pub use macos_device_watch::DeviceChangeWatcher;
-#[cfg(all(feature = "windows-supervisor", not(feature = "macos-supervisor")))]
+#[cfg(all(
+    windows,
+    feature = "windows-supervisor",
+    not(feature = "macos-supervisor")
+))]
 pub use windows_device_watch::DeviceChangeWatcher;
 // `live_transcription` (unlike `LevelSnapshot`) has no macOS-side equivalent type
 // to collide with (see that module's doc comment), so this re-export doesn't need
@@ -116,3 +157,11 @@ pub use silence_gate::{GateAction, GateConfig, SilenceGate};
 pub use stt_provider_kind::{SttProviderKind, CREDENTIAL_SERVICE, SELECTED_STT_PROVIDER_ACCOUNT};
 pub use timeline_adapter::align_track;
 pub use upload_worker::{run_until_drained, upload_pending_once, UploadPassSummary};
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn live_transcription_silence_gate_is_disabled_by_default() {
+        assert!(!super::LiveTranscriptionOptions::default().silence_gate_enabled);
+    }
+}

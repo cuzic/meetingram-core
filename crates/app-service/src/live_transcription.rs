@@ -38,6 +38,8 @@ use recorder_domain::{speaker_label, SessionId, TrackKind};
 use session_store::SessionStore;
 use tokio::sync::mpsc::Receiver;
 
+use crate::LiveTranscriptionOptions;
+
 /// Per-track Deepgram connection status (task #52): the desktop UI can't otherwise
 /// tell "nobody has spoken yet" from "STT is broken" when the transcript panel is
 /// empty. Updated by [`run_live_transcription`] as each track's session state
@@ -741,7 +743,7 @@ mod stt_wiring {
     /// track's connection state for #52's UI visibility — `None` is fine, it's just
     /// a side channel, mirroring `level_sink`/`stt_sink` elsewhere in this crate.
     ///
-    /// `silence_gate_enabled`, if `true`, applies a local RMS VAD ([`SilenceGate`])
+    /// `options.silence_gate_enabled`, if `true`, applies a local RMS VAD ([`SilenceGate`])
     /// to the **Remote track only** (v1 scope — the Self track always streams
     /// unconditionally, regardless of this flag) so silent stretches aren't sent
     /// to the (metered) STT provider at all; see this crate's `silence_gate` and
@@ -749,6 +751,9 @@ mod stt_wiring {
     /// correction it requires. `false` preserves this function's pre-gate
     /// behavior exactly (unconditional send on both tracks, no keepalive timer,
     /// no timestamp correction).
+    ///
+    /// `options.stt_override`, when supplied, uses the caller's providers at
+    /// the capture sample rate without consulting the credential store.
     ///
     /// A **mid-session disconnect** (task #82: an `SttEvent::Error`, a
     /// `send_audio`/`keep_alive` call returning `Err`, or a track's events
@@ -795,7 +800,7 @@ mod stt_wiring {
         mut audio_rx: Receiver<(TrackKind, Vec<f32>, u32)>,
         store: &SessionStore,
         status_sink: Option<Arc<Mutex<TranscriptionStatus>>>,
-        silence_gate_enabled: bool,
+        options: LiveTranscriptionOptions,
         broker: Option<&LocalBroker>,
     ) {
         // Task #90: the clock every `transcription_gaps` row's `start_ms`/
@@ -812,48 +817,43 @@ mod stt_wiring {
         let mut self_segment_counter: u64 = 0;
         let mut remote_segment_counter: u64 = 0;
 
-        let Some(credential_store) = credential_store else {
-            tracing::debug!("live transcription: no credential store configured, skipping");
-            set_both_status(&status_sink, TrackTranscriptionStatus::NotConfigured);
-            drain(&mut audio_rx).await;
-            return;
-        };
-
-        let selected_kind = credential_store
-            .load(CREDENTIAL_SERVICE, SELECTED_STT_PROVIDER_ACCOUNT)
-            .ok()
-            .and_then(|value| SttProviderKind::from_account_value(&value))
-            .unwrap_or_default();
-
-        let provider = match build_stt_provider(selected_kind, credential_store.as_ref()) {
-            Ok(provider) => provider,
-            Err(err) => {
-                tracing::info!(%err, ?selected_kind, "live transcription: no STT provider available, skipping");
+        let LiveTranscriptionOptions {
+            silence_gate_enabled,
+            stt_override,
+        } = options;
+        let (self_provider, remote_provider, target_rate_hz) = if let Some(overrides) = stt_override
+        {
+            tracing::info!("stt override active");
+            (overrides.self_track, overrides.remote_track, sample_rate_hz)
+        } else {
+            let Some(credential_store) = credential_store else {
+                tracing::debug!("live transcription: no credential store configured, skipping");
                 set_both_status(&status_sink, TrackTranscriptionStatus::NotConfigured);
                 drain(&mut audio_rx).await;
                 return;
-            }
+            };
+
+            let selected_kind = credential_store
+                .load(CREDENTIAL_SERVICE, SELECTED_STT_PROVIDER_ACCOUNT)
+                .ok()
+                .and_then(|value| SttProviderKind::from_account_value(&value))
+                .unwrap_or_default();
+
+            let provider = match build_stt_provider(selected_kind, credential_store.as_ref()) {
+                Ok(provider) => provider,
+                Err(err) => {
+                    tracing::info!(%err, ?selected_kind, "live transcription: no STT provider available, skipping");
+                    set_both_status(&status_sink, TrackTranscriptionStatus::NotConfigured);
+                    drain(&mut audio_rx).await;
+                    return;
+                }
+            };
+
+            // Reconnect tasks own an Arc clone of their track's provider.
+            let provider: Arc<dyn SttProvider> = Arc::from(provider);
+            let target_rate_hz = target_sample_rate_hz(selected_kind, sample_rate_hz);
+            (provider.clone(), provider, target_rate_hz)
         };
-        // `Arc` rather than `Box` (task #87): a mid-session reconnect attempt
-        // now runs as a `tokio::spawn`ed task (see `attempt_reconnect`), which
-        // needs to own the provider it connects through rather than borrow it
-        // from this function's stack frame — an `Arc` clone per spawned attempt
-        // is cheap, and `SttProvider: Send + Sync` (see `stt-api`) already makes
-        // `dyn SttProvider` shareable across tasks like this.
-        let provider: Arc<dyn SttProvider> = Arc::from(provider);
-        // Phase 1A capture is a fixed format (design.md; see
-        // `windows_frame_collector`'s "falls back to 48kHz mono" comment) — the
-        // session is opened once, up front, at the target rate rather than
-        // per-chunk, since a provider's session config (like every provider's) is
-        // fixed for the connection's lifetime. `target_rate_hz` may differ from
-        // `sample_rate_hz` (the capture pipeline's own rate) for providers that
-        // require a fixed rate (see `target_sample_rate_hz`); each incoming chunk is
-        // resampled to it below, right before `send_audio`.
-        // Diarization is additional info within a single track (e.g. multiple people
-        // on the Remote track in a group call) — the app's primary speaker split is
-        // still Self/Remote (see this module's doc comment), not a provider's own
-        // `speaker` index alone.
-        let target_rate_hz = target_sample_rate_hz(selected_kind, sample_rate_hz);
         // Known side effect of `silence_gate_enabled` (Remote track only): once
         // silence is skipped locally, the provider itself sees almost no silence
         // in its input stream, so its own `vad_events(true)`-subscribed VAD
@@ -886,14 +886,14 @@ mod stt_wiring {
         // this function's lifetime.
         let (self_sess, remote_sess) = tokio::join!(
             start_session_with_timeout(
-                provider.as_ref(),
+                self_provider.as_ref(),
                 config.clone(),
                 "self",
                 TrackKind::SelfMic,
                 &status_sink
             ),
             start_session_with_timeout(
-                provider.as_ref(),
+                remote_provider.as_ref(),
                 config.clone(),
                 "remote",
                 TrackKind::RemoteAudio,
@@ -1049,11 +1049,11 @@ mod stt_wiring {
                 // timer immediately rather than blocking on it.
                 _ = tokio::time::sleep_until(self_reconnect.retry_at.unwrap_or_else(Instant::now)), if audio_open && self_reconnect.retry_at.is_some() && self_reconnect.in_flight.is_none() => {
                     self_reconnect.retry_at = None;
-                    self_reconnect.in_flight = Some(tokio::spawn(attempt_reconnect(provider.clone(), config.clone(), "self", TrackKind::SelfMic, status_sink.clone())));
+                    self_reconnect.in_flight = Some(tokio::spawn(attempt_reconnect(self_provider.clone(), config.clone(), "self", TrackKind::SelfMic, status_sink.clone())));
                 }
                 _ = tokio::time::sleep_until(remote.reconnect.retry_at.unwrap_or_else(Instant::now)), if audio_open && remote.reconnect.retry_at.is_some() && remote.reconnect.in_flight.is_none() => {
                     remote.reconnect.retry_at = None;
-                    remote.reconnect.in_flight = Some(tokio::spawn(attempt_reconnect(provider.clone(), config.clone(), "remote", TrackKind::RemoteAudio, status_sink.clone())));
+                    remote.reconnect.in_flight = Some(tokio::spawn(attempt_reconnect(remote_provider.clone(), config.clone(), "remote", TrackKind::RemoteAudio, status_sink.clone())));
                 }
                 // Reconnect completions (task #87): awaits whichever spawned
                 // `attempt_reconnect` task the arms above started, without
@@ -1739,6 +1739,134 @@ mod stt_wiring {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        type EventSender = tokio::sync::mpsc::UnboundedSender<SttEvent>;
+
+        struct RecordingProvider {
+            starts: tokio::sync::mpsc::UnboundedSender<(u32, EventSender)>,
+            audio: tokio::sync::mpsc::UnboundedSender<Vec<f32>>,
+        }
+
+        #[async_trait::async_trait]
+        impl SttProvider for RecordingProvider {
+            async fn start_session(
+                &self,
+                config: SttSessionConfig,
+            ) -> Result<(Box<dyn SttSession>, UnboundedReceiver<SttEvent>), SttError> {
+                let (events_tx, events_rx) = tokio::sync::mpsc::unbounded_channel();
+                self.starts
+                    .send((config.sample_rate_hz, events_tx))
+                    .unwrap();
+                Ok((Box::new(RecordingSession(self.audio.clone())), events_rx))
+            }
+        }
+
+        struct RecordingSession(tokio::sync::mpsc::UnboundedSender<Vec<f32>>);
+
+        #[async_trait::async_trait]
+        impl SttSession for RecordingSession {
+            async fn send_audio(&mut self, chunk: AudioChunk<'_>) -> Result<(), SttError> {
+                self.0.send(chunk.pcm.to_vec()).unwrap();
+                Ok(())
+            }
+
+            async fn finalize(self: Box<Self>) -> Result<(), SttError> {
+                Ok(())
+            }
+        }
+
+        #[tokio::test(start_paused = true)]
+        async fn stt_override_routes_audio_and_reconnects_per_track_without_credentials() {
+            let (store, session_id) = test_store_and_session();
+            let (audio_tx, audio_rx) = tokio::sync::mpsc::channel(2);
+            let (self_starts_tx, mut self_starts) = tokio::sync::mpsc::unbounded_channel();
+            let (remote_starts_tx, mut remote_starts) = tokio::sync::mpsc::unbounded_channel();
+            let (self_audio_tx, mut self_audio) = tokio::sync::mpsc::unbounded_channel();
+            let (remote_audio_tx, mut remote_audio) = tokio::sync::mpsc::unbounded_channel();
+            let options =
+                crate::LiveTranscriptionOptions::default().with_stt_override(crate::SttOverride {
+                    self_track: Arc::new(RecordingProvider {
+                        starts: self_starts_tx,
+                        audio: self_audio_tx,
+                    }),
+                    remote_track: Arc::new(RecordingProvider {
+                        starts: remote_starts_tx,
+                        audio: remote_audio_tx,
+                    }),
+                });
+
+            let rate = 44_100;
+            let exercise = async move {
+                let (self_rate, self_events) = self_starts.recv().await.unwrap();
+                let (remote_rate, remote_events) = remote_starts.recv().await.unwrap();
+                assert_eq!((self_rate, remote_rate), (rate, rate));
+
+                let self_pcm = vec![0.25, 0.5];
+                let remote_pcm = vec![-0.25, -0.5];
+                audio_tx
+                    .send((TrackKind::SelfMic, self_pcm.clone(), rate))
+                    .await
+                    .unwrap();
+                audio_tx
+                    .send((TrackKind::RemoteAudio, remote_pcm.clone(), rate))
+                    .await
+                    .unwrap();
+                assert_eq!(self_audio.recv().await.unwrap(), self_pcm);
+                assert_eq!(remote_audio.recv().await.unwrap(), remote_pcm);
+
+                // Close one event stream at a time to identify which provider reconnects.
+                drop(self_events);
+                let (self_rate, self_reconnected) = self_starts.recv().await.unwrap();
+                assert_eq!(self_rate, rate);
+                drop(remote_events);
+                let (remote_rate, remote_reconnected) = remote_starts.recv().await.unwrap();
+                assert_eq!(remote_rate, rate);
+
+                drop(audio_tx);
+                drop((self_reconnected, remote_reconnected));
+            };
+
+            tokio::time::timeout(Duration::from_secs(10), async {
+                tokio::join!(
+                    run_live_transcription(
+                        session_id, rate, None, audio_rx, &store, None, options, None
+                    ),
+                    exercise,
+                );
+            })
+            .await
+            .expect("both tracks should receive audio and reconnect via their own providers");
+        }
+
+        #[tokio::test]
+        async fn without_stt_override_missing_credentials_are_not_configured() {
+            let (store, session_id) = test_store_and_session();
+            let (audio_tx, audio_rx) = tokio::sync::mpsc::channel(1);
+            drop(audio_tx);
+            let sink = Arc::new(Mutex::new(TranscriptionStatus {
+                self_status: TrackTranscriptionStatus::Connecting,
+                remote_status: TrackTranscriptionStatus::Connecting,
+            }));
+
+            run_live_transcription(
+                session_id,
+                48_000,
+                None,
+                audio_rx,
+                &store,
+                Some(sink.clone()),
+                crate::LiveTranscriptionOptions::default(),
+                None,
+            )
+            .await;
+
+            let status = sink.lock().unwrap();
+            assert_eq!(status.self_status, TrackTranscriptionStatus::NotConfigured);
+            assert_eq!(
+                status.remote_status,
+                TrackTranscriptionStatus::NotConfigured
+            );
+        }
 
         #[test]
         fn set_status_updates_only_the_named_track() {
@@ -2836,7 +2964,7 @@ pub async fn run_live_transcription(
     mut audio_rx: Receiver<(TrackKind, Vec<f32>, u32)>,
     _store: &SessionStore,
     status_sink: Option<Arc<Mutex<TranscriptionStatus>>>,
-    _silence_gate_enabled: bool,
+    _options: LiveTranscriptionOptions,
     _broker: Option<&LocalBroker>,
 ) {
     set_both_status(&status_sink, TrackTranscriptionStatus::Unavailable);
