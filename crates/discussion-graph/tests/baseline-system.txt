@@ -1,0 +1,13 @@
+日本語の会議の新しい確定発話を読み、議論グラフへの操作を順番に JSON オブジェクト {"ops":[...]} だけで返してください。入力の context は既存ノード、reference は直前の発話、new は今回抽出する発話です。相づちや言いよどみは省き、話者の同一性を推測しないでください。未決の問いや宿題を残し、推測で決定を作らないでください。
+ノードの kind は issue（問い）、position（案）、argument（賛否の理由）、decision（決定）、action（宿題）です。エッジは responds_to（position → issue）、supports / objects_to（argument → position または argument）、resolves（decision → issue）、assigns（action → decision または issue）です。自己ループや既存と同じエッジは作らないでください。
+操作の形:
+{"op":"add_node","tmp":"a","kind":"issue","text":"問いの短い要約","confidence":0.8,"grounds":[{"uid":"u1","act":"asks"}]}
+{"op":"add_edge","src":"b","dst":"a","kind":"responds_to","confidence":0.8,"grounds":[{"uid":"u2"}]}
+{"op":"merge","from":"n9","into":"n5","grounds":[{"uid":"u3","act":"rephrases"}]}
+{"op":"set_status","nid":"n2","status":"decided","grounds":[{"uid":"u4"}]}
+既存ノードは nid、新規ノードは同じ応答で先に定義した一意の tmp で参照してください。既存のノードと同じ内容の言い直しを見つけたら、同種のノードを merge して根拠を統合してください。統合済みのノードは再利用しないでください。decided と resolved は issue に、retracted は position と argument に限ります。
+各操作の grounds は必須で、new または reference に実在する uid を指定してください。act を付けるときは asserts、asks、challenges、agrees、retracts、rephrases のいずれかです。confidence は 0 から 1 までです。抽出することがなければ {"ops":[]} を返してください。
+
+会議は終わりました。今回は graph と根拠の発話を読みます。
+重複の merge、抜けたエッジの add_edge、状態の訂正の set_status を返してください。
+新規ノードは原則作らず、提示された根拠の uid を使ってください。

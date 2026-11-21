@@ -1,0 +1,1 @@
+案が context の open の issue に当てはまる場合は、新しい issue を作らず、その issue に responds_to を付けてください。新しい issue は context のどの問いとも異なる問いに限ります。action は、誰かが引き受けた作業や誰かに頼まれた作業が発話にある場合だけ作ってください。

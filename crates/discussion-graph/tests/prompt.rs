@@ -1,8 +1,9 @@
 mod common;
 
 use discussion_graph::{
-    build_consolidate, build_incremental, ConsolidateStyle, Graph, Ground, NodeKind, Prompt,
-    PromptError, Review, Status, DEFAULT_INPUT_LIMIT,
+    apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
+    build_incremental, parse_ops, ConsolidateStyle, Edge, EdgeKind, Graph, Ground, NodeKind,
+    Prompt, PromptError, Review, Status, DEFAULT_INPUT_LIMIT,
 };
 use serde_json::Value;
 
@@ -115,67 +116,391 @@ fn incremental_still_includes_a_long_first_utterance_when_space_is_tight() {
     );
 }
 
-#[test]
-fn consolidation_splits_and_caps_text_before_reducing_ground_count() {
-    let mut graph = Graph::default();
-    for i in 1..=2 {
-        let id = format!("n{i}");
-        graph.nodes.insert(id.clone(), node(&id, NodeKind::Issue));
-        for k in 0..2 {
-            let u = utterance(i * 10 + k, "根".repeat(if i == 1 { 650 } else { 250 }));
-            graph.grounds.push(Ground {
-                target: id.clone(),
-                uid: u.uid.clone(),
-                act: None,
-            });
-            graph.utterances.insert(u.uid.clone(), u);
-        }
-    }
-    let style = ConsolidateStyle::Strengthened;
-    let full = build_consolidate(&graph, style, DEFAULT_INPUT_LIMIT).unwrap();
-    assert_eq!(full.len(), 1);
-    assert!(full[0].system.contains("すべての組"));
-    let system_size = full[0].system.chars().count();
+fn add_ground(graph: &mut Graph, nid: &str, row: i64, length: usize) {
+    let u = utterance(row, "根".repeat(length));
+    graph.grounds.push(Ground {
+        target: nid.into(),
+        uid: u.uid.clone(),
+        act: None,
+    });
+    graph.utterances.insert(u.uid.clone(), u);
+}
 
-    let limit = system_size + 760;
-    let split = build_consolidate(&graph, style, limit).unwrap();
-    assert_eq!(split.len(), 2);
-    for prompt in &split {
-        assert!(size(prompt) <= limit);
-        assert_eq!(
-            section(prompt, "issues")
-                .iter()
-                .map(|n| n["nid"].as_str().unwrap())
-                .collect::<Vec<_>>(),
-            ["n1", "n2"]
+fn graph_with_groups(count: usize) -> Graph {
+    let mut graph = Graph::default();
+    for i in 1..=count {
+        let issue = format!("n{i}");
+        let position = format!("p{i}");
+        let eid = format!("e{i}");
+        let mut question = node(&issue, NodeKind::Issue);
+        question.created_rev = i as u64;
+        graph.nodes.insert(issue.clone(), question);
+        graph
+            .nodes
+            .insert(position.clone(), node(&position, NodeKind::Position));
+        graph.edges.insert(
+            eid.clone(),
+            Edge {
+                eid,
+                src: position,
+                dst: issue,
+                kind: EdgeKind::RespondsTo,
+                confidence: 1.0,
+                review: Review::Auto,
+                created_rev: 1,
+            },
         );
-        let nodes = section(prompt, "graph nodes");
-        assert_eq!(nodes.len(), 1);
-        assert_eq!(nodes[0]["grounds"].as_array().unwrap().len(), 2);
-        assert!(nodes[0]["grounds"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .all(|ground| ground["text"].as_str().unwrap().chars().count() == 200));
-        assert_eq!(nodes[0]["ground_count"], 2);
     }
-    let limit = system_size + 510;
-    let reduced = build_consolidate(&graph, style, limit).unwrap();
-    for prompt in &reduced {
-        assert!(size(prompt) <= limit);
-        assert_eq!(section(prompt, "issues").len(), 2);
-        assert_eq!(prompt.allowed_uids.len(), 1);
-        let nodes = section(prompt, "graph nodes");
-        assert_eq!(nodes[0]["grounds"].as_array().unwrap().len(), 1);
-        assert_eq!(nodes[0]["ground_count"], 2);
+    graph
+}
+
+fn assert_graph_prompt(prompt: &Prompt, edges: usize, nodes: usize, limit: usize) {
+    assert!(size(prompt) <= limit);
+    assert_eq!(section(prompt, "graph edges").len(), edges);
+
+    let nodes_in_prompt = section(prompt, "graph nodes");
+    assert_eq!(nodes_in_prompt.len(), nodes);
+    let uids: std::collections::BTreeSet<_> = nodes_in_prompt
+        .iter()
+        .flat_map(|n| n["grounds"].as_array().unwrap())
+        .map(|g| g["uid"].as_str().unwrap())
+        .collect();
+    assert_eq!(prompt.allowed_uids, uids.into_iter().collect::<Vec<_>>());
+    assert!(prompt.new_uids.is_empty());
+    for text in ["Synthetic", "根根"] {
+        assert!(!prompt.system.contains(text), "{text}");
     }
-    let baseline =
-        build_consolidate(&graph, ConsolidateStyle::Baseline, DEFAULT_INPUT_LIMIT).unwrap();
-    assert_eq!(baseline.len(), 1);
-    assert!(!baseline[0].system.contains("すべての組"));
-    assert_eq!(baseline[0].allowed_uids.len(), 4);
+}
+
+#[test]
+fn baseline_matches_original_prompt_when_it_fits() {
+    let mut graph = graph_with_groups(1);
+    add_ground(&mut graph, "n1", 1, 1);
+    let prompt = build_consolidate(&graph, ConsolidateStyle::Baseline, DEFAULT_INPUT_LIMIT)
+        .unwrap()
+        .remove(0);
+    assert_eq!(prompt.system, include_str!("baseline-system.txt"));
+    // Use the original field order with or without serde_json's preserve_order.
+    let issue = serde_json::json!({
+        "nid":"n1", "kind":"issue", "status":"open", "text":"Synthetic n1",
+        "confidence":1.0, "ground_count":1,
+        "grounds":[{"uid":"u1","speaker_label":"A","text":"根"}],
+    });
+    let position = serde_json::json!({
+        "nid":"p1", "kind":"position", "status":"open", "text":"Synthetic p1",
+        "confidence":1.0, "ground_count":0, "grounds":[],
+    });
+    let edge = serde_json::json!({
+        "eid":"e1", "src":"p1", "dst":"n1", "kind":"responds_to", "confidence":1.0,
+    });
     assert_eq!(
-        build_consolidate(&graph, style, system_size + 20),
+        prompt.user,
+        format!("graph nodes\n{issue}\n{position}\ngraph edges\n{edge}\n")
+    );
+    assert_eq!(prompt.allowed_uids, ["u1"]);
+}
+
+#[test]
+fn issue_stage_uid_only_evidence_still_allows_a_merge() {
+    let mut graph = Graph::default();
+    for row in 1..=120 {
+        let id = format!("n{row}");
+        let mut issue = node(&id, NodeKind::Issue);
+        issue.text = "問".repeat(40);
+        graph.nodes.insert(id.clone(), issue);
+        add_ground(&mut graph, &id, row, 400);
+    }
+    let prompt = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
+        .unwrap()
+        .unwrap();
+    assert_eq!(prompt.omitted_issues, 0);
+    assert_eq!(
+        section(&prompt, "graph nodes")[0]["grounds"],
+        serde_json::json!([{"uid":"u1"}])
+    );
+    let allowed: Vec<_> = prompt.allowed_uids.iter().map(String::as_str).collect();
+    let ops =
+        parse_ops(r#"{"ops":[{"op":"merge","from":"n2","into":"n1","grounds":[{"uid":"u1"}]}]}"#)
+            .unwrap();
+    let result = apply_patch(&graph, &ops, &allowed);
+    assert!(result.rejected.is_empty(), "{:?}", result.rejected);
+    assert_eq!(result.applied.len(), 1);
+}
+
+#[test]
+fn baseline_reduces_evidence_without_losing_edges_or_nodes() {
+    let mut graph = graph_with_groups(2);
+    for row in 1..=3 {
+        add_ground(&mut graph, "n1", row, 400);
+    }
+    let build = |limit| {
+        build_consolidate(&graph, ConsolidateStyle::Baseline, limit)
+            .unwrap()
+            .remove(0)
+    };
+    let full = build(DEFAULT_INPUT_LIMIT);
+    assert_graph_prompt(&full, 2, 4, DEFAULT_INPUT_LIMIT);
+    let limit = size(&full) - 450;
+    let reduced = build(limit);
+    assert_graph_prompt(&reduced, 2, 4, limit);
+    assert_eq!(reduced.allowed_uids, ["u1"]);
+    let limit = size(&reduced) - 1;
+    assert_graph_prompt(&build(limit), 2, 4, limit);
+    assert_eq!(build(limit).allowed_uids, ["u1", "u2", "u3"]);
+}
+
+#[test]
+fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
+    let mut graph = graph_with_groups(3);
+    let mut hidden = node("hidden", NodeKind::Issue);
+    hidden.review = Review::Rejected;
+    graph.nodes.insert(hidden.nid.clone(), hidden);
+    let mut merged = node("merged", NodeKind::Issue);
+    merged.status = Status::Merged;
+    graph.nodes.insert(merged.nid.clone(), merged);
+    add_ground(&mut graph, "n1", 2, 400);
+    add_ground(&mut graph, "n1", 1, 400);
+    add_ground(&mut graph, "n2", 3, 400);
+    add_ground(&mut graph, "n3", 4, 400);
+    add_ground(&mut graph, "p1", 5, 400);
+
+    let build = |graph: &Graph, limit| build_consolidate_issues(graph, limit).unwrap().unwrap();
+    let full = build(&graph, DEFAULT_INPUT_LIMIT);
+    assert_graph_prompt(&full, 0, 3, DEFAULT_INPUT_LIMIT);
+    assert!(full.system.contains("issue 同士の merge だけ"));
+    assert!(!full.system.contains("reference"));
+    assert!(!full.system.contains("add_node"));
+    assert!(full.user.find("graph edges").unwrap() < full.user.find("graph nodes").unwrap());
+    assert_eq!(full.allowed_uids, ["u1", "u3", "u4"]);
+    let issues = section(&full, "graph nodes");
+    assert_eq!(issues[0]["ground_count"], 2);
+    assert_eq!(issues[0]["grounds"][0]["text"], "根".repeat(100));
+
+    let limit = size(&full) - 1;
+    let without_evidence = build(&graph, limit);
+    assert_graph_prompt(&without_evidence, 0, 3, limit);
+    assert_eq!(without_evidence.omitted_issues, 0);
+    assert_eq!(without_evidence.allowed_uids, ["u1", "u2", "u3", "u4"]);
+
+    let limit = size(&without_evidence) - 1;
+    let trimmed = build(&graph, limit);
+    assert_graph_prompt(&trimmed, 0, 2, limit);
+    assert_eq!(trimmed.omitted_issues, 1);
+    let issues = section(&trimmed, "graph nodes");
+    assert_eq!(issues[0]["nid"], "n1");
+    assert_eq!(issues[1]["nid"], "n2");
+    assert_eq!(
+        build_consolidate_issues(&graph, 1),
         Err(PromptError::InputLimit)
     );
+    for id in ["n1", "n2"] {
+        graph.nodes.remove(id);
+    }
+    assert_eq!(build_consolidate_issues(&graph, 1).unwrap(), None);
+}
+
+#[test]
+fn group_stage_packs_thirty_small_groups_into_one_prompt() {
+    let graph = graph_with_groups(30);
+    let prompts = build_consolidate_groups(&graph, DEFAULT_INPUT_LIMIT).0;
+    assert_eq!(prompts.len(), 1);
+    assert_graph_prompt(&prompts[0], 30, 60, DEFAULT_INPUT_LIMIT);
+    assert_eq!(section(&prompts[0], "graph groups").len(), 30);
+    assert!(!prompts[0].system.contains("reference"));
+    assert!(!prompts[0].system.contains("add_node"));
+    assert!(
+        prompts[0].user.find("graph edges").unwrap() < prompts[0].user.find("graph nodes").unwrap()
+    );
+}
+
+#[test]
+fn group_stage_reduces_evidence_in_order_and_preserves_edges_and_node_text() {
+    let mut graph = graph_with_groups(1);
+    graph.nodes.get_mut("p1").unwrap().text = "案".repeat(400);
+    for row in 1..=3 {
+        add_ground(&mut graph, "n1", row, 400);
+    }
+    let build = |limit| build_consolidate_groups(&graph, limit).0.remove(0);
+    let mut limit = DEFAULT_INPUT_LIMIT;
+    for (count, length) in [(3, 400), (3, 200), (1, 200), (3, 0)] {
+        let prompt = build(limit);
+        assert_graph_prompt(&prompt, 1, 2, limit);
+        let nodes = section(&prompt, "graph nodes");
+        let grounds = nodes[0]["grounds"].as_array().unwrap();
+        assert_eq!(grounds.len(), count);
+        if length == 0 {
+            assert_eq!(
+                grounds,
+                &vec![
+                    serde_json::json!({"uid":"u1"}),
+                    serde_json::json!({"uid":"u2"}),
+                    serde_json::json!({"uid":"u3"})
+                ]
+            );
+        } else {
+            assert!(grounds.iter().all(|g| g["text"] == "根".repeat(length)));
+        }
+        assert_eq!(nodes[0]["ground_count"], 3);
+        assert_eq!(nodes[1]["text"], "案".repeat(400));
+        assert!(!prompt.system.contains("案案"));
+        limit = size(&prompt) - 1;
+    }
+    assert_eq!(build_consolidate_groups(&graph, 1), (vec![], 2));
+}
+
+#[test]
+fn group_stage_keeps_unassigned_nodes_and_cross_group_edges() {
+    let mut graph = graph_with_groups(1);
+    for (id, kind) in [("a", NodeKind::Argument), ("p2", NodeKind::Position)] {
+        let mut record = node(id, kind);
+        record.text = "合".repeat(500);
+        graph.nodes.insert(id.into(), record);
+    }
+    for (eid, dst) in [("e2", "p1"), ("e3", "p2")] {
+        graph.edges.insert(
+            eid.into(),
+            Edge {
+                eid: eid.into(),
+                src: "a".into(),
+                dst: dst.into(),
+                kind: EdgeKind::Supports,
+                confidence: 1.0,
+                review: Review::Auto,
+                created_rev: 1,
+            },
+        );
+    }
+    let full = build_consolidate_groups(&graph, DEFAULT_INPUT_LIMIT).0;
+    assert_eq!(full.len(), 1);
+    assert_graph_prompt(&full[0], 3, 4, DEFAULT_INPUT_LIMIT);
+    assert!(full[0].system.contains("external のエッジも既に存在"));
+    let limit = size(&full[0]) - 1;
+    let split = build_consolidate_groups(&graph, limit).0;
+    assert_eq!(split.len(), 2);
+    assert_graph_prompt(&split[0], 3, 3, limit);
+    assert_graph_prompt(&split[1], 1, 1, limit);
+    let external_edge = serde_json::json!({
+        "eid":"e3", "src":"a", "dst":"p2", "kind":"supports", "external":true
+    });
+    assert_eq!(section(&split[0], "graph edges")[2], external_edge);
+    assert_eq!(section(&split[1], "graph edges"), [external_edge]);
+    assert_eq!(section(&split[1], "graph nodes")[0]["nid"], "p2");
+}
+
+#[test]
+fn group_stage_assigns_shared_nodes_to_the_first_issue_only() {
+    let mut graph = graph_with_groups(2);
+    for (nid, kind) in [
+        ("n5", NodeKind::Argument),
+        ("n3", NodeKind::Position),
+        ("n4", NodeKind::Position),
+    ] {
+        let mut record = node(nid, kind);
+        record.text = "案".repeat(1000);
+        graph.nodes.insert(nid.into(), record);
+    }
+    graph.nodes.remove("p1");
+    graph.nodes.remove("p2");
+    graph.edges.get_mut("e1").unwrap().src = "n3".into();
+    graph.edges.get_mut("e2").unwrap().src = "n4".into();
+    for (eid, dst) in [("e3", "n3"), ("e4", "n4")] {
+        graph.edges.insert(
+            eid.into(),
+            Edge {
+                eid: eid.into(),
+                src: "n5".into(),
+                dst: dst.into(),
+                kind: EdgeKind::Supports,
+                confidence: 1.0,
+                review: Review::Auto,
+                created_rev: 1,
+            },
+        );
+    }
+    let full = build_consolidate_groups(&graph, DEFAULT_INPUT_LIMIT).0;
+    assert_eq!(full.len(), 1);
+    assert_graph_prompt(&full[0], 4, 5, DEFAULT_INPUT_LIMIT);
+    let edges = section(&full[0], "graph edges");
+    assert_eq!(edges[3]["eid"], "e4");
+    assert!(edges[3].get("external").is_none());
+    let limit = size(&full[0]) - 1;
+    let split = build_consolidate_groups(&graph, limit).0;
+    assert_eq!(split.len(), 2);
+    assert_graph_prompt(&split[0], 3, 3, limit);
+    assert_graph_prompt(&split[1], 2, 2, limit);
+    assert_eq!(
+        section(&split[0], "graph groups")[0]["nids"],
+        serde_json::json!(["n1", "n3", "n5"])
+    );
+    assert_eq!(
+        section(&split[1], "graph groups")[0]["nids"],
+        serde_json::json!(["n2", "n4"])
+    );
+    assert_eq!(section(&split[1], "graph edges")[0]["eid"], "e2");
+}
+
+#[test]
+fn group_stage_splits_only_the_oversized_group() {
+    let small = graph_with_groups(1);
+    let expected = build_consolidate_groups(&small, DEFAULT_INPUT_LIMIT).0;
+    let mut graph = small;
+    for nid in ["a", "b", "c", "d"] {
+        let mut record = node(nid, NodeKind::Argument);
+        record.text = "案".repeat(1000);
+        graph.nodes.insert(nid.into(), record);
+    }
+    for row in 1..=3 {
+        add_ground(&mut graph, "d", row, 1000);
+    }
+    let limit = size(&expected[0]) + 3000;
+    let prompts = build_consolidate_groups(&graph, limit).0;
+    assert_eq!(prompts.len(), 2);
+    assert_graph_prompt(&prompts[0], 1, 4, limit);
+    assert_eq!(
+        section(&prompts[0], "graph groups")[1]["nids"],
+        serde_json::json!(["a", "b"])
+    );
+    assert_graph_prompt(&prompts[1], 0, 2, limit);
+    assert_eq!(
+        section(&prompts[1], "graph groups")[0]["nids"],
+        serde_json::json!(["c", "d"])
+    );
+    let nodes = section(&prompts[1], "graph nodes");
+    let grounds = nodes[1]["grounds"].as_array().unwrap();
+    assert_eq!(grounds.len(), 3);
+    assert!(grounds
+        .iter()
+        .all(|ground| ground["text"] == "根".repeat(200)));
+}
+
+#[test]
+fn group_stage_skips_only_an_oversized_node() {
+    let mut graph = graph_with_groups(2);
+    graph.nodes.get_mut("p1").unwrap().text = "案".repeat(DEFAULT_INPUT_LIMIT);
+    let (prompts, omitted) = build_consolidate_groups(&graph, DEFAULT_INPUT_LIMIT);
+    assert_eq!(omitted, 1);
+    assert_eq!(prompts.len(), 1);
+    assert_graph_prompt(&prompts[0], 2, 3, DEFAULT_INPUT_LIMIT);
+    assert_eq!(section(&prompts[0], "graph edges")[0]["external"], true);
+    let nodes = section(&prompts[0], "graph nodes");
+    assert_eq!(
+        nodes
+            .iter()
+            .map(|node| node["nid"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["n1", "n2", "p2"]
+    );
+}
+
+#[test]
+fn incremental_prompt_limits_issue_and_action_creation() {
+    let prompt =
+        build_incremental(&Graph::default(), &[], &[], false, DEFAULT_INPUT_LIMIT).unwrap();
+    for rule in [
+        "context の open の issue に当てはまる場合は、新しい issue を作らず、その issue に responds_to",
+        "新しい issue は context のどの問いとも異なる問いに限ります",
+        "誰かが引き受けた作業や誰かに頼まれた作業が発話にある場合だけ",
+    ] {
+        assert!(prompt.system.contains(rule));
+    }
 }
