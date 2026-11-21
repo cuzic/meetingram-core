@@ -50,7 +50,7 @@
       "text": "ファイルを閉じてから移動しセグメント単位で確定する",
       "grounds": [
         14,
-        18
+        17
       ]
     },
     {
@@ -58,8 +58,8 @@
       "kind": "action",
       "text": "三つの中断箇所を使って復旧試験を書く",
       "grounds": [
-        19,
-        99
+        18,
+        123
       ]
     },
     {
@@ -67,9 +67,10 @@
       "kind": "issue",
       "text": "書き込み待ちが積み上がったらどう対処するか",
       "grounds": [
-        26,
-        35,
-        104
+        32,
+        41,
+        52,
+        127
       ]
     },
     {
@@ -77,8 +78,8 @@
       "kind": "position",
       "text": "バッファを無制限にする",
       "grounds": [
-        27,
-        45
+        33,
+        50
       ]
     },
     {
@@ -86,7 +87,7 @@
       "kind": "argument",
       "text": "無制限ではメモリが増える",
       "grounds": [
-        28
+        34
       ]
     },
     {
@@ -94,9 +95,9 @@
       "kind": "position",
       "text": "固定の上限を付けて手前で待つ",
       "grounds": [
-        30,
-        33,
-        45
+        36,
+        39,
+        50
       ]
     },
     {
@@ -104,8 +105,8 @@
       "kind": "argument",
       "text": "録音コールバックで待つと録音が途切れる",
       "grounds": [
-        31,
-        32
+        37,
+        38
       ]
     },
     {
@@ -113,7 +114,7 @@
       "kind": "argument",
       "text": "別タスクで待っても受け口があふれる",
       "grounds": [
-        34
+        40
       ]
     },
     {
@@ -121,8 +122,10 @@
       "kind": "action",
       "text": "ピークのバッファ量を測る",
       "grounds": [
-        46,
-        101
+        51,
+        53,
+        58,
+        125
       ]
     },
     {
@@ -130,7 +133,7 @@
       "kind": "issue",
       "text": "ヘッダーに版を付けるか",
       "grounds": [
-        52
+        63
       ]
     },
     {
@@ -138,7 +141,7 @@
       "kind": "position",
       "text": "先頭に一バイトの版を付ける",
       "grounds": [
-        53
+        64
       ]
     },
     {
@@ -146,7 +149,7 @@
       "kind": "argument",
       "text": "版だけでは破損データと区別しにくい",
       "grounds": [
-        54
+        65
       ]
     },
     {
@@ -154,8 +157,8 @@
       "kind": "position",
       "text": "目印と版の組を置く",
       "grounds": [
-        55,
-        56
+        66,
+        67
       ]
     },
     {
@@ -163,8 +166,8 @@
       "kind": "decision",
       "text": "最初から目印と版を付ける",
       "grounds": [
-        61,
-        106
+        72,
+        129
       ]
     },
     {
@@ -172,8 +175,10 @@
       "kind": "action",
       "text": "旧形式サンプルを読んだ場合のエラーを確認する",
       "grounds": [
-        62,
-        100
+        73,
+        81,
+        84,
+        124
       ]
     },
     {
@@ -181,9 +186,9 @@
       "kind": "issue",
       "text": "読み手のエラーをどう通知するか",
       "grounds": [
-        86,
-        92,
-        102
+        103,
+        109,
+        126
       ]
     },
     {
@@ -191,7 +196,7 @@
       "kind": "position",
       "text": "警告を一度だけ出す",
       "grounds": [
-        87
+        104
       ]
     },
     {
@@ -199,7 +204,7 @@
       "kind": "argument",
       "text": "一度の警告では気づかない可能性がある",
       "grounds": [
-        90
+        107
       ]
     },
     {
@@ -207,7 +212,7 @@
       "kind": "position",
       "text": "繰り返しエラーは件数を付ける",
       "grounds": [
-        88
+        105
       ]
     },
     {
@@ -215,8 +220,8 @@
       "kind": "action",
       "text": "警告の文言の長さを確認する",
       "grounds": [
-        94,
-        95
+        111,
+        112
       ]
     },
     {
@@ -224,7 +229,7 @@
       "kind": "issue",
       "text": "どの順番でレビューするか",
       "grounds": [
-        73
+        91
       ]
     },
     {
@@ -232,7 +237,7 @@
       "kind": "position",
       "text": "ドキュメントを先に確認する",
       "grounds": [
-        74
+        92
       ]
     },
     {
@@ -240,7 +245,7 @@
       "kind": "argument",
       "text": "ドキュメントだけでは形式しか確認できない",
       "grounds": [
-        75
+        93
       ]
     },
     {
@@ -248,8 +253,90 @@
       "kind": "action",
       "text": "障害時の図を追加する",
       "grounds": [
-        76,
-        77
+        94,
+        95
+      ]
+    },
+    {
+      "id": "i-input",
+      "kind": "issue",
+      "text": "復旧試験の合成入力で残った区間をどう見分けるか",
+      "grounds": [
+        24
+      ]
+    },
+    {
+      "id": "i-inputp1",
+      "kind": "position",
+      "text": "区間番号を合成音声で読み上げる",
+      "grounds": [
+        25,
+        26
+      ]
+    },
+    {
+      "id": "i-inputp2",
+      "kind": "position",
+      "text": "区間別の高さの合成音を機械比較する",
+      "grounds": [
+        27
+      ]
+    },
+    {
+      "id": "a-input",
+      "kind": "argument",
+      "text": "周波数照合は声や辞書の変更に影響されない",
+      "grounds": [
+        27
+      ]
+    },
+    {
+      "id": "i-notice",
+      "kind": "issue",
+      "text": "読み手の警告をどこで見せるか",
+      "grounds": [
+        115
+      ]
+    },
+    {
+      "id": "i-noticep1",
+      "kind": "position",
+      "text": "録音画面に短い警告を載せる",
+      "grounds": [
+        116
+      ]
+    },
+    {
+      "id": "i-noticep2",
+      "kind": "position",
+      "text": "診断一覧にだけ警告を載せる",
+      "grounds": [
+        117
+      ]
+    },
+    {
+      "id": "p-review",
+      "kind": "position",
+      "text": "中断試験の実演からレビューを始める",
+      "grounds": [
+        132,
+        133
+      ]
+    },
+    {
+      "id": "a-notice",
+      "kind": "argument",
+      "text": "一覧だけでは録音中に異常に気づけない可能性がある",
+      "grounds": [
+        117
+      ]
+    },
+    {
+      "id": "t-notice",
+      "kind": "action",
+      "text": "画面の担当に普段どこを見るか聞く",
+      "grounds": [
+        120
       ]
     }
   ],
@@ -372,6 +459,46 @@
     {
       "src": "t5",
       "dst": "i5",
+      "kind": "assigns"
+    },
+    {
+      "src": "i-inputp1",
+      "dst": "i-input",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-inputp2",
+      "dst": "i-input",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a-input",
+      "dst": "i-inputp2",
+      "kind": "supports"
+    },
+    {
+      "src": "i-noticep1",
+      "dst": "i-notice",
+      "kind": "responds_to"
+    },
+    {
+      "src": "i-noticep2",
+      "dst": "i-notice",
+      "kind": "responds_to"
+    },
+    {
+      "src": "p-review",
+      "dst": "i5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "a-notice",
+      "dst": "i-noticep2",
+      "kind": "objects_to"
+    },
+    {
+      "src": "t-notice",
+      "dst": "i-notice",
       "kind": "assigns"
     }
   ]

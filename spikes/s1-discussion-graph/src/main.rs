@@ -184,9 +184,17 @@ async fn run(args: Run) -> Result<()> {
         args.out.join("graph.json"),
         serde_json::to_vec_pretty(&graph)?,
     )?;
+    let mut score = report::evaluate(&graph, &gold);
+    score.duration_ms = rows.first().map(|first| {
+        rows.iter()
+            .map(|row| row.end_ms)
+            .max()
+            .unwrap_or(first.start_ms)
+            - first.start_ms
+    });
     fs::write(
         args.out.join("score.json"),
-        serde_json::to_vec_pretty(&report::evaluate(&graph, &gold))?,
+        serde_json::to_vec_pretty(&score)?,
     )?;
     Ok(())
 }
@@ -200,5 +208,77 @@ async fn main() -> Result<()> {
         }
         Command::Run(args) => run(args).await,
         Command::Aggregate { out, runs } => report::aggregate(out, &runs),
+    }
+}
+
+#[cfg(test)]
+mod meeting_tests {
+    use super::*;
+
+    #[test]
+    fn synthetic_meetings_cover_review_profile() {
+        let mut total_calls = 0;
+        for meeting in ["design", "budget", "one-on-one"] {
+            let rows = replay::load(&PathBuf::from(format!("data/{meeting}.jsonl"))).unwrap();
+            let duration = rows.last().unwrap().end_ms - rows[0].start_ms;
+            assert!(
+                (900_000..=1_200_000).contains(&duration),
+                "{meeting}: {duration} ms"
+            );
+            assert!((150..=180).contains(&rows.len()), "{meeting}");
+            let mut lengths: Vec<_> = rows.iter().map(|row| row.text.chars().count()).collect();
+            lengths.sort_unstable();
+            let median =
+                (lengths[(lengths.len() - 1) / 2] + lengths[lengths.len() / 2]) as f64 / 2.0;
+            assert!(
+                (30.0..=40.0).contains(&median),
+                "{meeting}: median {median}"
+            );
+            assert!(
+                lengths.iter().filter(|&&len| len >= 100).count() >= lengths.len().div_ceil(10),
+                "{meeting}"
+            );
+            assert!(
+                lengths.iter().filter(|&&len| len >= 300).count() >= 3,
+                "{meeting}"
+            );
+            for row in &rows {
+                let milliseconds = row.end_ms - row.start_ms;
+                let chars = row.text.chars().count() as u64 * 1000;
+                assert!(
+                    (6 * milliseconds..=8 * milliseconds).contains(&chars),
+                    "{meeting}: row {}",
+                    row.row_id
+                );
+            }
+            let mut long_pauses = 0;
+            for pair in rows.windows(2) {
+                let pause = pair[1].start_ms.checked_sub(pair[0].end_ms).unwrap();
+                assert!(
+                    (300..=3000).contains(&pause) || (10_000..=60_000).contains(&pause),
+                    "{meeting}: pause {pause}"
+                );
+                long_pauses += usize::from(pause >= 10_000);
+            }
+            assert!(long_pauses >= 3, "{meeting}");
+            let gold: Graph =
+                serde_json::from_slice(&fs::read(format!("gold/{meeting}.json")).unwrap()).unwrap();
+            for (kind, minimum) in [("issue", 5), ("position", 10)] {
+                assert!(
+                    gold.nodes.iter().filter(|node| node.kind == kind).count() >= minimum,
+                    "{meeting}: {kind}"
+                );
+            }
+            let ids: BTreeSet<_> = rows.iter().map(|row| row.row_id).collect();
+            assert!(
+                gold.nodes
+                    .iter()
+                    .all(|node| !node.grounds.is_empty() && node.grounds.is_subset(&ids)),
+                "{meeting}"
+            );
+            total_calls += 4 * replay::windows(&rows, 6, 45_000).len()
+                + replay::windows(&rows, 12, 90_000).len();
+        }
+        assert!(total_calls <= 400, "{total_calls} base calls");
     }
 }

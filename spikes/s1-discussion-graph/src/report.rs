@@ -14,6 +14,8 @@ pub struct Score {
     pub precision: f64,
     pub edge_f1: f64,
     pub duplicates: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<u64>,
 }
 
 fn fraction(n: usize, d: usize) -> f64 {
@@ -81,6 +83,7 @@ pub fn evaluate(predicted: &Graph, gold: &Graph) -> Score {
         precision: fraction(matched.len(), active.len()),
         edge_f1: fraction(2 * correct, gold_edges.len() + predicted_edges.len()),
         duplicates,
+        duration_ms: None,
     }
 }
 
@@ -102,7 +105,7 @@ pub struct Attempt {
 
 pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
     let mut report = String::from(
-        "# S1 計測結果\n\n各行は 1 会議の実行。トークンの平均と合計は取得できた呼び出し分。取得できた件数を併記する。拒否率の分母は解析できた応答の全操作数。上限超過で呼ばなかった入力は呼び出し数・遅延・解析率から除く。\n\n",
+        "# S1 計測結果\n\n各行は 1 会議の実行。トークンの平均と合計は取得できた呼び出し分。取得できた件数を併記する。時間換算は会議の開始から最終発話の終了までの長さを使う。拒否率の分母は解析できた応答の全操作数。上限超過で呼ばなかった入力は呼び出し数・遅延・解析率から除く。\n\n",
     );
     write!(
         report,
@@ -113,9 +116,9 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
     }
     writeln!(
         report,
-        " 再現率 | 適合率 | エッジ F1 | 重複 | 入力合計 | 出力合計 |"
+        " 再現率 | 適合率 | エッジ F1 | 重複 | 入力合計 | 出力合計 | 会議の長さ (分) | 呼び出し/時 | 入力トークン/時 | 出力トークン/時 |"
     )?;
-    writeln!(report, "|{}", " --- |".repeat(19))?;
+    writeln!(report, "|{}", " --- |".repeat(18 + RULES.len()))?;
     for dir in dirs {
         let score: Score = serde_json::from_slice(&fs::read(dir.join("score.json"))?)?;
         let attempts: Vec<Attempt> = fs::read_to_string(dir.join("calls.jsonl"))?
@@ -141,11 +144,19 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
             .iter()
             .map(|attempt| attempt.applied.len() + attempt.dropped.values().sum::<usize>())
             .sum();
+        let minutes = score.duration_ms.map(|ms| ms as f64 / 60_000.0);
+        let per_hour = |count: u64| {
+            minutes
+                .filter(|&mins| mins > 0.0)
+                .map_or("—".into(), |mins| {
+                    format!("{:.1}", count as f64 * 60.0 / mins)
+                })
+        };
         let tokens = |select: fn(&Attempt) -> Option<u64>| {
             let values: Vec<_> = calls.iter().filter_map(|attempt| select(attempt)).collect();
             let total: u64 = values.iter().sum();
             if values.is_empty() {
-                ("— (0)".into(), "—".into())
+                ("— (0)".into(), "—".into(), "—".into())
             } else {
                 (
                     format!(
@@ -154,11 +165,12 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
                         values.len()
                     ),
                     total.to_string(),
+                    per_hour(total),
                 )
             }
         };
-        let (input, total_in) = tokens(|attempt| attempt.input_tokens);
-        let (output, total_out) = tokens(|attempt| attempt.output_tokens);
+        let (input, total_in, hourly_in) = tokens(|attempt| attempt.input_tokens);
+        let (output, total_out, hourly_out) = tokens(|attempt| attempt.output_tokens);
         let label = dir
             .file_name()
             .unwrap_or(dir.as_os_str())
@@ -185,8 +197,13 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
         }
         writeln!(
             report,
-            " {:.3} | {:.3} | {:.3} | {} | {total_in} | {total_out} |",
-            score.recall, score.precision, score.edge_f1, score.duplicates
+            " {:.3} | {:.3} | {:.3} | {} | {total_in} | {total_out} | {} | {} | {hourly_in} | {hourly_out} |",
+            score.recall,
+            score.precision,
+            score.edge_f1,
+            score.duplicates,
+            minutes.map_or("—".into(), |mins| format!("{mins:.2}")),
+            per_hour(calls.len() as u64)
         )?;
     }
     fs::write(out, report)?;
@@ -196,6 +213,29 @@ pub fn aggregate(out: PathBuf, dirs: &[PathBuf]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn aggregate_normalizes_observed_usage_to_one_hour() {
+        let run = tempfile::tempdir().unwrap();
+        let dir = run.path();
+        fs::write(
+            dir.join("score.json"),
+            r#"{"recall":0,"precision":0,"edge_f1":0,"duplicates":0,"duration_ms":900000}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.join("calls.jsonl"),
+            r#"{"window":1,"retry":false,"input_chars":50,"input_tokens":10,"output_tokens":null,"elapsed_ms":1,"called":true,"parsed":true,"error":null,"raw":null,"dropped":{},"applied":[]}"#,
+        )
+        .unwrap();
+        let out = dir.join("RESULTS.md");
+        aggregate(out.clone(), &[dir.to_path_buf()]).unwrap();
+        let table = fs::read_to_string(out).unwrap();
+        assert!(
+            table.contains("| 会議の長さ (分) | 呼び出し/時 | 入力トークン/時 | 出力トークン/時 |")
+        );
+        assert!(table.contains("| 15.00 | 4.0 | 40.0 | — |"));
+    }
 
     #[test]
     fn matches_by_overlap_and_counts_unmatched_predictions_once() {

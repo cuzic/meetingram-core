@@ -19,7 +19,6 @@ settings=(
   'claude sonnet 6 45 3'
   'claude haiku 6 45 3'
   'codex default 6 45 3'
-  'claude sonnet 3 20 3'
   'claude sonnet 12 90 3'
   'claude sonnet 6 45 10'
 )
