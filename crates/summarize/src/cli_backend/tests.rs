@@ -520,6 +520,68 @@ async fn summarize_via_cli_codex_smoke_test() {
     assert!(!text.trim().is_empty());
 }
 
+#[cfg(unix)]
+#[test]
+fn configured_cli_base_is_used_and_cleaned() {
+    let fixture = tempfile::tempdir().unwrap();
+    let work = tempfile::tempdir().unwrap();
+    let cli = script(
+        fixture.path(),
+        r#"
+        test "$(pwd -P)" != "$MEETINGRAM_TEST_CLI_WORK" || exit 1
+        test "$(cd .. && pwd -P)" = "$MEETINGRAM_TEST_CLI_WORK" || exit 2
+        test -f system.txt || exit 3
+        printf '%s\n' '{"result":"synthetic response"}'
+        "#,
+    );
+    std::fs::rename(cli, fixture.path().join("claude")).unwrap();
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "cli_backend::tests::configured_cli_base_subprocess",
+            "--ignored",
+        ])
+        .env("PATH", fixture.path())
+        .env(
+            "MEETINGRAM_TEST_CLI_WORK",
+            work.path().canonicalize().unwrap(),
+        )
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[cfg(unix)]
+#[tokio::test]
+#[ignore = "launched by configured_cli_base_is_used_and_cleaned with an isolated PATH"]
+async fn configured_cli_base_subprocess() {
+    let Some(work) = std::env::var_os("MEETINGRAM_TEST_CLI_WORK").map(PathBuf::from) else {
+        return;
+    };
+    let credentials = tempfile::tempdir().unwrap();
+    let store = Arc::new(credential_store::EncryptedFileStore::new(credentials.path()).unwrap());
+    let cli = crate::build_summarizer("claude-cli", store, None, Some(work.clone())).unwrap();
+    let options = SummarizeOptions::new("sonnet");
+    let request = CompletionRequest::new(
+        "Synthetic instruction",
+        "Synthetic message",
+        "sonnet",
+        Duration::from_secs(5),
+    );
+    let summary = cli.summarize(&[], &options).await;
+    wait_for_cleanup(&work).await;
+    let completion = cli.complete(&request).await;
+    wait_for_cleanup(&work).await;
+
+    assert_eq!(summary.unwrap(), "synthetic response");
+    assert_eq!(completion.unwrap(), "synthetic response");
+}
+
 #[tokio::test]
 #[ignore]
 async fn complete_via_claude_code_smoke_test() {
@@ -531,7 +593,7 @@ async fn complete_via_claude_code_smoke_test() {
         "sonnet",
         Duration::from_secs(60),
     );
-    let text = CliSummarizer(CliBackend::ClaudeCode)
+    let text = CliSummarizer::new(CliBackend::ClaudeCode, None)
         .complete(&request)
         .await
         .expect("claude CLI completion should succeed");
@@ -671,7 +733,7 @@ async fn completion_delivers_prompts_without_putting_them_in_arguments() {
         Duration::from_secs(5),
     );
     assert_eq!(
-        complete_with_binary(CliBackend::ClaudeCode, cli.as_os_str(), &request)
+        complete_with_binary(CliBackend::ClaudeCode, cli.as_os_str(), &request, None)
             .await
             .unwrap(),
         "synthetic response",
@@ -680,7 +742,7 @@ async fn completion_delivers_prompts_without_putting_them_in_arguments() {
     let cli = script(base.path(), "exec sleep 30");
     let request = CompletionRequest::new("", "", "", Duration::from_millis(50));
     assert_eq!(
-        complete_with_binary(CliBackend::ClaudeCode, cli.as_os_str(), &request)
+        complete_with_binary(CliBackend::ClaudeCode, cli.as_os_str(), &request, None)
             .await
             .unwrap_err()
             .kind(),
@@ -708,6 +770,7 @@ async fn summarize_enforces_its_default_and_explicit_deadlines() {
             cli.as_os_str(),
             &[],
             &options,
+            None,
         ));
         assert!(poll_fn(|cx| Poll::Ready(response.as_mut().poll(cx)))
             .await

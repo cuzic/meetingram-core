@@ -50,7 +50,7 @@ static CLAUDE_COMPAT: AtomicBool = AtomicBool::new(false);
 
 /// Default CLI time limit for incremental graph updates.
 pub const DEFAULT_CLI_TIMEOUT: Duration = Duration::from_secs(60);
-pub(crate) const DEFAULT_SUMMARY_TIMEOUT: Duration = Duration::from_secs(600);
+const DEFAULT_SUMMARY_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Whether Claude has switched to legacy flags in this process.
 pub fn claude_compatibility_mode() -> bool {
@@ -58,7 +58,8 @@ pub fn claude_compatibility_mode() -> bool {
 }
 
 /// Removes leftover CLI working directories from a dedicated base directory.
-/// Call at startup, before starting CLI requests using this base.
+/// Call only for an application-specific base directory, at startup before
+/// beginning CLI requests that use it.
 pub fn cleanup_stale_cli_dirs(base: &Path) -> io::Result<()> {
     let entries = match std::fs::read_dir(base) {
         Ok(entries) => entries,
@@ -157,7 +158,16 @@ pub async fn summarize_via_cli(
     turns: &[TranscriptTurn],
     options: &SummarizeOptions,
 ) -> Result<String, CliSummarizeError> {
-    summarize_with_binary(backend, OsStr::new(backend.binary()), turns, options).await
+    summarize_via_cli_with_base(backend, turns, options, None).await
+}
+
+pub(crate) async fn summarize_via_cli_with_base(
+    backend: CliBackend,
+    turns: &[TranscriptTurn],
+    options: &SummarizeOptions,
+    base: Option<&Path>,
+) -> Result<String, CliSummarizeError> {
+    summarize_with_binary(backend, OsStr::new(backend.binary()), turns, options, base).await
 }
 
 async fn summarize_with_binary(
@@ -165,13 +175,14 @@ async fn summarize_with_binary(
     name: &OsStr,
     turns: &[TranscriptTurn],
     options: &SummarizeOptions,
+    base: Option<&Path>,
 ) -> Result<String, CliSummarizeError> {
     summarize_with_limits_and_binary(
         backend,
         name,
         turns,
         options,
-        None,
+        base,
         options.cli_timeout.unwrap_or(DEFAULT_SUMMARY_TIMEOUT),
     )
     .await
@@ -219,14 +230,16 @@ async fn summarize_with_limits_and_binary(
 pub(crate) async fn complete_via_cli(
     backend: CliBackend,
     req: &CompletionRequest,
+    base: Option<&Path>,
 ) -> Result<String, SummarizerError> {
-    complete_with_binary(backend, OsStr::new(backend.binary()), req).await
+    complete_with_binary(backend, OsStr::new(backend.binary()), req, base).await
 }
 
 async fn complete_with_binary(
     backend: CliBackend,
     name: &OsStr,
     req: &CompletionRequest,
+    base: Option<&Path>,
 ) -> Result<String, SummarizerError> {
     req.validate()?;
     let input = CliInput {
@@ -234,7 +247,7 @@ async fn complete_with_binary(
         user: &req.user,
         model: (!req.model.trim().is_empty()).then_some(req.model.as_str()),
     };
-    Ok(run_named_cli(backend, name, input, None, req.timeout).await?)
+    Ok(run_named_cli(backend, name, input, base, req.timeout).await?)
 }
 
 async fn run_named_cli(

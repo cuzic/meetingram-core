@@ -12,6 +12,7 @@
 //! transcript type into it is the caller's job.
 
 use std::future::Future;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::process::Stdio;
 use std::sync::Arc;
@@ -275,7 +276,18 @@ impl Summarizer for GenaiSummarizer {
 }
 
 /// [`Summarizer`] backed by a `claude`/`codex` CLI subprocess (#59).
-pub struct CliSummarizer(pub cli_backend::CliBackend);
+pub struct CliSummarizer {
+    backend: cli_backend::CliBackend,
+    temp_base: Option<PathBuf>,
+}
+
+impl CliSummarizer {
+    /// Uses an existing directory as the base for per-request working directories.
+    /// Pass `None` to use the OS temporary directory.
+    pub fn new(backend: cli_backend::CliBackend, temp_base: Option<PathBuf>) -> Self {
+        Self { backend, temp_base }
+    }
+}
 
 #[async_trait::async_trait]
 impl Summarizer for CliSummarizer {
@@ -284,11 +296,17 @@ impl Summarizer for CliSummarizer {
         turns: &[TranscriptTurn],
         options: &SummarizeOptions,
     ) -> Result<String, SummarizerError> {
-        Ok(cli_backend::summarize_via_cli(self.0, turns, options).await?)
+        Ok(cli_backend::summarize_via_cli_with_base(
+            self.backend,
+            turns,
+            options,
+            self.temp_base.as_deref(),
+        )
+        .await?)
     }
 
     async fn complete(&self, req: &CompletionRequest) -> Result<String, SummarizerError> {
-        cli_backend::complete_via_cli(self.0, req).await
+        cli_backend::complete_via_cli(self.backend, req, self.temp_base.as_deref()).await
     }
 }
 
@@ -864,7 +882,7 @@ mod completion_tests {
         let request =
             CompletionRequest::new("界".repeat(23_999), "🙂🙂", "invalid-model", Duration::ZERO);
         let genai = GenaiSummarizer(Client::builder().build().unwrap());
-        let cli = CliSummarizer(cli_backend::CliBackend::ClaudeCode);
+        let cli = CliSummarizer::new(cli_backend::CliBackend::ClaudeCode, None);
         for backend in [&genai as &dyn Summarizer, &cli] {
             assert!(matches!(
                 backend.complete(&request).await,

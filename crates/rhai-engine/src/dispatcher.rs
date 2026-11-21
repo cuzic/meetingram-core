@@ -88,7 +88,7 @@ async fn handle_ai_summarize(
     let ollama_base_url = settings.get("ollama_base_url");
     let credential_store = Arc::clone(credential_store);
     let summarizer = tokio::task::spawn_blocking(move || {
-        summarize::build_summarizer(&provider_key, credential_store, ollama_base_url)
+        summarize::build_summarizer(&provider_key, credential_store, ollama_base_url, None)
     })
     .await
     .map_err(|_| "AIクライアントの作成に失敗")?

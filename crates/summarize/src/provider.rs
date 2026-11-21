@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use credential_store::CredentialStore;
@@ -156,14 +157,17 @@ pub enum BuildSummarizerError {
 
 /// Builds the configured backend without making a provider request.
 /// Reading the credential store can block.
+/// For CLI providers, `cli_temp_base` selects an existing base directory for
+/// per-request working directories. Pass `None` to use the OS temporary directory.
 pub fn build_summarizer<S: CredentialStore + Send + Sync + 'static>(
     provider_key: &str,
     store: Arc<S>,
     ollama_base_url: Option<String>,
+    cli_temp_base: Option<PathBuf>,
 ) -> Result<Box<dyn Summarizer>, BuildSummarizerError> {
     let provider = SummaryProvider::from_key(provider_key);
     if let Some(backend) = provider.cli_backend() {
-        return Ok(Box::new(CliSummarizer(backend)));
+        return Ok(Box::new(CliSummarizer::new(backend, cli_temp_base)));
     }
 
     let client = if provider == SummaryProvider::ClaudeOAuth {
@@ -301,12 +305,12 @@ mod tests {
             ("openai", BuildSummarizerError::MissingApiKey),
         ] {
             assert_eq!(
-                build_summarizer(key, store.clone(), None).err(),
+                build_summarizer(key, store.clone(), None, None).err(),
                 Some(expected)
             );
         }
         for key in ["claude-cli", "codex", "claude-oauth", "ollama"] {
-            assert!(build_summarizer(key, store.clone(), None).is_ok());
+            assert!(build_summarizer(key, store.clone(), None, None).is_ok());
         }
     }
 }
