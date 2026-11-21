@@ -1776,6 +1776,21 @@ mod stt_wiring {
             }
         }
 
+        /// A credential store that fails the test if anything reads it: with an
+        /// override, live transcription must not consult the keyring at all.
+        struct PanicCredentialStore;
+
+        impl credential_store::CredentialStore for PanicCredentialStore {
+            fn save(&self, _: &str, _: &str, _: &str) -> Result<(), credential_store::StoreError> {
+                panic!("credential store must not be written with an STT override")
+            }
+            fn load(&self, _: &str, _: &str) -> Result<String, credential_store::StoreError> {
+                panic!("credential store must not be read with an STT override")
+            }
+            fn delete(&self, _: &str, _: &str) -> Result<(), credential_store::StoreError> {
+                panic!("credential store must not be written with an STT override")
+            }
+        }
         #[tokio::test(start_paused = true)]
         async fn stt_override_routes_audio_and_reconnects_per_track_without_credentials() {
             let (store, session_id) = test_store_and_session();
@@ -1830,7 +1845,14 @@ mod stt_wiring {
             tokio::time::timeout(Duration::from_secs(10), async {
                 tokio::join!(
                     run_live_transcription(
-                        session_id, rate, None, audio_rx, &store, None, options, None
+                        session_id,
+                        rate,
+                        Some(Arc::new(PanicCredentialStore)),
+                        audio_rx,
+                        &store,
+                        None,
+                        options,
+                        None
                     ),
                     exercise,
                 );

@@ -38,20 +38,39 @@ pub mod timestamp_mapper;
 pub mod pseudo_source;
 
 /// Settings for live transcription during a capture session.
+///
+/// `#[non_exhaustive]`: build it with `LiveTranscriptionOptions::default()` and the
+/// `with_*` methods, so new settings can be added without breaking callers.
 #[derive(Default)]
 #[non_exhaustive]
 pub struct LiveTranscriptionOptions {
+    /// Skip silent stretches of the **Remote** track instead of streaming them to
+    /// the provider (the Self track always streams). Default: `false`.
     pub silence_gate_enabled: bool,
+    /// Providers to use instead of the one selected in the credential store.
+    /// See [`SttOverride`]. Default: `None`.
     #[cfg(feature = "live-transcription")]
     pub stt_override: Option<SttOverride>,
 }
 
+impl std::fmt::Debug for LiveTranscriptionOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut d = f.debug_struct("LiveTranscriptionOptions");
+        d.field("silence_gate_enabled", &self.silence_gate_enabled);
+        #[cfg(feature = "live-transcription")]
+        d.field("stt_override", &self.stt_override);
+        d.finish()
+    }
+}
+
 impl LiveTranscriptionOptions {
+    /// Sets [`Self::silence_gate_enabled`].
     pub fn with_silence_gate(mut self, enabled: bool) -> Self {
         self.silence_gate_enabled = enabled;
         self
     }
 
+    /// Sets [`Self::stt_override`].
     #[cfg(feature = "live-transcription")]
     pub fn with_stt_override(mut self, stt_override: SttOverride) -> Self {
         self.stt_override = Some(stt_override);
@@ -59,11 +78,31 @@ impl LiveTranscriptionOptions {
     }
 }
 
-/// Caller-supplied providers for the Self and Remote live transcription tracks.
+/// Caller-supplied providers for the Self and Remote live transcription tracks
+/// (e.g. a scripted provider for end-to-end tests).
+///
+/// When set, live transcription:
+/// - never reads the credential store or the selected provider;
+/// - opens each track's session on its own provider, at the capture sample rate
+///   (no provider-specific resampling), so the provider must accept any rate;
+/// - calls `start_session` on the **same** `Arc` again for every reconnect of that
+///   track, so a provider that keeps progress (e.g. a script position) can resume.
 #[cfg(feature = "live-transcription")]
 pub struct SttOverride {
+    /// Provider for the Self (microphone) track.
     pub self_track: std::sync::Arc<dyn stt_api::SttProvider>,
+    /// Provider for the Remote (loopback) track.
     pub remote_track: std::sync::Arc<dyn stt_api::SttProvider>,
+}
+
+#[cfg(feature = "live-transcription")]
+impl std::fmt::Debug for SttOverride {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SttOverride")
+            .field("self_track", &"<dyn SttProvider>")
+            .field("remote_track", &"<dyn SttProvider>")
+            .finish()
+    }
 }
 
 #[cfg(feature = "windows-supervisor")]
