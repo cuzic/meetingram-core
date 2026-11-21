@@ -433,3 +433,26 @@ fn redirect_prefers_earlier_creation_then_numeric_edge_id() {
     assert!(earlier.graph.edges.contains_key("e10"));
     assert!(!earlier.graph.edges.contains_key("e2"));
 }
+
+#[test]
+fn redirect_preserves_newer_approved_edge_and_its_ground() {
+    let mut graph = apply(
+        &graph(),
+        [edge("n3", "n2", "supports"), edge("n4", "n2", "supports")],
+    )
+    .graph;
+    let approved = graph.edges.get_mut("e3").unwrap();
+    approved.review = Review::Approved;
+    approved.created_rev += 1;
+    let ground = discussion_graph::Ground {
+        target: "e3".into(),
+        uid: "u2".into(),
+        act: Some(discussion_graph::Act::Agrees),
+    };
+    graph.grounds.push(ground.clone());
+
+    let result = apply(&graph, [merge("n3", "n4")]);
+    assert_eq!(result.graph.edges.get("e3"), graph.edges.get("e3"));
+    assert!(!result.graph.edges.contains_key("e2"));
+    assert!(result.graph.grounds.contains(&ground));
+}

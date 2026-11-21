@@ -182,3 +182,58 @@ fn get_latest_summary_returns_the_most_recently_generated_one() {
 
     assert_eq!(store.get_latest_summary(session_id).unwrap(), Some(newer));
 }
+
+#[test]
+fn graph_store_imports_final_transcripts_once_in_row_order() {
+    use discussion_graph::store::GraphStore;
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("sessions.sqlite");
+    let store = SessionStore::open(&path).unwrap();
+    let sid = SessionId::new();
+    store.create_session(&sample_manifest(sid)).unwrap();
+    let mut graph = GraphStore::open(&path).unwrap();
+
+    let mut segment = TranscriptSegment {
+        session_id: sid,
+        track: None,
+        speaker: None,
+        text: "synthetic turn".into(),
+        start_ms: None,
+        end_ms: None,
+        is_final: false,
+        is_retranscribed: false,
+    };
+    store.insert_transcript_segment(&segment).unwrap();
+    segment.is_final = true;
+    store.insert_transcript_segment(&segment).unwrap();
+    assert_eq!(graph.import_utterances(sid).unwrap(), 1);
+    assert_eq!(graph.import_utterances(sid).unwrap(), 0);
+
+    segment.track = Some(TrackKind::RemoteAudio);
+    segment.speaker = Some(1);
+    segment.start_ms = Some(0);
+    segment.end_ms = Some(100);
+    segment.is_retranscribed = true;
+    store.insert_transcript_segment(&segment).unwrap();
+    let other = SessionId::new();
+    store.create_session(&sample_manifest(other)).unwrap();
+    segment.session_id = other;
+    store.insert_transcript_segment(&segment).unwrap();
+
+    assert_eq!(graph.import_utterances(sid).unwrap(), 1);
+    assert_eq!(graph.import_utterances(sid).unwrap(), 0);
+    let rows = graph.pending_utterances(sid).unwrap();
+    assert_eq!(rows.len(), 2);
+    assert_eq!(rows[0].uid, "u1");
+    assert_eq!(rows[0].row_id, 2);
+    assert_eq!(rows[0].track, None);
+    assert_eq!(rows[0].speaker_label, "不明");
+    assert_eq!((rows[0].start_ms, rows[0].end_ms), (None, None));
+    assert_eq!(rows[1].uid, "u2");
+    assert_eq!(rows[1].row_id, 3);
+    assert_eq!(rows[1].track.as_deref(), Some("remote"));
+    assert_eq!(rows[1].speaker_label, "相手 (話者2)");
+    assert_eq!((rows[1].start_ms, rows[1].end_ms), (Some(0), Some(100)));
+    assert_eq!(rows[1].text, segment.text);
+}

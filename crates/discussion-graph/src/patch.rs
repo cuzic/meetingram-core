@@ -181,9 +181,16 @@ struct Patch<'a> {
 
 impl Patch<'_> {
     fn apply(&mut self, value: &Value) -> Result<AppliedOp, Rejection> {
-        let field = |key: &str| value[key].as_str().ok_or(Rejection::MalformedOperation);
+        let field = |key: &str| {
+            value
+                .get(key)
+                .and_then(Value::as_str)
+                .ok_or(Rejection::MalformedOperation)
+        };
         let op = field("op")?;
-        let tmp = (op == "add_node").then(|| value["tmp"].as_str()).flatten();
+        let tmp = (op == "add_node")
+            .then(|| value.get("tmp").and_then(Value::as_str))
+            .flatten();
         let duplicate = tmp.is_some_and(|id| !self.seen_tmp.insert(id.to_owned()));
         if !matches!(op, "add_node" | "add_edge" | "merge" | "set_status") {
             return Err(Rejection::UnknownOperation);
@@ -243,25 +250,29 @@ impl Patch<'_> {
             ),
             "merge" => self.merge(field("from")?, field("into")?, grounds),
             "set_status" => self.set_status(field("nid")?, field("status")?, grounds),
-            _ => unreachable!(),
+            _ => Err(Rejection::UnknownOperation),
         }
     }
 
     fn grounds(&self, value: &Value) -> Result<Vec<GroundRef>, Rejection> {
-        let grounds = value["grounds"]
-            .as_array()
+        let grounds = value
+            .get("grounds")
+            .and_then(Value::as_array)
             .filter(|values| !values.is_empty())
             .ok_or(Rejection::EmptyGrounds)?;
         grounds
             .iter()
             .map(|ground| {
-                let uid = ground["uid"]
-                    .as_str()
+                let uid = ground
+                    .get("uid")
+                    .and_then(Value::as_str)
                     .filter(|uid| self.allowed.contains(uid))
                     .ok_or(Rejection::GroundOutsideInput)?;
-                let act = match &ground["act"] {
-                    Value::Null => None,
-                    Value::String(act) => Some(act.parse().map_err(|_| Rejection::UnknownAct)?),
+                let act = match ground.get("act") {
+                    None | Some(Value::Null) => None,
+                    Some(Value::String(act)) => {
+                        Some(act.parse().map_err(|_| Rejection::UnknownAct)?)
+                    }
                     _ => return Err(Rejection::UnknownAct),
                 };
                 Ok(GroundRef {
@@ -445,14 +456,14 @@ impl Patch<'_> {
                 continue;
             }
             let key = (edge.src.clone(), edge.dst.clone(), edge.kind);
-            if let Some(existing_id) = keys.get(&key) {
-                let existing = &self.graph.edges[existing_id];
+            if let Some(existing) = keys.get(&key).and_then(|eid| self.graph.edges.get(eid)) {
+                let existing_id = existing.eid.clone();
                 if existing.review != Review::Auto || edge_age(existing) <= edge_age(&edge) {
                     removed.insert(edge.eid);
                     continue;
                 }
-                self.graph.edges.remove(existing_id);
-                removed.insert(existing_id.clone());
+                self.graph.edges.remove(&existing_id);
+                removed.insert(existing_id);
             }
             keys.insert(key, edge.eid.clone());
             self.graph.edges.insert(edge.eid.clone(), edge);

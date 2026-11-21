@@ -989,8 +989,13 @@ dependencies = [
 name = "discussion-graph"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "recorder-domain",
+ "rusqlite",
  "serde",
  "serde_json",
+ "session-store",
+ "tempfile",
  "thiserror",
 ]
 
@@ -3494,6 +3499,7 @@ name = "session-store"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "discussion-graph",
  "recorder-domain",
  "rusqlite",
  "serde_json",
