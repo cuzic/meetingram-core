@@ -122,11 +122,9 @@ impl AudioFormatInfo {
     /// `WAVEFORMATEXTENSIBLE` when `wFormatTag` indicates it.
     pub fn from_waveformatex(wfx: &WAVEFORMATEX) -> Self {
         let block_align = wfx.nBlockAlign;
-        let bytes_per_sample = if wfx.nChannels > 0 {
-            block_align / wfx.nChannels
-        } else {
-            wfx.wBitsPerSample / 8
-        };
+        let bytes_per_sample = block_align
+            .checked_div(wfx.nChannels)
+            .unwrap_or(wfx.wBitsPerSample / 8);
 
         // Only reinterpret as WAVEFORMATEXTENSIBLE once cbSize confirms there's
         // actually room for its extra fields; a too-small cbSize (a malformed format
@@ -189,6 +187,10 @@ impl WaveFormatBox {
         Self { ptr }
     }
 
+    #[allow(
+        clippy::should_implement_trait,
+        reason = "Keep the existing public inherent method and trait implementations unchanged"
+    )]
     pub fn as_ref(&self) -> &WAVEFORMATEX {
         unsafe { &*self.ptr }
     }
