@@ -56,6 +56,16 @@ fn fake_runs_and_reports_all_seven_meetings() {
         3
     );
     assert!(report.contains("Not evaluated."));
+    assert!(
+        rows.iter()
+            .any(|row| row.starts_with("| m3 | two-stage | 1 | 3 | 3 | 1 |"))
+    );
+    assert!(long.iter().all(|row| row.contains(" | full annotations | ")
+        || row.contains(" | short decision | ")
+        || row.contains(" | no annotations | ")
+        || row.contains(" | UID only | ")
+        || row.contains(" | omitted issues | ")));
+
     assert!(report.contains("## Task 4b gate (ADR r13)"));
 
     // Use the fake artifacts to exercise the Sonnet gate. A short meeting's
@@ -102,7 +112,35 @@ fn fake_runs_and_reports_all_seven_meetings() {
         );
         fs::read_to_string(out.join("RESULTS.md")).unwrap()
     };
+    // Replay an undetermined merge in the saved fake output. An endpoint
+    // with no matching evidence is classified using the original flush.
+    let path = out.join("m2/two-stage-1.json");
+    let mut trial = read_json(&path);
+    let mut before = read_json(&out.join("m2/flush.json"));
+    let nodes = before["nodes"].as_object_mut().unwrap();
+    let into = nodes.keys().next().unwrap().clone();
+    let mut unmatched = nodes[&into].clone();
+    unmatched["nid"] = "n999".into();
+    unmatched["text"] = "synthetic unmatched issue".into();
+    nodes.insert("n999".to_owned(), unmatched);
+    fs::write(
+        out.join("m2/flush.json"),
+        serde_json::to_vec(&before).unwrap(),
+    )
+    .unwrap();
+    trial["applied"]
+        .as_array_mut()
+        .unwrap()
+        .push(serde_json::json!({
+            "op": "merge", "from": "n999", "into": into, "grounds": [],
+        }));
+    fs::write(path, serde_json::to_vec(&trial).unwrap()).unwrap();
+
     let report = gate_report();
+    assert!(report.contains("## Appendix: Undetermined merges"));
+    assert!(report.contains(&format!("m2 / two-stage / trial 1, `n999` → `{into}`")));
+    assert!(report.contains("From: \"synthetic unmatched issue\""));
+    assert!(report.contains(&format!("Into: {}", before["nodes"][&into]["text"])));
     assert!(report.contains("**FAIL**")); // Fake consolidation merges no long-meeting pairs.
     assert!(report.contains("m1 0.000 vs 0.000 (flush)"));
     assert!(report.contains("- Recall across six meetings: PASS"));
@@ -119,13 +157,19 @@ fn fake_runs_and_reports_all_seven_meetings() {
     assert!(!retry.status.success());
     let calls = fs::read_to_string(out.join("calls.jsonl")).unwrap();
     assert!(!calls.is_empty());
+    let mut stage_calls = 0;
     for line in calls.lines() {
         let call: serde_json::Value = serde_json::from_str(line).unwrap();
         assert!(call["input_chars"].as_u64().unwrap() <= 24_000);
         assert!(call["parsed"].as_bool().unwrap());
         assert_eq!(call["dropped_ops"], 0);
         assert!(line.is_ascii());
+        if !call["issue_stage"].is_null() {
+            assert_eq!(call["phase"], "two-stage");
+            stage_calls += 1;
+        }
     }
+    assert_eq!(stage_calls, 21);
 }
 
 fn read_json(path: &std::path::Path) -> serde_json::Value {

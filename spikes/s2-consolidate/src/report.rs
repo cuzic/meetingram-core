@@ -7,21 +7,21 @@ use std::{
 
 use anyhow::Result;
 use discussion_graph::{
-    Graph, Node, NodeKind,
-    eval::{Evaluation, evaluate},
+    EdgeKind, Graph, Node, NodeKind, Review,
+    eval::{Evaluation, evaluate, gold_agenda_count},
 };
 
 use crate::{
     Config, Style,
     data::{self, Gold},
-    run::Trial,
+    run::{RecordedIssueStage, Trial},
 };
 
 #[derive(Clone)]
 struct Measurement {
     scores: Evaluation,
     pairs: usize,
-    gold_issues: usize,
+    gold_agendas: usize,
     complete: bool,
     baseline_not_applicable: bool,
 }
@@ -29,18 +29,14 @@ struct Measurement {
 pub(crate) fn report(out: &Path) -> Result<()> {
     let config: Config = data::read_json(&out.join("config.json"))?;
     let mut results = String::from(
-        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold issues | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
+        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold agendas | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Undetermined merges | Issue prompt stage | Parented contested issues | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |\n",
     );
+    let mut appendix = String::new();
     let mut all = BTreeMap::new();
     let mut flush_recalls = BTreeMap::new();
     for &meeting in config.meetings() {
         let (_, gold) = data::load(meeting)?;
-        let gold_issues = gold
-            .graph
-            .nodes
-            .iter()
-            .filter(|node| node.kind == NodeKind::Issue)
-            .count();
+        let gold_agendas = gold_agenda_count(&gold.graph);
         let flush = out.join(meeting).join("flush.json");
         let before: Option<Graph> = read_if_present(&flush)?;
         if let Some(before) = &before {
@@ -56,9 +52,26 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     let scores = evaluate(&trial.graph, &gold.graph, before, &trial.applied);
                     let pairs = merged_pairs(before, &trial.graph, &gold);
                     let baseline_not_applicable = trial.baseline_not_applicable(style);
+                    for (from, into) in &scores.undetermined_merges {
+                        let node_text = |id| {
+                            before
+                                .nodes
+                                .get(id)
+                                .or_else(|| trial.graph.nodes.get(id))
+                                .map(|node| node.text.as_str())
+                                .unwrap_or("missing node")
+                        };
+                        writeln!(
+                            appendix,
+                            "- {meeting} / {} / trial {repeat}, `{from}` → `{into}`\n    - From: {}\n    - Into: {}",
+                            style.label(),
+                            serde_json::to_string(node_text(from))?,
+                            serde_json::to_string(node_text(into))?,
+                        )?;
+                    }
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | {} | {gold_issues} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} |",
+                        "| {meeting} | {} | {repeat} | {} | {gold_agendas} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} | {} | {} | {} |",
                         style.label(),
                         scores.agendas,
                         scores.sub_questions,
@@ -73,6 +86,9 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                         trial.calls,
                         trial.omitted_issues,
                         trial.omitted_group_nodes,
+                        scores.undetermined_merges.len(),
+                        trial.issue_stage.map_or("—", RecordedIssueStage::label),
+                        parented_contested_issues(&trial.graph),
                         if baseline_not_applicable {
                             "baseline not applicable"
                         } else if trial.complete {
@@ -86,7 +102,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                         .push(Measurement {
                             scores,
                             pairs,
-                            gold_issues,
+                            gold_agendas,
                             complete: trial.complete,
                             baseline_not_applicable,
                         });
@@ -98,7 +114,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     };
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | — | {gold_issues} | — | — | — | — | — | — | — | — | — | — | — | {status} |",
+                        "| {meeting} | {} | {repeat} | — | {gold_agendas} | — | — | — | — | — | — | — | — | — | — | — | — | — | — | {status} |",
                         style.label()
                     )?;
                 }
@@ -114,6 +130,12 @@ pub(crate) fn report(out: &Path) -> Result<()> {
         )?;
     } else {
         write_gate(&mut results, &all, &flush_recalls)?;
+    }
+    if !appendix.is_empty() {
+        writeln!(
+            results,
+            "\n## Appendix: Undetermined merges\n\nReview each pair and add any wrong merges to its trial's count before finalizing condition (2).\n\n{appendix}"
+        )?;
     }
     fs::write(out.join("RESULTS.md"), results)?;
     Ok(())
@@ -138,7 +160,8 @@ fn write_gate(
             .filter(|rows| rows.len() == 3 && rows.iter().all(|row| row.complete))
     };
     let mut agenda_ratio_sum = 0.0;
-    let mut agenda_details = Vec::new();
+    let mut each_agenda_ok = true;
+    let mut agenda_ratios = Vec::new();
     let mut recall_details = Vec::new();
     let mut wrong_merges = 0;
     let mut recall_ok = true;
@@ -146,13 +169,14 @@ fn write_gate(
         let Some(two_stage) = complete(meeting, two_stage) else {
             return write_inconclusive(results);
         };
-        let gold_issues = two_stage[0].gold_issues;
-        if gold_issues == 0 {
-            return writeln!(results, "Inconclusive. {meeting} has no gold issues.");
+        let gold_agendas = two_stage[0].gold_agendas;
+        if gold_agendas == 0 {
+            return writeln!(results, "Inconclusive. {meeting} has no gold agendas.");
         }
-        let ratio = median(two_stage, |row| row.scores.agendas) as f64 / gold_issues as f64;
+        let ratio = median(two_stage, |row| row.scores.agendas) as f64 / gold_agendas as f64;
         agenda_ratio_sum += ratio;
-        agenda_details.push(format!("{meeting} {ratio:.3}"));
+        each_agenda_ok &= (0.5..=2.5).contains(&ratio);
+        agenda_ratios.push((meeting, ratio));
         wrong_merges += median(two_stage, |row| row.scores.wrong_merges);
 
         let (reference, source) = if let Some(base) = complete(meeting, baseline) {
@@ -180,14 +204,23 @@ fn write_gate(
     let long_pairs = median(long, |row| row.pairs);
     let agenda_ok = mean_ratio <= 1.5;
     let merges_ok = wrong_merges <= 2;
-    let long_ok = long_pairs > 0;
-    let pass = agenda_ok && merges_ok && recall_ok && long_ok;
+    let long_ok = long_pairs == 3;
+    let pass = agenda_ok && each_agenda_ok && merges_ok && recall_ok && long_ok;
     let status = |ok| if ok { "PASS" } else { "FAIL" };
     writeln!(results, "**{}**\n", status(pass))?;
     writeln!(
         results,
-        "- Mean agenda-to-gold-issue ratio (target ≤1.5): {} ({mean_ratio:.3}; {}).",
-        status(agenda_ok),
+        "- Mean agenda-to-gold-agenda ratio (target ≤1.5): {} ({mean_ratio:.3}).",
+        status(agenda_ok)
+    )?;
+    let agenda_details: Vec<_> = agenda_ratios
+        .iter()
+        .map(|(meeting, ratio)| format!("{meeting} {ratio:.3}"))
+        .collect();
+    writeln!(
+        results,
+        "- Agenda ratio for each meeting (target 0.5–2.5): {} ({}).",
+        status(each_agenda_ok),
         agenda_details.join(", ")
     )?;
     writeln!(
@@ -203,9 +236,17 @@ fn write_gate(
     )?;
     writeln!(
         results,
-        "- Long-meeting correct duplicate pairs merged (median, target ≥1): {} ({long_pairs}).",
+        "- Long-meeting correct duplicate pairs merged (median, target 3/3): {} ({long_pairs}/3).",
         status(long_ok)
-    )
+    )?;
+    writeln!(
+        results,
+        "\n| Meeting | Median agenda ratio |\n| --- | ---: |"
+    )?;
+    for (meeting, ratio) in agenda_ratios {
+        writeln!(results, "| {meeting} | {ratio:.3} |")?;
+    }
+    Ok(())
 }
 
 fn write_inconclusive(results: &mut String) -> std::fmt::Result {
@@ -221,8 +262,43 @@ fn median<T: Copy + PartialOrd>(rows: &[Measurement], metric: impl Fn(&Measureme
     values[1]
 }
 
-/// Match each pre-consolidation issue independently by evidence Jaccard,
-/// using the same gold-ID tie break as the core's wrong-merge evaluation.
+fn parented_contested_issues(graph: &Graph) -> usize {
+    let live_edges = graph.edges.values().filter(|edge| {
+        edge.review != Review::Rejected
+            && graph.nodes.get(&edge.src).is_some_and(Node::is_live)
+            && graph.nodes.get(&edge.dst).is_some_and(Node::is_live)
+    });
+    let mut parents = BTreeSet::new();
+    let mut objections = BTreeSet::new();
+    let mut positions = BTreeMap::<_, BTreeSet<_>>::new();
+    for edge in live_edges {
+        match edge.kind {
+            EdgeKind::SubIssueOf => {
+                parents.insert(&edge.src);
+            }
+            EdgeKind::ObjectsTo => {
+                objections.insert(&edge.dst);
+            }
+            EdgeKind::RespondsTo if graph.nodes[&edge.src].kind == NodeKind::Position => {
+                positions.entry(&edge.dst).or_default().insert(&edge.src);
+            }
+            _ => {}
+        }
+    }
+    parents
+        .into_iter()
+        .filter(|issue| {
+            positions.get(issue).is_some_and(|positions| {
+                positions.len() >= 2
+                    || positions
+                        .iter()
+                        .any(|position| objections.contains(position))
+            })
+        })
+        .count()
+}
+
+/// Match each pre-consolidation issue by evidence Jaccard, breaking ties by gold ID.
 fn merged_pairs(before: &Graph, after: &Graph, gold: &Gold) -> usize {
     if gold.duplicate_issue_pairs.is_empty() {
         return 0;
@@ -302,8 +378,8 @@ mod tests {
         scores.node_recall = 1.0;
         let row = Measurement {
             scores,
-            pairs: 1,
-            gold_issues: 2,
+            pairs: 3,
+            gold_agendas: 2,
             complete: true,
             baseline_not_applicable: false,
         };
@@ -332,11 +408,12 @@ mod tests {
         assert!(gate(&all).contains("**PASS**"));
 
         type Edit = fn(&mut Measurement);
-        let cases: [(_, Edit); 4] = [
+        let cases: [(_, Edit); 5] = [
             ("m1", |row| row.scores.agendas = 4),
             ("m2", |row| row.scores.wrong_merges = 1),
             ("m3", |row| row.scores.node_recall = 0.99),
-            ("long", |row| row.pairs = 0),
+            ("long", |row| row.pairs = 2),
+            ("m1", |row| row.scores.agendas = 0),
         ];
         for (meeting, edit) in cases {
             let mut trials = all.clone();

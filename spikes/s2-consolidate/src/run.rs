@@ -8,9 +8,10 @@ use std::{
 
 use anyhow::{Result, bail, ensure};
 use discussion_graph::{
-    AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, Graph, PatchResult, Prompt, PromptError,
-    Utterance, apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
-    build_incremental, eval::GoldGraph, parse_ops,
+    AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, Graph, IssuePromptStage, PatchContext,
+    PatchResult, Prompt, PromptError, Utterance, apply_patch_with_context, build_consolidate,
+    build_consolidate_groups, build_consolidate_issues, build_incremental, eval::GoldGraph,
+    parse_ops,
 };
 use serde::{Deserialize, Serialize};
 use summarize::{CliSummarizer, CompletionRequest, Summarizer, cli_backend::CliBackend};
@@ -32,6 +33,41 @@ struct Call {
     parsed: bool,
     dropped_ops: usize,
     error: Option<&'static str>,
+    issue_stage: Option<RecordedIssueStage>,
+}
+
+// Ordered from least to most reduced, for the per-trial summary.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum RecordedIssueStage {
+    FullAnnotations,
+    ShortDecision,
+    NoAnnotations,
+    UidOnly,
+    OmittedIssues,
+}
+
+impl RecordedIssueStage {
+    fn from_prompt(stage: IssuePromptStage) -> Result<Self> {
+        Ok(match stage {
+            IssuePromptStage::FullAnnotations => Self::FullAnnotations,
+            IssuePromptStage::ShortDecision => Self::ShortDecision,
+            IssuePromptStage::NoAnnotations => Self::NoAnnotations,
+            IssuePromptStage::UidOnly => Self::UidOnly,
+            IssuePromptStage::OmittedIssues => Self::OmittedIssues,
+            _ => bail!("unknown issue consolidation prompt stage"),
+        })
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::FullAnnotations => "full annotations",
+            Self::ShortDecision => "short decision",
+            Self::NoAnnotations => "no annotations",
+            Self::UidOnly => "UID only",
+            Self::OmittedIssues => "omitted issues",
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -44,6 +80,7 @@ pub(crate) struct Trial {
     pub omitted_issues: usize,
     pub omitted_group_nodes: usize,
     pub complete: bool,
+    pub issue_stage: Option<RecordedIssueStage>,
     baseline_not_applicable: Option<bool>,
 }
 
@@ -67,6 +104,7 @@ struct Runner<'a> {
 struct CallResult {
     patch: Option<PatchResult>,
     timed_out: bool,
+    issue_stage: Option<RecordedIssueStage>,
 }
 
 impl Runner<'_> {
@@ -92,6 +130,15 @@ impl Runner<'_> {
             input_chars <= DEFAULT_INPUT_LIMIT,
             "prompt exceeded 24,000 characters"
         );
+        let issue_stage = prompt
+            .issue_stage
+            .map(RecordedIssueStage::from_prompt)
+            .transpose()?;
+        let context = if issue_stage.is_some() {
+            PatchContext::IssueConsolidation
+        } else {
+            PatchContext::Other
+        };
         let start = Instant::now();
         let output = if let Some(cli) = &self.cli {
             let request =
@@ -106,7 +153,7 @@ impl Runner<'_> {
         let error = parsed.as_ref().err().copied();
         let patch = parsed.ok().map(|ops| {
             let allowed: Vec<_> = prompt.allowed_uids.iter().map(String::as_str).collect();
-            apply_patch(graph, &ops, &allowed)
+            apply_patch_with_context(graph, &ops, &allowed, context)
         });
         let dropped_ops = patch.as_ref().map_or(0, |p| p.rejected.values().sum());
         serde_json::to_writer(
@@ -121,6 +168,7 @@ impl Runner<'_> {
                 parsed: patch.is_some(),
                 dropped_ops,
                 error,
+                issue_stage,
             },
         )?;
         self.log.write_all(b"\n")?;
@@ -128,6 +176,7 @@ impl Runner<'_> {
         Ok(CallResult {
             patch,
             timed_out: error == Some("timeout"),
+            issue_stage,
         })
     }
 
@@ -199,6 +248,7 @@ impl Runner<'_> {
             omitted_issues: 0,
             omitted_group_nodes: 0,
             complete: false,
+            issue_stage: None,
             baseline_not_applicable: Some(false),
         };
         let first = match style {
@@ -261,6 +311,7 @@ impl Runner<'_> {
             .call(meeting, Some((style, repeat)), &trial.graph, gold, prompt)
             .await?;
         trial.calls += 1;
+        trial.issue_stage = trial.issue_stage.max(call.issue_stage);
         let Some(patch) = call.patch else {
             trial.timeouts += usize::from(call.timed_out);
             return Ok(false);

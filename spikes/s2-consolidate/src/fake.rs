@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use discussion_graph::{Graph, Prompt, Status, eval::GoldGraph};
+use discussion_graph::{EdgeKind, Graph, Prompt, Status, eval::GoldGraph};
 use serde_json::json;
 
 use crate::data::uid;
@@ -42,13 +42,21 @@ pub(crate) fn response(graph: &Graph, gold: &GoldGraph, prompt: &Prompt) -> Stri
             ids.insert(node.id.as_str(), (nid, None));
         }
     }
-    for edge in &gold.edges {
-        if let (Some((src, src_new)), Some((dst, dst_new))) =
-            (ids.get(edge.src.as_str()), ids.get(edge.dst.as_str()))
+    let edges = gold
+        .edges
+        .iter()
+        .map(|edge| (edge.src.as_str(), edge.dst.as_str(), edge.kind))
+        .chain(gold.nodes.iter().filter_map(|node| {
+            node.parent
+                .as_deref()
+                .map(|parent| (node.id.as_str(), parent, EdgeKind::SubIssueOf))
+        }));
+    for (src_id, dst_id, kind) in edges {
+        if let (Some((src, src_new)), Some((dst, dst_new))) = (ids.get(src_id), ids.get(dst_id))
             && let Some(anchor) = src_new.as_ref().or(dst_new.as_ref())
         {
             ops.push(json!({
-                "op":"add_edge", "src":src, "dst":dst, "kind":edge.kind,
+                "op":"add_edge", "src":src, "dst":dst, "kind":kind,
                 "confidence":1.0, "grounds":[{"uid":anchor}],
             }));
         }
