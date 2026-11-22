@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::Result;
 use discussion_graph::{
-    EdgeKind, Graph, Node, NodeKind, Review,
+    AppliedOp, EdgeKind, Graph, Node, NodeKind, Review,
     eval::{Evaluation, evaluate, gold_agenda_count},
 };
 
@@ -29,22 +29,20 @@ struct Measurement {
 pub(crate) fn report(out: &Path) -> Result<()> {
     let config: Config = data::read_json(&out.join("config.json"))?;
     let mut results = String::from(
-        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold agendas | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Undetermined merges | Issue prompt stage | Parented contested issues | Stage 1 parent adds | Stage 1 parent removals | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |\n",
+        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold agendas | Sub-questions | Node recall (reference) | Content recall (condition 3) | Sub-question-only agendas (condition 7) | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Undetermined merges | Issue prompt stage | Parented contested issues | Stage 1 parent adds | Stage 1 parent removals | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |\n",
     );
     let mut appendix = String::new();
+    let mut changed_matches = String::new();
     let mut parent_samples = String::new();
     let mut all = BTreeMap::new();
-    let mut flush_recalls = BTreeMap::new();
+    let mut flush_scores = BTreeMap::new();
     for &meeting in config.meetings() {
         let (_, gold) = data::load(meeting)?;
         let gold_agendas = gold_agenda_count(&gold.graph);
         let flush = out.join(meeting).join("flush.json");
         let before: Option<Graph> = read_if_present(&flush)?;
         if let Some(before) = &before {
-            flush_recalls.insert(
-                meeting,
-                evaluate(before, &gold.graph, before, &[]).node_recall,
-            );
+            flush_scores.insert(meeting, evaluate(before, &gold.graph, before, &[]));
         }
         for &style in config.styles() {
             for repeat in 1..=config.repeats {
@@ -61,6 +59,39 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                         })
                         .unwrap_or_else(|| ("—".to_owned(), "—".to_owned()));
                     let scores = evaluate(&trial.graph, &gold.graph, before, &trial.applied);
+                    if !scores.changed_matches.is_empty() {
+                        writeln!(
+                            changed_matches,
+                            "### {meeting} / {} / trial {repeat}\n",
+                            style.label(),
+                        )?;
+                        for changed in &scores.changed_matches {
+                            let gold_node = gold
+                                .graph
+                                .nodes
+                                .iter()
+                                .find(|node| node.id == changed.gold_id)
+                                .expect("evaluation match refers to a gold node");
+                            writeln!(
+                                changed_matches,
+                                "- Gold `{}`: {}",
+                                gold_node.id,
+                                serde_json::to_string(&gold_node.text)?,
+                            )?;
+                            for (label, id) in [
+                                ("Node recall", &changed.agenda_prediction_id),
+                                ("Content recall", &changed.content_prediction_id),
+                            ] {
+                                if let Some(id) = id {
+                                    let text = serde_json::to_string(&trial.graph.nodes[id].text)?;
+                                    writeln!(changed_matches, "    - {label}: `{id}` {text}")?;
+                                } else {
+                                    writeln!(changed_matches, "    - {label}: unmatched")?;
+                                }
+                            }
+                        }
+                        writeln!(changed_matches)?;
+                    }
                     let pairs = merged_pairs(before, &trial.graph, &gold);
                     let baseline_not_applicable = trial.baseline_not_applicable(style);
                     for (from, into) in &scores.undetermined_merges {
@@ -82,11 +113,13 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     }
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | {} | {gold_agendas} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} | {} | {} | {parent_adds} | {parent_removals} | {} |",
+                        "| {meeting} | {} | {repeat} | {} | {gold_agendas} | {} | {:.3} | {:.3} | {} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} | {} | {} | {parent_adds} | {parent_removals} | {} |",
                         style.label(),
                         scores.agendas,
                         scores.sub_questions,
                         scores.node_recall,
+                        scores.content_recall,
+                        scores.sub_question_only_agendas,
                         scores.node_precision,
                         scores.edge_f1,
                         scores.wrong_merges,
@@ -125,7 +158,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     };
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | — | {gold_agendas} | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | {status} |",
+                        "| {meeting} | {} | {repeat} | — | {gold_agendas} | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | {status} |",
                         style.label()
                     )?;
                 }
@@ -133,14 +166,14 @@ pub(crate) fn report(out: &Path) -> Result<()> {
         }
     }
 
-    writeln!(results, "\n## Task 4b gate (ADR r13)\n")?;
+    writeln!(results, "\n## Task 4b gate (ADR r15)\n")?;
     if !config.is_sonnet_gate() {
         writeln!(
             results,
             "Not evaluated. The gate requires Claude CLI Sonnet, 6/45 windows, all seven meetings, both styles and three trials."
         )?;
     } else {
-        write_gate(&mut results, &all, &flush_recalls)?;
+        write_gate(&mut results, &all, &flush_scores)?;
     }
     if !appendix.is_empty() {
         writeln!(
@@ -150,9 +183,15 @@ pub(crate) fn report(out: &Path) -> Result<()> {
     }
     writeln!(
         results,
-        "\n## Appendix: Parent samples\n\nCompleted trial 1 for each meeting and style. Labels show where each surviving parent edge was created.\n"
+        "\n## Appendix: Parent samples\n\nCompleted trial 1 for each meeting and style. Includes all stage 1 additions and up to five surviving flush parent edges.\n"
     )?;
     results.push_str(&parent_samples);
+    writeln!(results, "\n## Appendix: Changed matches\n")?;
+    if changed_matches.is_empty() {
+        writeln!(results, "No assignments changed.")?;
+    } else {
+        results.push_str(&changed_matches);
+    }
     fs::write(out.join("RESULTS.md"), results)?;
     Ok(())
 }
@@ -164,38 +203,34 @@ fn write_parent_samples(
     before: &Graph,
     trial: &Trial,
 ) -> Result<()> {
-    let mut added = Vec::new();
-    let mut existing = Vec::new();
-    for edge in live_edges(&trial.graph).filter(|edge| edge.kind == EdgeKind::SubIssueOf) {
-        // A merge can move an edge without changing its identity. The revision
-        // distinguishes edges whose ID was reused after removal.
-        if trial.stage_one_parents.as_ref().is_some_and(|parents| {
-            parents
-                .added
-                .iter()
-                .any(|(id, rev)| id == &edge.eid && *rev == edge.created_rev)
-        }) {
-            added.push(("stage 1", edge));
-        } else if before.edges.get(&edge.eid).is_some_and(|original| {
-            original.kind == EdgeKind::SubIssueOf && original.created_rev == edge.created_rev
-        }) {
-            existing.push(("flush", edge));
+    let added = trial.applied.iter().filter_map(|op| match op {
+        AppliedOp::AddEdge { edge, .. }
+            if trial.stage_one_parents.as_ref().is_some_and(|parents| {
+                parents
+                    .added
+                    .contains(&(edge.eid.clone(), edge.created_rev))
+            }) =>
+        {
+            Some(("stage 1", edge))
         }
-    }
-    if added.is_empty() && existing.is_empty() {
+        _ => None,
+    });
+    let existing = live_edges(&trial.graph)
+        .filter(|edge| {
+            edge.kind == EdgeKind::SubIssueOf
+                && before.edges.get(&edge.eid).is_some_and(|original| {
+                    original.kind == EdgeKind::SubIssueOf
+                        && original.created_rev == edge.created_rev
+                })
+        })
+        .take(5)
+        .map(|edge| ("flush", edge));
+    let mut samples = added.chain(existing).peekable();
+    if samples.peek().is_none() {
         return Ok(());
     }
     writeln!(out, "### {meeting} / {} / trial 1\n", style.label())?;
-    let mut added = added.into_iter();
-    let mut existing = existing.into_iter();
-    for (origin, edge) in added
-        .next()
-        .into_iter()
-        .chain(existing.next())
-        .chain(added)
-        .chain(existing)
-        .take(5)
-    {
+    for (origin, edge) in samples {
         let child = serde_json::to_string(&trial.graph.nodes[&edge.src].text)?;
         let parent = serde_json::to_string(&trial.graph.nodes[&edge.dst].text)?;
         writeln!(out, "- [{origin}] {child} → {parent}")?;
@@ -214,7 +249,7 @@ fn read_if_present<T: serde::de::DeserializeOwned>(path: &Path) -> Result<Option
 fn write_gate(
     results: &mut String,
     all: &BTreeMap<(&str, &str), Vec<Measurement>>,
-    flush_recalls: &BTreeMap<&str, f64>,
+    flush_scores: &BTreeMap<&str, Evaluation>,
 ) -> std::fmt::Result {
     let baseline = Style::Baseline.label();
     let two_stage = Style::TwoStage.label();
@@ -226,6 +261,8 @@ fn write_gate(
     let mut each_agenda_ok = true;
     let mut agenda_ratios = Vec::new();
     let mut recall_details = Vec::new();
+    let mut sub_question_details = Vec::new();
+    let mut sub_question_ok = true;
     let mut wrong_merges = 0;
     let mut recall_ok = true;
     for &meeting in crate::SHORT_MEETINGS {
@@ -242,19 +279,33 @@ fn write_gate(
         agenda_ratios.push((meeting, ratio));
         wrong_merges += median(two_stage, |row| row.scores.wrong_merges);
 
-        let (reference, source) = if let Some(base) = complete(meeting, baseline) {
-            (median(base, |row| row.scores.node_recall), "baseline")
-        } else if all.get(&(meeting, baseline)).is_some_and(|rows| {
-            rows.len() == 3 && rows.iter().all(|row| row.baseline_not_applicable)
-        }) {
-            let Some(&recall) = flush_recalls.get(meeting) else {
+        let (reference, reference_sub_questions, source) =
+            if let Some(base) = complete(meeting, baseline) {
+                (
+                    median(base, |row| row.scores.content_recall),
+                    median(base, |row| row.scores.sub_question_only_agendas),
+                    "baseline",
+                )
+            } else if all.get(&(meeting, baseline)).is_some_and(|rows| {
+                rows.len() == 3 && rows.iter().all(|row| row.baseline_not_applicable)
+            }) {
+                let Some(scores) = flush_scores.get(meeting) else {
+                    return write_inconclusive(results);
+                };
+                (
+                    scores.content_recall,
+                    scores.sub_question_only_agendas,
+                    "flush",
+                )
+            } else {
                 return write_inconclusive(results);
             };
-            (recall, "flush")
-        } else {
-            return write_inconclusive(results);
-        };
-        let recall = median(two_stage, |row| row.scores.node_recall);
+        let recall = median(two_stage, |row| row.scores.content_recall);
+        let sub_questions = median(two_stage, |row| row.scores.sub_question_only_agendas);
+        sub_question_ok &= sub_questions <= reference_sub_questions;
+        sub_question_details.push(format!(
+            "{meeting} {sub_questions} vs {reference_sub_questions} ({source})"
+        ));
         recall_ok &= recall >= reference;
         recall_details.push(format!(
             "{meeting} {recall:.3} vs {reference:.3} ({source})"
@@ -268,7 +319,7 @@ fn write_gate(
     let agenda_ok = mean_ratio <= 1.5;
     let merges_ok = wrong_merges <= 2;
     let long_ok = long_pairs == 3;
-    let pass = agenda_ok && each_agenda_ok && merges_ok && recall_ok && long_ok;
+    let pass = agenda_ok && each_agenda_ok && merges_ok && recall_ok && sub_question_ok && long_ok;
     let status = |ok| if ok { "PASS" } else { "FAIL" };
     writeln!(results, "**{}**\n", status(pass))?;
     writeln!(
@@ -293,9 +344,15 @@ fn write_gate(
     )?;
     writeln!(
         results,
-        "- Recall across six meetings: {} ({}).",
+        "- Content recall across six meetings (condition 3): {} ({}).",
         status(recall_ok),
         recall_details.join(", ")
+    )?;
+    writeln!(
+        results,
+        "- Sub-question-only agendas across six meetings (condition 7): {} ({}).",
+        status(sub_question_ok),
+        sub_question_details.join(", ")
     )?;
     writeln!(
         results,
@@ -492,6 +549,12 @@ mod tests {
         let existing = serde_json::to_string(&before.nodes[&original.src].text).unwrap();
         assert!(samples.contains(&format!("[stage 1] {added} → {parent}")));
         assert!(samples.contains(&format!("[flush] {existing} → {parent}")));
+        assert_eq!(samples.matches("[stage 1]").count(), 2);
+        let (_, changed) = result.split_once("## Appendix: Changed matches").unwrap();
+        assert!(changed.contains("m3 / two-stage / trial 1"));
+        assert!(changed.contains("- Gold `"));
+        assert!(changed.contains("- Node recall: unmatched"));
+        assert!(changed.contains(&format!("- Content recall: `{}` {added}", child.nid)));
         let calls = fs::read_to_string(out.join("calls.jsonl")).unwrap();
         assert!(!calls.contains(&child.text));
     }
@@ -505,6 +568,7 @@ mod tests {
         let mut scores = evaluate(&empty, &gold.graph, &empty, &[]);
         scores.agendas = 3;
         scores.node_recall = 1.0;
+        scores.content_recall = 1.0;
         let row = Measurement {
             scores,
             pairs: 3,
@@ -534,13 +598,18 @@ mod tests {
         // A single high outlier does not move the median. Two wrong merges still pass.
         all.get_mut(&("m1", style)).unwrap()[2].scores.agendas = 300;
         change(&mut all, "m1", |row| row.scores.wrong_merges = 2);
+        change(&mut all, "m3", |row| row.scores.node_recall = 0.99);
+        all.get_mut(&("m3", style)).unwrap()[2]
+            .scores
+            .sub_question_only_agendas = 1;
         assert!(gate(&all).contains("**PASS**"));
 
         type Edit = fn(&mut Measurement);
-        let cases: [(_, Edit); 5] = [
+        let cases: [(_, Edit); 6] = [
             ("m1", |row| row.scores.agendas = 4),
             ("m2", |row| row.scores.wrong_merges = 1),
-            ("m3", |row| row.scores.node_recall = 0.99),
+            ("m3", |row| row.scores.content_recall = 0.99),
+            ("m3", |row| row.scores.sub_question_only_agendas = 1),
             ("long", |row| row.pairs = 2),
             ("m1", |row| row.scores.agendas = 0),
         ];

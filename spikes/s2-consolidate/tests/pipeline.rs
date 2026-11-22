@@ -30,7 +30,7 @@ fn fake_runs_and_reports_all_seven_meetings() {
     assert_eq!(rows.len(), 42);
     assert!(
         rows.iter()
-            .all(|line| line.split(" | ").nth(6) == Some("1.000"))
+            .all(|line| line.split(" | ").skip(6).take(2).eq(["1.000", "1.000"]))
     );
     let long: Vec<_> = rows
         .iter()
@@ -39,7 +39,7 @@ fn fake_runs_and_reports_all_seven_meetings() {
     assert_eq!(long.len(), 3);
     assert!(
         long.iter()
-            .all(|line| { line.split(" | ").nth(13).unwrap().parse::<usize>().unwrap() > 1 })
+            .all(|line| { line.split(" | ").nth(15).unwrap().parse::<usize>().unwrap() > 1 })
     );
     assert!(run.stdout.is_empty());
     assert_eq!(
@@ -72,12 +72,13 @@ fn fake_runs_and_reports_all_seven_meetings() {
         .find(|line| line.starts_with("| m3 | two-stage | 1 |"))
         .unwrap();
     assert!(m3.ends_with("| 0 | 0 | complete |"));
-    let samples = report.split_once("## Appendix: Parent samples").unwrap().1;
+    let (_, appendix) = report.split_once("## Appendix: Parent samples").unwrap();
+    let (samples, _) = appendix.split_once("## Appendix: Changed matches").unwrap();
     assert!(samples.contains("m3 / two-stage / trial 1"));
     assert!(samples.contains("[flush]"));
     assert!(!samples.contains("trial 2"));
 
-    assert!(report.contains("## Task 4b gate (ADR r13)"));
+    assert!(report.contains("## Task 4b gate (ADR r15)"));
 
     // Use the fake artifacts to exercise the Sonnet gate. A short meeting's
     // empty flush graph has zero recall, even though its saved baseline graphs
@@ -154,11 +155,11 @@ fn fake_runs_and_reports_all_seven_meetings() {
     assert!(report.contains(&format!("Into: {}", before["nodes"][&into]["text"])));
     assert!(report.contains("**FAIL**")); // Fake consolidation merges no long-meeting pairs.
     assert!(report.contains("m1 0.000 vs 0.000 (flush)"));
-    assert!(report.contains("- Recall across six meetings: PASS"));
+    assert!(report.contains("- Content recall across six meetings (condition 3): PASS"));
     fs::write(flush_path, serde_json::to_vec(&full_flush).unwrap()).unwrap();
     let report = gate_report();
     assert!(report.contains("m1 0.000 vs 1.000 (flush)"));
-    assert!(report.contains("- Recall across six meetings: FAIL"));
+    assert!(report.contains("- Content recall across six meetings (condition 3): FAIL"));
 
     let retry = Command::new(binary)
         .args(["run", "--backend", "fake", "--out"])
