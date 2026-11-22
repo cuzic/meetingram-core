@@ -2,8 +2,8 @@ mod common;
 
 use discussion_graph::{
     apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
-    build_incremental, parse_ops, ConsolidateStyle, Edge, EdgeKind, Graph, Ground, NodeKind,
-    Prompt, PromptError, Review, Status, DEFAULT_INPUT_LIMIT,
+    build_incremental, parse_ops, ConsolidateStyle, Edge, EdgeKind, Graph, Ground,
+    IssuePromptStage, NodeKind, Prompt, PromptError, Review, Status, DEFAULT_INPUT_LIMIT,
 };
 use serde_json::Value;
 
@@ -74,7 +74,7 @@ fn incremental_caps_long_new_and_reference_utterances_and_tracks_actual_input() 
         let u = utterance(i, text);
         graph.utterances.insert(u.uid.clone(), u);
     }
-    let limit = 4_000;
+    let limit = 4_200;
     let prompt = build_incremental(&graph, &["u12", "u10", "u11"], &[], false, limit).unwrap();
     assert!(size(&prompt) <= limit);
     assert_eq!(prompt.new_uids, ["u10"]);
@@ -263,6 +263,57 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     add_ground(&mut graph, "n2", 3, 400);
     add_ground(&mut graph, "n3", 4, 400);
     add_ground(&mut graph, "p1", 5, 400);
+    graph.nodes.get_mut("p1").unwrap().created_rev = 5;
+
+    for (kind, edge_kind) in [
+        (NodeKind::Decision, EdgeKind::Resolves),
+        (NodeKind::Position, EdgeKind::RespondsTo),
+    ] {
+        for (index, created_rev, review, status, link_kind) in [
+            (0, 4, Review::Auto, Status::Open, edge_kind),
+            (1, 3, Review::Auto, Status::Open, edge_kind),
+            (2, 2, Review::Auto, Status::Open, edge_kind),
+            (3, 0, Review::Rejected, Status::Open, edge_kind),
+            (4, 0, Review::Auto, Status::Merged, edge_kind),
+            (5, 0, Review::Auto, Status::Open, EdgeKind::Supports),
+        ] {
+            let id = format!("{kind:?}{index}");
+            let mut annotation = node(&id, kind);
+            annotation.created_rev = created_rev;
+            annotation.review = review;
+            annotation.status = status;
+            annotation.text = format!("{index}{}", "添".repeat(70));
+            graph.nodes.insert(id.clone(), annotation);
+            graph.edges.insert(
+                id.clone(),
+                Edge {
+                    eid: id.clone(),
+                    src: id,
+                    dst: "n1".into(),
+                    kind: link_kind,
+                    confidence: 1.0,
+                    review: Review::Auto,
+                    created_rev: 1,
+                },
+            );
+        }
+    }
+
+    graph
+        .nodes
+        .insert("objection".into(), node("objection", NodeKind::Argument));
+    graph.edges.insert(
+        "objection".into(),
+        Edge {
+            eid: "objection".into(),
+            src: "objection".into(),
+            dst: "p1".into(),
+            kind: EdgeKind::ObjectsTo,
+            confidence: 1.0,
+            review: Review::Auto,
+            created_rev: 1,
+        },
+    );
 
     let build = |graph: &Graph, limit| build_consolidate_issues(graph, limit).unwrap().unwrap();
     let full = build(&graph, DEFAULT_INPUT_LIMIT);
@@ -276,16 +327,69 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     assert_eq!(issues[0]["ground_count"], 2);
     assert_eq!(issues[0]["grounds"][0]["text"], "根".repeat(100));
 
+    for key in ["decisions", "positions"] {
+        assert_eq!(
+            issues[0][key],
+            serde_json::json!([
+                format!("2{}", "添".repeat(59)),
+                format!("1{}", "添".repeat(59))
+            ])
+        );
+    }
+
     let limit = size(&full) - 1;
+    let short = build(&graph, limit);
+    assert_eq!(short.issue_stage, Some(IssuePromptStage::ShortDecision));
+    let issues = section(&short, "graph nodes");
+    assert_eq!(
+        issues[0]["decisions"],
+        serde_json::json!([format!("2{}", "添".repeat(39))])
+    );
+    assert!(issues[0].get("positions").is_none());
+
+    let limit = size(&short) - 1;
+    let without_annotations = build(&graph, limit);
+    assert_graph_prompt(&without_annotations, 0, 3, limit);
+    assert_eq!(without_annotations.omitted_issues, 0);
+    assert_eq!(without_annotations.allowed_uids, ["u1", "u3", "u4"]);
+    let issues = section(&without_annotations, "graph nodes");
+    assert_eq!(issues[0]["grounds"][0]["text"], "根".repeat(100));
+    assert!(issues
+        .iter()
+        .all(|issue| issue.get("decisions").is_none() && issue.get("positions").is_none()));
+
+    let limit = size(&without_annotations) - 1;
     let without_evidence = build(&graph, limit);
     assert_graph_prompt(&without_evidence, 0, 3, limit);
     assert_eq!(without_evidence.omitted_issues, 0);
     assert_eq!(without_evidence.allowed_uids, ["u1", "u2", "u3", "u4"]);
+    let issues = section(&without_evidence, "graph nodes");
+    assert_eq!(
+        issues[0]["grounds"],
+        serde_json::json!([{"uid":"u1"}, {"uid":"u2"}])
+    );
+    assert!(issues
+        .iter()
+        .all(|issue| issue.get("decisions").is_none() && issue.get("positions").is_none()));
 
     let limit = size(&without_evidence) - 1;
     let trimmed = build(&graph, limit);
     assert_graph_prompt(&trimmed, 0, 2, limit);
     assert_eq!(trimmed.omitted_issues, 1);
+    for (prompt, stage) in [
+        (&full, IssuePromptStage::FullAnnotations),
+        (&short, IssuePromptStage::ShortDecision),
+        (&without_annotations, IssuePromptStage::NoAnnotations),
+        (&without_evidence, IssuePromptStage::UidOnly),
+        (&trimmed, IssuePromptStage::OmittedIssues),
+    ] {
+        assert_eq!(prompt.issue_stage, Some(stage));
+        let issues = section(prompt, "graph nodes");
+        assert_eq!(issues[0]["position_count"], 4);
+        assert_eq!(issues[0]["has_objection"], true);
+        assert_eq!(issues[1]["position_count"], 1);
+        assert_eq!(issues[1]["has_objection"], false);
+    }
     let issues = section(&trimmed, "graph nodes");
     assert_eq!(issues[0]["nid"], "n1");
     assert_eq!(issues[1]["nid"], "n2");
@@ -523,7 +627,13 @@ fn prompts_show_parents_and_stage_one_can_attach_a_question_using_uid_only() {
     let full = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
         .unwrap()
         .unwrap();
-    let issues = build_consolidate_issues(&graph, size(&full) - 1)
+    let short = build_consolidate_issues(&graph, size(&full) - 1)
+        .unwrap()
+        .unwrap();
+    let without_annotations = build_consolidate_issues(&graph, size(&short) - 1)
+        .unwrap()
+        .unwrap();
+    let issues = build_consolidate_issues(&graph, size(&without_annotations) - 1)
         .unwrap()
         .unwrap();
     assert!(issues.system.contains("sub_issue_of の add_edge"));
@@ -579,4 +689,37 @@ fn stage_two_keeps_an_earlier_child_in_its_agenda_group() {
         section(&prompts[0], "graph groups"),
         [serde_json::json!({"nids":["n1","n2","p1","p2"]})]
     );
+}
+
+#[test]
+fn extraction_and_issue_stage_distinguish_agendas_from_sub_questions() {
+    let mut graph = graph_with_groups(2);
+    add_ground(&mut graph, "n1", 1, 20);
+    let increment = build_incremental(&graph, &["u1"], &[], false, DEFAULT_INPUT_LIMIT).unwrap();
+    let stage_one = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
+        .unwrap()
+        .unwrap();
+    for system in [&increment.system, &stage_one.system] {
+        for rule in [
+            "案が対立する issue（responds_to する position が 2 件以上ある、または objects_to を受けた position が付いている）は、必ず議題とし、ほかの議題の判断材料になる問いでも親を付けないでください。",
+            "細かな問いは、親の議題に答えるための事実・数値・可否の確認の問いで、案が対立していないものです。答えの position が 1 件あってもかまいません。",
+            "それ以外の issue（案が 1 件だけでも確認の問いでないもの）は、親の無い議題のまま残してください。",
+        ] {
+            assert!(system.lines().any(|line| line == rule), "{rule}");
+        }
+        assert!(
+            system.contains("会議の進め方（今日は何を話すか、順番、時間配分）は issue にしない")
+        );
+        assert!(system.contains("議題を進め方の問いの子にしない"));
+    }
+    assert!(increment
+        .system
+        .contains("明らかに事実・数値・可否の確認の問いのときだけ"));
+    assert!(stage_one.system.lines().any(|line| {
+        line == "既存の親子も見直してください。細かな問いに当たらない issue の親と、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。"
+    }));
+    assert!(stage_one.system.contains(r#""op":"remove_edge""#));
+    assert_eq!(increment.issue_stage, None);
+    assert!(stage_one.system.contains("decisions"));
+    assert!(stage_one.system.contains("positions"));
 }
