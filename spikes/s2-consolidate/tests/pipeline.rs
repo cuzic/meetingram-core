@@ -66,6 +66,17 @@ fn fake_runs_and_reports_all_seven_meetings() {
         || row.contains(" | UID only | ")
         || row.contains(" | omitted issues | ")));
 
+    assert!(report.contains("| Stage 1 parent adds | Stage 1 parent removals |"));
+    let m3 = rows
+        .iter()
+        .find(|line| line.starts_with("| m3 | two-stage | 1 |"))
+        .unwrap();
+    assert!(m3.ends_with("| 0 | 0 | complete |"));
+    let samples = report.split_once("## Appendix: Parent samples").unwrap().1;
+    assert!(samples.contains("m3 / two-stage / trial 1"));
+    assert!(samples.contains("[flush]"));
+    assert!(!samples.contains("trial 2"));
+
     assert!(report.contains("## Task 4b gate (ADR r13)"));
 
     // Use the fake artifacts to exercise the Sonnet gate. A short meeting's

@@ -29,9 +29,10 @@ struct Measurement {
 pub(crate) fn report(out: &Path) -> Result<()> {
     let config: Config = data::read_json(&out.join("config.json"))?;
     let mut results = String::from(
-        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold agendas | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Undetermined merges | Issue prompt stage | Parented contested issues | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |\n",
+        "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold agendas | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Undetermined merges | Issue prompt stage | Parented contested issues | Stage 1 parent adds | Stage 1 parent removals | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |\n",
     );
     let mut appendix = String::new();
+    let mut parent_samples = String::new();
     let mut all = BTreeMap::new();
     let mut flush_recalls = BTreeMap::new();
     for &meeting in config.meetings() {
@@ -49,6 +50,16 @@ pub(crate) fn report(out: &Path) -> Result<()> {
             for repeat in 1..=config.repeats {
                 let path = data::trial_path(out, meeting, style.label(), repeat);
                 if let (Some(before), Some(trial)) = (&before, read_if_present::<Trial>(&path)?) {
+                    if repeat == 1 && trial.complete {
+                        write_parent_samples(&mut parent_samples, meeting, style, before, &trial)?;
+                    }
+                    let (parent_adds, parent_removals) = trial
+                        .stage_one_parents
+                        .as_ref()
+                        .map(|parents| {
+                            (parents.added.len().to_string(), parents.removed.to_string())
+                        })
+                        .unwrap_or_else(|| ("—".to_owned(), "—".to_owned()));
                     let scores = evaluate(&trial.graph, &gold.graph, before, &trial.applied);
                     let pairs = merged_pairs(before, &trial.graph, &gold);
                     let baseline_not_applicable = trial.baseline_not_applicable(style);
@@ -71,7 +82,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     }
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | {} | {gold_agendas} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} | {} | {} | {} |",
+                        "| {meeting} | {} | {repeat} | {} | {gold_agendas} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} | {} | {} | {parent_adds} | {parent_removals} | {} |",
                         style.label(),
                         scores.agendas,
                         scores.sub_questions,
@@ -114,7 +125,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                     };
                     writeln!(
                         results,
-                        "| {meeting} | {} | {repeat} | — | {gold_agendas} | — | — | — | — | — | — | — | — | — | — | — | — | — | — | {status} |",
+                        "| {meeting} | {} | {repeat} | — | {gold_agendas} | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | {status} |",
                         style.label()
                     )?;
                 }
@@ -137,7 +148,59 @@ pub(crate) fn report(out: &Path) -> Result<()> {
             "\n## Appendix: Undetermined merges\n\nReview each pair and add any wrong merges to its trial's count before finalizing condition (2).\n\n{appendix}"
         )?;
     }
+    writeln!(
+        results,
+        "\n## Appendix: Parent samples\n\nCompleted trial 1 for each meeting and style. Labels show where each surviving parent edge was created.\n"
+    )?;
+    results.push_str(&parent_samples);
     fs::write(out.join("RESULTS.md"), results)?;
+    Ok(())
+}
+
+fn write_parent_samples(
+    out: &mut String,
+    meeting: &str,
+    style: Style,
+    before: &Graph,
+    trial: &Trial,
+) -> Result<()> {
+    let mut added = Vec::new();
+    let mut existing = Vec::new();
+    for edge in live_edges(&trial.graph).filter(|edge| edge.kind == EdgeKind::SubIssueOf) {
+        // A merge can move an edge without changing its identity. The revision
+        // distinguishes edges whose ID was reused after removal.
+        if trial.stage_one_parents.as_ref().is_some_and(|parents| {
+            parents
+                .added
+                .iter()
+                .any(|(id, rev)| id == &edge.eid && *rev == edge.created_rev)
+        }) {
+            added.push(("stage 1", edge));
+        } else if before.edges.get(&edge.eid).is_some_and(|original| {
+            original.kind == EdgeKind::SubIssueOf && original.created_rev == edge.created_rev
+        }) {
+            existing.push(("flush", edge));
+        }
+    }
+    if added.is_empty() && existing.is_empty() {
+        return Ok(());
+    }
+    writeln!(out, "### {meeting} / {} / trial 1\n", style.label())?;
+    let mut added = added.into_iter();
+    let mut existing = existing.into_iter();
+    for (origin, edge) in added
+        .next()
+        .into_iter()
+        .chain(existing.next())
+        .chain(added)
+        .chain(existing)
+        .take(5)
+    {
+        let child = serde_json::to_string(&trial.graph.nodes[&edge.src].text)?;
+        let parent = serde_json::to_string(&trial.graph.nodes[&edge.dst].text)?;
+        writeln!(out, "- [{origin}] {child} → {parent}")?;
+    }
+    writeln!(out)?;
     Ok(())
 }
 
@@ -262,16 +325,19 @@ fn median<T: Copy + PartialOrd>(rows: &[Measurement], metric: impl Fn(&Measureme
     values[1]
 }
 
-fn parented_contested_issues(graph: &Graph) -> usize {
-    let live_edges = graph.edges.values().filter(|edge| {
+fn live_edges(graph: &Graph) -> impl Iterator<Item = &discussion_graph::Edge> {
+    graph.edges.values().filter(|edge| {
         edge.review != Review::Rejected
             && graph.nodes.get(&edge.src).is_some_and(Node::is_live)
             && graph.nodes.get(&edge.dst).is_some_and(Node::is_live)
-    });
+    })
+}
+
+fn parented_contested_issues(graph: &Graph) -> usize {
     let mut parents = BTreeSet::new();
     let mut objections = BTreeSet::new();
     let mut positions = BTreeMap::<_, BTreeSet<_>>::new();
-    for edge in live_edges {
+    for edge in live_edges(graph) {
         match edge.kind {
             EdgeKind::SubIssueOf => {
                 parents.insert(&edge.src);
@@ -366,6 +432,69 @@ mod tests {
     use super::*;
     use discussion_graph::{Op, apply_patch};
     use serde_json::json;
+
+    #[tokio::test]
+    async fn reports_accepted_parent_operations_and_both_sample_origins() {
+        let root = tempfile::tempdir().unwrap();
+        let out = root.path().join("fake");
+        let config = Config {
+            backend: crate::Backend::Fake,
+            model: "sonnet".to_owned(),
+            window: "6/45".parse().unwrap(),
+            repeats: 1,
+            max_calls: 700,
+            short_only: true,
+            two_stage_only: true,
+        };
+        crate::run::run(&config, &out).await.unwrap();
+        let before: Graph = data::read_json(&out.join("m3/flush.json")).unwrap();
+        let original = live_edges(&before)
+            .find(|edge| edge.kind == EdgeKind::SubIssueOf)
+            .unwrap();
+        let child = before
+            .nodes
+            .values()
+            .find(|node| {
+                node.kind == NodeKind::Issue && node.nid != original.src && node.nid != original.dst
+            })
+            .unwrap();
+        let uid = before.utterances.keys().next().unwrap();
+        let add = Op(json!({
+            "op":"add_edge", "src":child.nid, "dst":original.dst, "kind":"sub_issue_of",
+            "confidence":1.0, "grounds":[{"uid":uid}],
+        }));
+        let remove = Op(json!({
+            "op":"remove_edge", "src":child.nid, "dst":original.dst, "kind":"sub_issue_of",
+            "grounds":[{"uid":uid}],
+        }));
+        let patch = discussion_graph::apply_patch_with_context(
+            &before,
+            &[add.clone(), remove.clone(), remove, add.clone(), add],
+            &[uid],
+            discussion_graph::PatchContext::IssueConsolidation,
+        );
+        assert_eq!(patch.rejected.values().sum::<usize>(), 2);
+
+        let path = data::trial_path(&out, "m3", "two-stage", 1);
+        let mut trial: Trial = data::read_json(&path).unwrap();
+        trial.apply_consolidation_patch(patch, Some(RecordedIssueStage::FullAnnotations));
+        data::write_json(&path, &trial).unwrap();
+        report(&out).unwrap();
+
+        let result = fs::read_to_string(out.join("RESULTS.md")).unwrap();
+        assert!(result.lines().any(|line| {
+            line.starts_with("| m3 | two-stage | 1 |") && line.ends_with("| 2 | 1 | complete |")
+        }));
+        let (_, samples) = result.split_once("### m3 / two-stage / trial 1\n").unwrap();
+        let samples = samples.trim_start().split("\n\n").next().unwrap();
+        let parent = serde_json::to_string(&before.nodes[&original.dst].text).unwrap();
+        let added = serde_json::to_string(&child.text).unwrap();
+        let existing = serde_json::to_string(&before.nodes[&original.src].text).unwrap();
+        assert!(samples.contains(&format!("[stage 1] {added} → {parent}")));
+        assert!(samples.contains(&format!("[flush] {existing} → {parent}")));
+        let calls = fs::read_to_string(out.join("calls.jsonl")).unwrap();
+        assert!(!calls.contains(&child.text));
+    }
 
     #[test]
     fn task_4b_checks_each_condition_using_three_trial_medians() {

@@ -8,10 +8,10 @@ use std::{
 
 use anyhow::{Result, bail, ensure};
 use discussion_graph::{
-    AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, Graph, IssuePromptStage, PatchContext,
-    PatchResult, Prompt, PromptError, Utterance, apply_patch_with_context, build_consolidate,
-    build_consolidate_groups, build_consolidate_issues, build_incremental, eval::GoldGraph,
-    parse_ops,
+    AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, EdgeKind, Graph, IssuePromptStage,
+    PatchContext, PatchResult, Prompt, PromptError, Utterance, apply_patch_with_context,
+    build_consolidate, build_consolidate_groups, build_consolidate_issues, build_incremental,
+    eval::GoldGraph, parse_ops,
 };
 use serde::{Deserialize, Serialize};
 use summarize::{CliSummarizer, CompletionRequest, Summarizer, cli_backend::CliBackend};
@@ -82,9 +82,46 @@ pub(crate) struct Trial {
     pub complete: bool,
     pub issue_stage: Option<RecordedIssueStage>,
     baseline_not_applicable: Option<bool>,
+    pub stage_one_parents: Option<StageOneParents>,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub(crate) struct StageOneParents {
+    pub added: Vec<(String, u64)>,
+    pub removed: usize,
+}
+
+impl StageOneParents {
+    fn record(&mut self, applied: &[AppliedOp]) {
+        for op in applied {
+            match op {
+                AppliedOp::AddEdge { edge, .. } if edge.kind == EdgeKind::SubIssueOf => {
+                    self.added.push((edge.eid.clone(), edge.created_rev));
+                }
+                AppliedOp::RemoveEdge { edge, .. } if edge.kind == EdgeKind::SubIssueOf => {
+                    self.removed += 1;
+                }
+                _ => {}
+            }
+        }
+    }
 }
 
 impl Trial {
+    pub fn apply_consolidation_patch(
+        &mut self,
+        patch: PatchResult,
+        issue_stage: Option<RecordedIssueStage>,
+    ) {
+        if issue_stage.is_some()
+            && let Some(parents) = &mut self.stage_one_parents
+        {
+            parents.record(&patch.applied);
+        }
+        self.applied.extend(patch.applied);
+        self.graph = patch.graph;
+    }
+
     pub fn baseline_not_applicable(&self, style: Style) -> bool {
         // Older runs only saved a stopped baseline with zero calls on input overflow.
         style == Style::Baseline
@@ -250,6 +287,7 @@ impl Runner<'_> {
             complete: false,
             issue_stage: None,
             baseline_not_applicable: Some(false),
+            stage_one_parents: Some(StageOneParents::default()),
         };
         let first = match style {
             Style::Baseline => {
@@ -316,8 +354,7 @@ impl Runner<'_> {
             trial.timeouts += usize::from(call.timed_out);
             return Ok(false);
         };
-        trial.applied.extend(patch.applied);
-        trial.graph = patch.graph;
+        trial.apply_consolidation_patch(patch, call.issue_stage);
         Ok(true)
     }
 }
