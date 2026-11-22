@@ -601,3 +601,62 @@ fn issue_consolidation_replaces_a_stored_parent() {
     assert!(!snapshot.edges.contains_key("e1"));
     assert!(snapshot.grounds.iter().all(|ground| ground.target != "e1"));
 }
+
+#[test]
+fn consolidation_completion_survives_flush_and_reopening_until_deletion() {
+    let (dir, session, mut graph) = stores();
+    let sid = create_session(&session);
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
+
+    graph
+        .apply_patch(sid, PatchSource::Consolidate, None, &[], &[], &[])
+        .unwrap();
+    assert!(graph.is_consolidated(sid).unwrap());
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
+
+    graph
+        .apply_patch(sid, PatchSource::Consolidate, None, &[], &[], &[])
+        .unwrap();
+    graph.mark_consolidation_completed(sid).unwrap();
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), Some(2));
+
+    graph
+        .apply_patch(sid, PatchSource::Flush, None, &[], &[], &[])
+        .unwrap();
+    assert!(!graph.is_consolidated(sid).unwrap());
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), Some(2));
+
+    let path = dir.path().join("sessions.sqlite");
+    drop(graph);
+    let mut graph = GraphStore::open(&path).unwrap();
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), Some(2));
+
+    graph
+        .apply_patch(sid, PatchSource::Consolidate, None, &[], &[], &[])
+        .unwrap();
+    graph.mark_consolidation_completed(sid).unwrap();
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), Some(4));
+
+    graph.delete_session(sid).unwrap();
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
+    drop(graph);
+    let graph = GraphStore::open(&path).unwrap();
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
+}
+
+#[test]
+fn opening_an_older_database_creates_the_consolidation_completion_table() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("sessions.sqlite");
+    let session = SessionStore::open(&path).unwrap();
+    let sid = create_session(&session);
+    let (old_schema, _) = include_str!("schema.sql")
+        .split_once("CREATE TABLE IF NOT EXISTS graph_consolidations")
+        .unwrap();
+    let conn = Connection::open(&path).unwrap();
+    conn.execute_batch(old_schema).unwrap();
+    drop(conn);
+
+    let graph = GraphStore::open(&path).unwrap();
+    assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
+}

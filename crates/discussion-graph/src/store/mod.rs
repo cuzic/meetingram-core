@@ -7,7 +7,7 @@ mod tests;
 use std::path::Path;
 
 use recorder_domain::{speaker_label, SessionId, TrackKind};
-use rusqlite::{params, Connection, Transaction, TransactionBehavior};
+use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
 use serde_json::json;
 
 use self::records::{load_graph, read_utterances, revision, write_changes};
@@ -135,8 +135,44 @@ impl GraphStore {
         Ok(revision(&self.conn, &session_id.to_string())?)
     }
 
+    /// Record the current graph revision after both consolidation stages succeed.
+    /// A later completion replaces the previous record.
+    pub fn mark_consolidation_completed(
+        &mut self,
+        session_id: SessionId,
+    ) -> Result<(), StoreError> {
+        let sid = session_id.to_string();
+        let tx = self.begin_write()?;
+        let rev = revision(&tx, &sid)?;
+        tx.execute(
+            "INSERT INTO graph_consolidations (session_id, rev) VALUES (?1, ?2)
+             ON CONFLICT (session_id) DO UPDATE SET rev = excluded.rev",
+            params![sid, rev],
+        )?;
+        tx.commit()?;
+        Ok(())
+    }
+
+    /// Return the last explicitly recorded completion revision, if any.
+    /// Later extraction patches leave this record in place for review eligibility.
+    /// Use [Self::is_consolidated] to decide whether to consolidate after a flush.
+    pub fn consolidation_completed(
+        &self,
+        session_id: SessionId,
+    ) -> Result<Option<u64>, StoreError> {
+        Ok(self
+            .conn
+            .query_row(
+                "SELECT rev FROM graph_consolidations WHERE session_id = ?1",
+                [session_id.to_string()],
+                |row| row.get(0),
+            )
+            .optional()?)
+    }
+
     /// Return whether a saved consolidation covers the latest live or flush patch.
     /// A consolidation with no live or flush patches also counts. Reviews are ignored.
+    /// Use [Self::consolidation_completed] to check whether both stages have ever completed.
     pub fn is_consolidated(&self, session_id: SessionId) -> Result<bool, StoreError> {
         Ok(self.conn.query_row(
             "WITH revisions AS (
@@ -278,7 +314,7 @@ impl GraphStore {
         Ok(rev)
     }
 
-    /// Delete the graph and its import cursor so this session can be rebuilt.
+    /// Delete the graph, its import cursor, and its consolidation completion record.
     pub fn delete_session(&mut self, session_id: SessionId) -> Result<(), StoreError> {
         let sid = session_id.to_string();
         let tx = self.begin_write()?;
@@ -288,6 +324,7 @@ impl GraphStore {
             "DELETE FROM graph_nodes WHERE session_id = ?1",
             "DELETE FROM graph_utterances WHERE session_id = ?1",
             "DELETE FROM graph_patches WHERE session_id = ?1",
+            "DELETE FROM graph_consolidations WHERE session_id = ?1",
         ] {
             tx.execute(sql, [&sid])?;
         }

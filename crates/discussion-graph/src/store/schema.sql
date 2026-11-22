@@ -56,3 +56,8 @@ CREATE TABLE IF NOT EXISTS graph_patches (
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     PRIMARY KEY (session_id, rev)
 );
+
+CREATE TABLE IF NOT EXISTS graph_consolidations (
+    session_id TEXT NOT NULL PRIMARY KEY,
+    rev INTEGER NOT NULL
+);
