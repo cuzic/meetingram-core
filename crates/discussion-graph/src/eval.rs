@@ -12,13 +12,28 @@ pub struct GoldGraph {
     pub edges: Vec<GoldEdge>,
 }
 
+/// An annotated node in a gold graph, deserializable from a gold fixture.
+///
+/// External callers cannot construct or update it with a struct literal.
+///
+/// ```compile_fail
+/// use discussion_graph::eval::GoldNode;
+///
+/// fn with_parent(node: GoldNode, parent: String) -> GoldNode {
+///     GoldNode { parent: Some(parent), ..node }
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct GoldNode {
     pub id: String,
     pub kind: NodeKind,
     pub text: String,
     pub status: Status,
     pub grounds: Vec<i64>,
+    /// Parent agenda or question of a gold sub-question.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -28,7 +43,7 @@ pub struct GoldEdge {
     pub kind: EdgeKind,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub struct Evaluation {
     pub node_recall: f64,
@@ -39,14 +54,26 @@ pub struct Evaluation {
     pub agendas: usize,
     /// Live issues with a parent, including nested questions.
     pub sub_questions: usize,
+    /// Merges whose endpoints each share a ground row with at least one
+    /// same-kind gold node before consolidation, with disjoint sets of matches.
     pub wrong_merges: usize,
+    /// Merge endpoints in response order where either side has no gold match.
+    pub undetermined_merges: Vec<(String, String)>,
+}
+
+/// Count gold issues without a parent.
+pub fn gold_agenda_count(gold: &GoldGraph) -> usize {
+    gold.nodes
+        .iter()
+        .filter(|node| node.kind == NodeKind::Issue && node.parent.is_none())
+        .count()
 }
 
 /// Evaluate live nodes and edges against agenda-level gold annotations.
 /// Exclude sub-questions and nodes attached only to sub-questions from scoring.
-/// Pass the applied operations from
-/// consolidation in order. Each merge endpoint is independently matched to
-/// the best overlapping gold node from the graph before consolidation.
+/// Pass the graph immediately after the final flush, before consolidation stage 1,
+/// as `before_consolidation`. Pass the applied operations from stage 1 followed
+/// by those from stage 2 as `consolidation_ops`, in application order.
 pub fn evaluate(
     prediction: &Graph,
     gold: &GoldGraph,
@@ -64,29 +91,45 @@ pub fn evaluate(
         })
         .map(|node| node.nid.as_str())
         .collect();
-    let mut incoming = BTreeMap::<_, Vec<_>>::new();
-    for edge in prediction
+    let links = prediction
         .live_edges()
         .filter(|edge| edge.kind != EdgeKind::SubIssueOf)
-    {
-        incoming
-            .entry(edge.dst.as_str())
-            .or_default()
-            .push(edge.src.as_str());
-    }
-    let agenda_nodes = reachable_nodes(&incoming, agendas.clone());
-    let sub_question_nodes = reachable_nodes(&incoming, parents.keys().copied().collect());
-    let excluded: BTreeSet<_> = sub_question_nodes
-        .difference(&agenda_nodes)
-        .copied()
-        .collect();
-    let matched = matching(prediction, gold, |node| {
-        node.is_live() && !excluded.contains(node.nid.as_str())
-    });
+        .map(|edge| (edge.src.as_str(), edge.dst.as_str()));
+    let excluded = sub_question_only(links, agendas.clone(), parents.keys().copied().collect());
+    let (gold_agendas, gold_questions): (Vec<_>, Vec<_>) = gold
+        .nodes
+        .iter()
+        .filter(|node| node.kind == NodeKind::Issue)
+        .partition(|node| node.parent.is_none());
+    let gold_links = gold
+        .edges
+        .iter()
+        .filter(|edge| edge.kind != EdgeKind::SubIssueOf)
+        .map(|edge| (edge.src.as_str(), edge.dst.as_str()));
+    let gold_excluded = sub_question_only(
+        gold_links,
+        gold_agendas
+            .into_iter()
+            .map(|node| node.id.as_str())
+            .collect(),
+        gold_questions
+            .into_iter()
+            .map(|node| node.id.as_str())
+            .collect(),
+    );
+    let matched = matching(
+        prediction,
+        gold,
+        |node| node.is_live() && !excluded.contains(node.nid.as_str()),
+        &gold_excluded,
+    );
     let live_nodes = prediction.nodes.values().filter(|n| n.is_live()).count();
     let gold_edges: BTreeSet<_> = gold
         .edges
         .iter()
+        .filter(|edge| {
+            !gold_excluded.contains(edge.src.as_str()) && !gold_excluded.contains(edge.dst.as_str())
+        })
         .map(|e| (e.src.as_str(), e.dst.as_str(), e.kind))
         .collect();
     let mut edge_count = 0;
@@ -107,30 +150,51 @@ pub fn evaluate(
         }
     }
 
-    let mut before = BTreeMap::new();
+    let mut before = BTreeMap::<_, BTreeSet<_>>::new();
     for (_, prediction_id, gold_id) in candidates(before_consolidation, gold, |_| true) {
-        before.entry(prediction_id).or_insert(gold_id);
+        before.entry(prediction_id).or_default().insert(gold_id);
     }
-    let wrong_merges = consolidation_ops
-        .iter()
-        .filter(|op| {
-            if let AppliedOp::Merge { from, into, .. } = op {
-                let source = before.get(from.as_str());
-                source.is_some() && source != before.get(into.as_str())
-            } else {
-                false
+    let mut wrong_merges = 0;
+    let mut undetermined_merges = Vec::new();
+    for op in consolidation_ops {
+        if let AppliedOp::Merge { from, into, .. } = op {
+            match before.get(from.as_str()).zip(before.get(into.as_str())) {
+                Some((source, target)) if source.is_disjoint(target) => wrong_merges += 1,
+                Some(_) => {}
+                None => undetermined_merges.push((from.clone(), into.clone())),
             }
-        })
-        .count();
+        }
+    }
     Evaluation {
-        node_recall: ratio(matched.len(), gold.nodes.len()),
+        node_recall: ratio(
+            matched.len(),
+            gold.nodes
+                .iter()
+                .filter(|node| !gold_excluded.contains(node.id.as_str()))
+                .count(),
+        ),
         node_precision: ratio(matched.len(), live_nodes - excluded.len()),
         edge_f1: ratio(2 * matched_edges.len(), edge_count + gold_edges.len()),
         live_nodes,
         agendas: agendas.len(),
         sub_questions: parents.len(),
         wrong_merges,
+        undetermined_merges,
     }
+}
+
+fn sub_question_only<'a>(
+    links: impl Iterator<Item = (&'a str, &'a str)>,
+    agendas: Vec<&'a str>,
+    questions: Vec<&'a str>,
+) -> BTreeSet<&'a str> {
+    let mut incoming = BTreeMap::<_, Vec<_>>::new();
+    for (src, dst) in links {
+        incoming.entry(dst).or_default().push(src);
+    }
+    let agenda_nodes = reachable_nodes(&incoming, agendas);
+    let question_nodes = reachable_nodes(&incoming, questions);
+    question_nodes.difference(&agenda_nodes).copied().collect()
 }
 
 fn reachable_nodes<'a>(
@@ -200,10 +264,14 @@ fn matching<'a>(
     prediction: &'a Graph,
     gold: &'a GoldGraph,
     include: impl Fn(&crate::Node) -> bool,
+    excluded_gold: &BTreeSet<&str>,
 ) -> BTreeMap<&'a str, &'a str> {
     let mut matched = BTreeMap::new();
     let mut used_gold = BTreeSet::new();
     for (_, prediction_id, gold_id) in candidates(prediction, gold, include) {
+        if excluded_gold.contains(gold_id) {
+            continue;
+        }
         if !matched.contains_key(prediction_id) && used_gold.insert(gold_id) {
             matched.insert(prediction_id, gold_id);
         }

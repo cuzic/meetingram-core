@@ -521,3 +521,81 @@ fn sub_issue_edges_require_two_issues() {
         Rejection::EdgeKind,
     );
 }
+
+#[test]
+fn remove_edge_requires_issue_consolidation_and_can_replace_a_parent() {
+    use discussion_graph::{apply_patch_with_context, PatchContext};
+
+    let graph = apply(
+        &Graph::default(),
+        [
+            add("old", "issue"),
+            add("new", "issue"),
+            add("child", "issue"),
+            edge("child", "old", "sub_issue_of"),
+        ],
+    )
+    .graph;
+    let ops = parse_ops(
+        r#"{"ops":[{"op":"remove_edge","src":"n3","dst":"n1","kind":"sub_issue_of","grounds":[{"uid":"u1"}]}]}"#,
+    )
+    .unwrap();
+    let stage_one = |graph: &Graph, ops: &[Op]| {
+        apply_patch_with_context(graph, ops, &["u1"], PatchContext::IssueConsolidation)
+    };
+    assert_eq!(
+        apply_patch(&graph, &ops, &["u1"]).rejected,
+        [(Rejection::RemoveEdgeContext, 1)].into()
+    );
+    assert_eq!(
+        stage_one(
+            &graph,
+            &[Op(with_field(
+                ops[0].0.clone(),
+                "kind",
+                json!("responds_to")
+            ))]
+        )
+        .rejected,
+        [(Rejection::RemoveEdgeKind, 1)].into()
+    );
+    assert_eq!(
+        stage_one(
+            &graph,
+            &[Op(with_field(ops[0].0.clone(), "dst", json!("n2")))]
+        )
+        .rejected,
+        [(Rejection::RemoveEdgeMissing, 1)].into()
+    );
+    for (review, reason) in [
+        (Review::Approved, Rejection::RemoveEdgeReviewed),
+        (Review::Rejected, Rejection::RemoveEdgeMissing),
+    ] {
+        let mut reviewed = graph.clone();
+        reviewed.edges.get_mut("e1").unwrap().review = review;
+        let result = stage_one(&reviewed, &ops);
+        assert_eq!(result.rejected, [(reason, 1)].into());
+        assert_eq!(result.graph, reviewed);
+    }
+
+    let mut ops = ops;
+    ops.push(Op(edge("n3", "n2", "sub_issue_of")));
+    let result = stage_one(&graph, &ops);
+    assert!(result.rejected.is_empty());
+    assert_eq!(result.patch_rev(), Some(graph.rev + 1));
+    assert!(
+        matches!(&result.applied[0], AppliedOp::RemoveEdge { edge, grounds }
+        if edge.eid == "e1" && grounds[0].uid == "u1")
+    );
+    assert!(!result.graph.edges.contains_key("e1"));
+    assert!(result
+        .graph
+        .grounds
+        .iter()
+        .all(|ground| ground.target != "e1"));
+    assert_eq!(result.graph.edges["e2"].dst, "n2");
+    assert_eq!(
+        result.touched,
+        ["n1".into(), "n2".into(), "n3".into()].into()
+    );
+}

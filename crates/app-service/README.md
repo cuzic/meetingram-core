@@ -120,6 +120,9 @@ converting each frame:
 inside `tokio::task::spawn_blocking`, since `DeviceWatch::start`/
 `run_until_shutdown` must share one dedicated OS thread (see `DeviceWatch`'s own
 requirement that its creating thread stay alive).
+Pass `LiveTranscriptionOptions::default().with_silence_gate(enabled)` to configure
+the Remote track's silence gate. With `live-transcription`, use `with_stt_override`
+to supply providers for both tracks at the capture sample rate.
 
 Buffers the entire session's audio in memory before running the pipeline —
 correctly scoped for proving real capture flows end to end, not for how a

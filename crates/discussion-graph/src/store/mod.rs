@@ -11,7 +11,9 @@ use rusqlite::{params, Connection, Transaction, TransactionBehavior};
 use serde_json::json;
 
 use self::records::{load_graph, read_utterances, revision, write_changes};
-use crate::{apply_patch, Graph, Op, PatchResult, PatchSource, Review, Utterance};
+use crate::{
+    apply_patch_with_context, Graph, Op, PatchContext, PatchResult, PatchSource, Review, Utterance,
+};
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
@@ -144,6 +146,34 @@ impl GraphStore {
         input_uids: &[&str],
         reference_uids: &[&str],
     ) -> Result<PatchResult, StoreError> {
+        self.apply_patch_with_context(
+            session_id,
+            source,
+            provider_model,
+            ops,
+            input_uids,
+            reference_uids,
+            PatchContext::Other,
+        )
+    }
+
+    /// Apply parsed operations with the caller's validation context.
+    /// Use `PatchSource::Consolidate` for issue consolidation. Input and
+    /// reference IDs have the same semantics as in [Self::apply_patch].
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "Preserve the existing patch inputs and pass validation context explicitly"
+    )]
+    pub fn apply_patch_with_context(
+        &mut self,
+        session_id: SessionId,
+        source: PatchSource,
+        provider_model: Option<&str>,
+        ops: &[Op],
+        input_uids: &[&str],
+        reference_uids: &[&str],
+        context: PatchContext,
+    ) -> Result<PatchResult, StoreError> {
         if source == PatchSource::Review {
             return Err(StoreError::InvalidPatchSource);
         }
@@ -157,7 +187,7 @@ impl GraphStore {
         {
             return Err(StoreError::UnknownUtterance);
         }
-        let mut result = apply_patch(&before, ops, &allowed);
+        let mut result = apply_patch_with_context(&before, ops, &allowed, context);
         let rev = before.rev + 1;
         result.graph.rev = rev;
         let ops_json = serde_json::to_string(&result.applied)?;
