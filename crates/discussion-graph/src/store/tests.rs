@@ -481,6 +481,34 @@ fn stores_and_reloads_sub_issue_edges() {
 }
 
 #[test]
+fn issue_consolidation_rejects_live_and_flush_without_writing() {
+    let (_dir, session, mut store) = stores();
+    let sid = create_session(&session);
+    append(&session, sid, "Synthetic question");
+    store.import_utterances(sid).unwrap();
+    let before = store.load_graph(sid).unwrap();
+    let ops = add_issue();
+
+    for source in [PatchSource::Live, PatchSource::Flush] {
+        let result = store.apply_patch_with_context(
+            sid,
+            source,
+            None,
+            &ops,
+            &["u1"],
+            &[],
+            PatchContext::IssueConsolidation,
+        );
+        assert!(
+            matches!(result, Err(StoreError::InvalidPatchSource)),
+            "{source:?}"
+        );
+        assert_eq!(store.load_graph(sid).unwrap(), before);
+        assert_eq!(store.pending_count(sid).unwrap(), 1);
+    }
+}
+
+#[test]
 fn issue_consolidation_replaces_a_stored_parent() {
     let (dir, session, mut store) = stores();
     let sid = create_session(&session);
