@@ -1,6 +1,6 @@
 mod common;
 
-use discussion_graph::eval::{evaluate, GoldEdge, GoldGraph, GoldNode};
+use discussion_graph::eval::{evaluate, gold_agenda_count, GoldEdge, GoldGraph, GoldNode};
 use discussion_graph::{
     detect_gaps, graph_updated_subject, AppliedOp, Edge, EdgeKind, Graph, Ground, NodeKind, Review,
     Status, Utterance,
@@ -16,6 +16,7 @@ fn gold_node(id: &str, kind: NodeKind, row: i64) -> GoldNode {
         text: format!("Synthetic {id}"),
         status: Status::Open,
         grounds: vec![row],
+        parent: None,
     }
 }
 
@@ -49,7 +50,12 @@ fn graph_from_gold(utterances: Vec<Utterance>, gold: &GoldGraph) -> Graph {
             });
         }
     }
-    for (i, e) in gold.edges.iter().enumerate() {
+    let parents = gold.nodes.iter().filter_map(|node| {
+        node.parent
+            .as_deref()
+            .map(|parent| gold_edge(&node.id, parent, EdgeKind::SubIssueOf))
+    });
+    for (i, e) in gold.edges.iter().cloned().chain(parents).enumerate() {
         let eid = format!("e{}", i + 1);
         graph.edges.insert(
             eid.clone(),
@@ -413,21 +419,97 @@ fn wrong_merges_require_two_disjoint_nonempty_gold_match_sets() {
             edges: vec![],
         },
     );
-    for (from, into, expected) in [
-        ("paraphrase", "original", 0),
-        ("original", "unrelated", 1),
-        ("original", "unmatched", 0),
-        ("unmatched", "original", 0),
-    ] {
-        let op = AppliedOp::Merge {
-            from: from.into(),
-            into: into.into(),
-            grounds: vec![],
-        };
-        assert_eq!(
-            evaluate(&Graph::default(), &gold, &before, &[op]).wrong_merges,
-            expected,
-            "{from} -> {into}"
-        );
-    }
+    let ops = [
+        ("paraphrase", "original"),
+        ("original", "unrelated"),
+        ("original", "unmatched"),
+        ("unmatched", "original"),
+    ]
+    .map(|(from, into)| AppliedOp::Merge {
+        from: from.into(),
+        into: into.into(),
+        grounds: vec![],
+    });
+    let score = evaluate(&Graph::default(), &gold, &before, &ops);
+    assert_eq!(score.wrong_merges, 1);
+    assert_eq!(
+        score.undetermined_merges,
+        [
+            ("original".into(), "unmatched".into()),
+            ("unmatched".into(), "original".into()),
+        ]
+    );
+}
+
+#[test]
+fn only_open_sub_questions_without_an_answer_or_decision_are_unanswered() {
+    use EdgeKind::*;
+    use NodeKind::*;
+    let mut closed = gold_node("closed", Issue, 2);
+    closed.status = Status::Resolved;
+    let graph = graph_from_gold(
+        vec![],
+        &GoldGraph {
+            nodes: vec![
+                gold_node("agenda", Issue, 1),
+                closed,
+                gold_node("decided", Issue, 3),
+                gold_node("answered", Issue, 4),
+                gold_node("unanswered", Issue, 5),
+                gold_node("decision", Decision, 6),
+                gold_node("answer", Position, 7),
+            ],
+            edges: vec![
+                gold_edge("closed", "agenda", SubIssueOf),
+                gold_edge("decided", "agenda", SubIssueOf),
+                gold_edge("answered", "agenda", SubIssueOf),
+                gold_edge("unanswered", "agenda", SubIssueOf),
+                gold_edge("decision", "decided", Resolves),
+                gold_edge("answer", "answered", RespondsTo),
+            ],
+        },
+    );
+    assert_eq!(
+        detect_gaps(&graph, false).unanswered_issues,
+        ["agenda", "unanswered"]
+    );
+}
+
+#[test]
+fn gold_parents_exclude_sub_questions_and_their_private_nodes_from_recall() {
+    use EdgeKind::*;
+    use NodeKind::*;
+
+    let mut detail = gold_node("gold-detail", Issue, 1);
+    detail.parent = Some("agenda".into());
+    let mut nested = gold_node("nested", Issue, 3);
+    nested.parent = Some(detail.id.clone());
+    let agenda = gold_node("agenda", Issue, 2);
+    let shared = gold_node("shared", Position, 4);
+    let gold = GoldGraph {
+        nodes: vec![
+            detail,
+            nested,
+            agenda.clone(),
+            shared.clone(),
+            gold_node("private", Position, 5),
+        ],
+        edges: vec![
+            gold_edge("shared", "agenda", RespondsTo),
+            gold_edge("shared", "nested", RespondsTo),
+            gold_edge("private", "nested", RespondsTo),
+        ],
+    };
+    let prediction = graph_from_gold(
+        (1..=5).map(|id| utterance(id, String::new())).collect(),
+        &GoldGraph {
+            nodes: vec![agenda, shared, gold_node("extra", Issue, 1)],
+            edges: vec![gold_edge("shared", "agenda", RespondsTo)],
+        },
+    );
+    let score = evaluate(&prediction, &gold, &prediction, &[]);
+    assert_eq!(gold_agenda_count(&gold), 1);
+    assert_eq!(score.node_recall, 1.0);
+    assert_eq!(score.node_precision, 2.0 / 3.0);
+    assert_eq!(score.edge_f1, 1.0);
 }

@@ -2,8 +2,8 @@ mod common;
 
 use discussion_graph::{
     apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
-    build_incremental, parse_ops, ConsolidateStyle, Edge, EdgeKind, Graph, Ground, NodeKind,
-    Prompt, PromptError, Review, Status, DEFAULT_INPUT_LIMIT,
+    build_incremental, parse_ops, ConsolidateStyle, Edge, EdgeKind, Graph, Ground,
+    IssuePromptStage, NodeKind, Prompt, PromptError, Review, Status, DEFAULT_INPUT_LIMIT,
 };
 use serde_json::Value;
 
@@ -299,6 +299,22 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
         }
     }
 
+    graph
+        .nodes
+        .insert("objection".into(), node("objection", NodeKind::Argument));
+    graph.edges.insert(
+        "objection".into(),
+        Edge {
+            eid: "objection".into(),
+            src: "objection".into(),
+            dst: "p1".into(),
+            kind: EdgeKind::ObjectsTo,
+            confidence: 1.0,
+            review: Review::Auto,
+            created_rev: 1,
+        },
+    );
+
     let build = |graph: &Graph, limit| build_consolidate_issues(graph, limit).unwrap().unwrap();
     let full = build(&graph, DEFAULT_INPUT_LIMIT);
     assert_graph_prompt(&full, 0, 3, DEFAULT_INPUT_LIMIT);
@@ -322,6 +338,16 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     }
 
     let limit = size(&full) - 1;
+    let short = build(&graph, limit);
+    assert_eq!(short.issue_stage, Some(IssuePromptStage::ShortDecision));
+    let issues = section(&short, "graph nodes");
+    assert_eq!(
+        issues[0]["decisions"],
+        serde_json::json!([format!("2{}", "添".repeat(39))])
+    );
+    assert!(issues[0].get("positions").is_none());
+
+    let limit = size(&short) - 1;
     let without_annotations = build(&graph, limit);
     assert_graph_prompt(&without_annotations, 0, 3, limit);
     assert_eq!(without_annotations.omitted_issues, 0);
@@ -350,6 +376,20 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     let trimmed = build(&graph, limit);
     assert_graph_prompt(&trimmed, 0, 2, limit);
     assert_eq!(trimmed.omitted_issues, 1);
+    for (prompt, stage) in [
+        (&full, IssuePromptStage::FullAnnotations),
+        (&short, IssuePromptStage::ShortDecision),
+        (&without_annotations, IssuePromptStage::NoAnnotations),
+        (&without_evidence, IssuePromptStage::UidOnly),
+        (&trimmed, IssuePromptStage::OmittedIssues),
+    ] {
+        assert_eq!(prompt.issue_stage, Some(stage));
+        let issues = section(prompt, "graph nodes");
+        assert_eq!(issues[0]["position_count"], 4);
+        assert_eq!(issues[0]["has_objection"], true);
+        assert_eq!(issues[1]["position_count"], 1);
+        assert_eq!(issues[1]["has_objection"], false);
+    }
     let issues = section(&trimmed, "graph nodes");
     assert_eq!(issues[0]["nid"], "n1");
     assert_eq!(issues[1]["nid"], "n2");
@@ -587,7 +627,10 @@ fn prompts_show_parents_and_stage_one_can_attach_a_question_using_uid_only() {
     let full = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
         .unwrap()
         .unwrap();
-    let without_annotations = build_consolidate_issues(&graph, size(&full) - 1)
+    let short = build_consolidate_issues(&graph, size(&full) - 1)
+        .unwrap()
+        .unwrap();
+    let without_annotations = build_consolidate_issues(&graph, size(&short) - 1)
         .unwrap()
         .unwrap();
     let issues = build_consolidate_issues(&graph, size(&without_annotations) - 1)
@@ -664,6 +707,11 @@ fn extraction_and_issue_stage_distinguish_agendas_from_sub_questions() {
         );
         assert!(system.contains("議題を進め方の問いの子にしない"));
     }
+    assert!(increment
+        .system
+        .contains("明らかに事実・数値・可否の確認の問いのときだけ"));
+    assert!(stage_one.system.contains(r#""op":"remove_edge""#));
+    assert_eq!(increment.issue_stage, None);
     assert!(stage_one.system.contains("decisions"));
     assert!(stage_one.system.contains("positions"));
 }

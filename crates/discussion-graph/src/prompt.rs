@@ -10,7 +10,8 @@ const EXTRACT: &str = concat!(
     include_str!("extraction.txt"),
     include_str!("extraction-r11.txt"),
     include_str!("extraction-r12.txt"),
-    include_str!("extraction-r13.txt")
+    include_str!("extraction-r13.txt"),
+    "増分では後から案が出るかは分かりません。明らかに事実・数値・可否の確認の問いのときだけ親を付けてください。付けた親が後で合わなくなったら整理の段 1 で外します。\n"
 );
 const BASELINE: &str = concat!(
     include_str!("extraction.txt"),
@@ -35,6 +36,9 @@ const ISSUE_OPERATIONS: &str = concat!(
 全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge で統合してください。ground_count が多い方を into にしてください。
 parent_nid は既存の親です。親の無い細かな問いは、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。
 {"op":"add_edge","src":"n8","dst":"n5","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u3"}]}
+既存の親子も見直してください。議題の条件に当たる issue の親や、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。
+{"op":"remove_edge","src":"n8","dst":"n5","kind":"sub_issue_of","grounds":[{"uid":"u3"}]}
+position_count はその issue に responds_to する position の数です。has_objection はその中に objects_to を受けた position があることを示します。
 decisions はその issue に resolves する決定、positions はその issue に responds_to する案の本文です。issue の本文が違っても、決定や案が同じなら同じ問いの言い換えとして merge を検討してください。
 "#,
     include_str!("extraction-r13.txt")
@@ -52,6 +56,18 @@ pub struct Prompt {
     pub new_uids: Vec<String>,
     /// Number of live issues omitted to fit the issue consolidation prompt.
     pub omitted_issues: usize,
+    /// The input reduction needed for stage one, if this is an issue prompt.
+    pub issue_stage: Option<IssuePromptStage>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum IssuePromptStage {
+    FullAnnotations,
+    ShortDecision,
+    NoAnnotations,
+    UidOnly,
+    OmittedIssues,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -167,6 +183,7 @@ pub fn build_incremental(
         allowed_uids,
         new_uids,
         omitted_issues: 0,
+        issue_stage: None,
     })
 }
 
@@ -307,26 +324,31 @@ pub fn build_consolidate_issues(
     });
     let system = format!("{CONSOLIDATE}{ISSUE_OPERATIONS}");
     let issue_count = issues.len();
-    let render = |issues: &[&Node], evidence, annotations| {
+    let render = |issues: &[&Node], evidence, stage| {
         let nodes = issues
             .iter()
             .map(|node| (node.nid.as_str(), evidence))
             .collect();
-        renderer.render(&system, &nodes, &[], Layout::Issues { annotations })
+        renderer.render(&system, &nodes, &[], Layout::Issues(stage))
     };
-    for annotations in [true, false] {
-        let prompt = render(&issues, (100, 1), annotations);
+    for (evidence, stage) in [
+        ((100, 1), IssuePromptStage::FullAnnotations),
+        ((100, 1), IssuePromptStage::ShortDecision),
+        ((100, 1), IssuePromptStage::NoAnnotations),
+        (UID_ONLY, IssuePromptStage::UidOnly),
+    ] {
+        let prompt = render(&issues, evidence, stage);
         if prompt.fits(limit) {
             return Ok(Some(prompt));
         }
     }
-    while issues.len() >= 2 {
-        let mut prompt = render(&issues, UID_ONLY, false);
+    while issues.len() > 2 {
+        issues.pop();
+        let mut prompt = render(&issues, UID_ONLY, IssuePromptStage::OmittedIssues);
         if prompt.fits(limit) {
             prompt.omitted_issues = issue_count - issues.len();
             return Ok(Some(prompt));
         }
-        issues.pop();
     }
     Err(PromptError::InputLimit)
 }
@@ -385,7 +407,7 @@ impl Prompt {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Layout {
     Baseline,
-    Issues { annotations: bool },
+    Issues(IssuePromptStage),
     Groups,
 }
 
@@ -440,20 +462,17 @@ impl<'a> Consolidation<'a> {
             .filter(|node| node.kind == NodeKind::Issue)
     }
 
-    fn issue_annotations(&self, nid: &str, kind: EdgeKind) -> Vec<&'a str> {
+    fn issue_links(&self, nid: &str, kind: EdgeKind, source_kind: NodeKind) -> Vec<&'a Node> {
         let mut linked: Vec<_> = self
             .edges
             .iter()
             .filter(|edge| edge.dst == nid && edge.kind == kind)
             .map(|edge| self.nodes[edge.src.as_str()])
+            .filter(|node| node.kind == source_kind)
             .collect();
         linked.sort_unstable_by_key(|node| (node.created_rev, &node.nid));
         linked.dedup_by_key(|node| &node.nid);
         linked
-            .into_iter()
-            .take(2)
-            .map(|node| prefix(&node.text, 60))
-            .collect()
     }
 
     fn groups(&self, all: &BTreeSet<&'a str>) -> Vec<BTreeSet<&'a str>> {
@@ -545,7 +564,7 @@ impl<'a> Consolidation<'a> {
         for edge in &self.edges {
             let has_src = evidence.contains_key(edge.src.as_str());
             let has_dst = evidence.contains_key(edge.dst.as_str());
-            if (!matches!(layout, Layout::Issues { .. }) || edge.kind == EdgeKind::SubIssueOf)
+            if (!matches!(layout, Layout::Issues(_)) || edge.kind == EdgeKind::SubIssueOf)
                 && has_src
                 && has_dst
             {
@@ -578,6 +597,12 @@ impl<'a> Consolidation<'a> {
         }
         user.push_str("graph nodes\n");
         let mut allowed = BTreeSet::new();
+        let objections: BTreeSet<_> = self
+            .edges
+            .iter()
+            .filter(|edge| edge.kind == EdgeKind::ObjectsTo)
+            .map(|edge| edge.dst.as_str())
+            .collect();
         for (&nid, &(cap, count)) in evidence {
             let node = self.nodes[nid];
             let utterances = self
@@ -593,11 +618,35 @@ impl<'a> Consolidation<'a> {
                     json!({"uid":u.uid, "speaker_label":u.speaker_label, "text":prefix(&u.text, cap)})
                 }
             }).collect();
-            let line = if let Layout::Issues { annotations } = layout {
-                let mut line = json!({"nid":nid, "parent_nid":self.parents.get(nid), "text":node.text, "ground_count":utterances.len(), "grounds":grounds});
-                if annotations {
-                    line["decisions"] = json!(self.issue_annotations(nid, EdgeKind::Resolves));
-                    line["positions"] = json!(self.issue_annotations(nid, EdgeKind::RespondsTo));
+            let line = if let Layout::Issues(stage) = layout {
+                let positions = self.issue_links(nid, EdgeKind::RespondsTo, NodeKind::Position);
+                let has_objection = positions
+                    .iter()
+                    .any(|position| objections.contains(position.nid.as_str()));
+                let mut line = json!({
+                    "nid":nid, "parent_nid":self.parents.get(nid), "text":node.text,
+                    "ground_count":utterances.len(), "grounds":grounds,
+                    "position_count":positions.len(), "has_objection":has_objection,
+                });
+                let (count, cap) = match stage {
+                    IssuePromptStage::FullAnnotations => (2, 60),
+                    IssuePromptStage::ShortDecision => (1, 40),
+                    _ => (0, 0),
+                };
+                if count > 0 {
+                    let decisions = self.issue_links(nid, EdgeKind::Resolves, NodeKind::Decision);
+                    line["decisions"] = json!(decisions
+                        .iter()
+                        .take(count)
+                        .map(|node| prefix(&node.text, cap))
+                        .collect::<Vec<_>>());
+                }
+                if stage == IssuePromptStage::FullAnnotations {
+                    line["positions"] = json!(positions
+                        .iter()
+                        .take(count)
+                        .map(|node| prefix(&node.text, cap))
+                        .collect::<Vec<_>>());
                 }
                 line
             } else {
@@ -617,6 +666,10 @@ impl<'a> Consolidation<'a> {
             allowed_uids: allowed.into_iter().collect(),
             new_uids: Vec::new(),
             omitted_issues: 0,
+            issue_stage: match layout {
+                Layout::Issues(stage) => Some(stage),
+                _ => None,
+            },
         }
     }
 }

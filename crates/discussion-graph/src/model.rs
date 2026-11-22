@@ -157,6 +157,7 @@ pub struct Gaps {
 }
 
 pub fn detect_gaps(graph: &Graph, flush_complete: bool) -> Gaps {
+    let parents = graph.issue_parents();
     let mut incoming = BTreeMap::<_, Vec<_>>::new();
     for edge in graph.live_edges() {
         incoming
@@ -173,7 +174,10 @@ pub fn detect_gaps(graph: &Graph, flush_complete: bool) -> Gaps {
         };
         match node.kind {
             NodeKind::Issue => {
-                if !has(EdgeKind::RespondsTo) {
+                if !has(EdgeKind::RespondsTo)
+                    && (!parents.contains_key(node.nid.as_str())
+                        || (node.status == Status::Open && !has(EdgeKind::Resolves)))
+                {
                     gaps.unanswered_issues.push(node.nid.clone());
                 }
                 if flush_complete && !has(EdgeKind::Resolves) {

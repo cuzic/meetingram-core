@@ -71,6 +71,10 @@ pub enum AppliedOp {
         edge: Edge,
         grounds: Vec<GroundRef>,
     },
+    RemoveEdge {
+        edge: Edge,
+        grounds: Vec<GroundRef>,
+    },
     Merge {
         from: String,
         into: String,
@@ -100,6 +104,10 @@ pub enum Rejection {
     EdgeKind,
     EdgeSelfLoop,
     EdgeDuplicate,
+    RemoveEdgeContext,
+    RemoveEdgeKind,
+    RemoveEdgeMissing,
+    RemoveEdgeReviewed,
     IssueAlreadyHasParent,
     IssueParentCycle,
     MergeSameNode,
@@ -133,7 +141,26 @@ impl PatchResult {
 /// Validate in response order. The IDs in `allowed_uids` are those actually
 /// presented to the model, including any reference utterances.
 pub fn apply_patch(graph: &Graph, ops: &[Op], allowed_uids: &[&str]) -> PatchResult {
+    apply_patch_with_context(graph, ops, allowed_uids, PatchContext::Other)
+}
+
+/// Identifies whether a response came from issue consolidation (stage one).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum PatchContext {
+    Other,
+    IssueConsolidation,
+}
+
+/// Validate and apply a response using the caller's consolidation context.
+pub fn apply_patch_with_context(
+    graph: &Graph,
+    ops: &[Op],
+    allowed_uids: &[&str],
+    context: PatchContext,
+) -> PatchResult {
     let mut patch = Patch {
+        context,
         next_node: last_id(graph.nodes.keys(), 'n'),
         next_edge: last_id(graph.edges.keys(), 'e'),
         graph: graph.clone(),
@@ -173,6 +200,7 @@ fn last_id<'a>(ids: impl Iterator<Item = &'a String>, prefix: char) -> u64 {
 }
 
 struct Patch<'a> {
+    context: PatchContext,
     graph: Graph,
     allowed: BTreeSet<&'a str>,
     tmp: BTreeMap<String, String>,
@@ -195,7 +223,10 @@ impl Patch<'_> {
             .then(|| value.get("tmp").and_then(Value::as_str))
             .flatten();
         let duplicate = tmp.is_some_and(|id| !self.seen_tmp.insert(id.to_owned()));
-        if !matches!(op, "add_node" | "add_edge" | "merge" | "set_status") {
+        if !matches!(
+            op,
+            "add_node" | "add_edge" | "remove_edge" | "merge" | "set_status"
+        ) {
             return Err(Rejection::UnknownOperation);
         }
         let grounds = self.grounds(value)?;
@@ -251,6 +282,9 @@ impl Patch<'_> {
                 confidence,
                 grounds,
             ),
+            "remove_edge" => {
+                self.remove_edge(field("src")?, field("dst")?, field("kind")?, grounds)
+            }
             "merge" => self.merge(field("from")?, field("into")?, grounds),
             "set_status" => self.set_status(field("nid")?, field("status")?, grounds),
             _ => Err(Rejection::UnknownOperation),
@@ -363,6 +397,38 @@ impl Patch<'_> {
         self.add_grounds(&edge.eid, &grounds);
         self.graph.edges.insert(edge.eid.clone(), edge.clone());
         Ok(AppliedOp::AddEdge { edge, grounds })
+    }
+
+    fn remove_edge(
+        &mut self,
+        src: &str,
+        dst: &str,
+        kind: &str,
+        grounds: Vec<GroundRef>,
+    ) -> Result<AppliedOp, Rejection> {
+        if self.context != PatchContext::IssueConsolidation {
+            return Err(Rejection::RemoveEdgeContext);
+        }
+        if kind.parse() != Ok(EdgeKind::SubIssueOf) {
+            return Err(Rejection::RemoveEdgeKind);
+        }
+        let src = self.node(src).ok_or(Rejection::RemoveEdgeMissing)?;
+        let dst = self.node(dst).ok_or(Rejection::RemoveEdgeMissing)?;
+        let edge = self
+            .graph
+            .live_edges()
+            .find(|edge| edge.key() == (src.nid.as_str(), dst.nid.as_str(), EdgeKind::SubIssueOf))
+            .ok_or(Rejection::RemoveEdgeMissing)?;
+        if edge.review != Review::Auto {
+            return Err(Rejection::RemoveEdgeReviewed);
+        }
+        let edge = edge.clone();
+        self.graph.edges.remove(&edge.eid);
+        self.graph
+            .grounds
+            .retain(|ground| ground.target != edge.eid);
+        self.touched.extend([edge.src.clone(), edge.dst.clone()]);
+        Ok(AppliedOp::RemoveEdge { edge, grounds })
     }
 
     fn merge(
