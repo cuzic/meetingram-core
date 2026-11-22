@@ -30,7 +30,9 @@ pub enum StoreError {
     UnknownUtterance,
     #[error("review target does not exist or has already been reviewed")]
     UnreviewableTarget,
-    #[error("review patches must use set_review")]
+    #[error(
+        "review patches must use set_review; issue consolidation patches must use consolidate"
+    )]
     InvalidPatchSource,
 }
 
@@ -158,7 +160,7 @@ impl GraphStore {
     }
 
     /// Apply parsed operations with the caller's validation context.
-    /// Use `PatchSource::Consolidate` for issue consolidation. Input and
+    /// Issue consolidation requires `PatchSource::Consolidate`. Input and
     /// reference IDs have the same semantics as in [Self::apply_patch].
     #[allow(
         clippy::too_many_arguments,
@@ -174,7 +176,9 @@ impl GraphStore {
         reference_uids: &[&str],
         context: PatchContext,
     ) -> Result<PatchResult, StoreError> {
-        if source == PatchSource::Review {
+        if source == PatchSource::Review
+            || (context == PatchContext::IssueConsolidation && source != PatchSource::Consolidate)
+        {
             return Err(StoreError::InvalidPatchSource);
         }
         let sid = session_id.to_string();
