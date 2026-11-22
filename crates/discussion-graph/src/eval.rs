@@ -12,7 +12,19 @@ pub struct GoldGraph {
     pub edges: Vec<GoldEdge>,
 }
 
+/// An annotated node in a gold graph, deserializable from a gold fixture.
+///
+/// External callers cannot construct or update it with a struct literal.
+///
+/// ```compile_fail
+/// use discussion_graph::eval::GoldNode;
+///
+/// fn with_parent(node: GoldNode, parent: String) -> GoldNode {
+///     GoldNode { parent: Some(parent), ..node }
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct GoldNode {
     pub id: String,
     pub kind: NodeKind,
@@ -59,7 +71,9 @@ pub fn gold_agenda_count(gold: &GoldGraph) -> usize {
 
 /// Evaluate live nodes and edges against agenda-level gold annotations.
 /// Exclude sub-questions and nodes attached only to sub-questions from scoring.
-/// Pass the applied consolidation operations in order.
+/// Pass the graph immediately after the final flush, before consolidation stage 1,
+/// as `before_consolidation`. Pass the applied operations from stage 1 followed
+/// by those from stage 2 as `consolidation_ops`, in application order.
 pub fn evaluate(
     prediction: &Graph,
     gold: &GoldGraph,

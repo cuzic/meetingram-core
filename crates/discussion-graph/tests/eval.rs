@@ -10,14 +10,14 @@ use serde::Deserialize;
 use common::{node, utterance};
 
 fn gold_node(id: &str, kind: NodeKind, row: i64) -> GoldNode {
-    GoldNode {
-        id: id.into(),
-        kind,
-        text: format!("Synthetic {id}"),
-        status: Status::Open,
-        grounds: vec![row],
-        parent: None,
-    }
+    serde_json::from_value(serde_json::json!({
+        "id": id,
+        "kind": kind,
+        "text": format!("Synthetic {id}"),
+        "status": Status::Open,
+        "grounds": [row],
+    }))
+    .unwrap()
 }
 
 fn gold_edge(src: &str, dst: &str, kind: EdgeKind) -> GoldEdge {
@@ -512,4 +512,12 @@ fn gold_parents_exclude_sub_questions_and_their_private_nodes_from_recall() {
     assert_eq!(score.node_recall, 1.0);
     assert_eq!(score.node_precision, 2.0 / 3.0);
     assert_eq!(score.edge_f1, 1.0);
+}
+
+#[test]
+fn one_on_one_read_through_remains_a_gold_agenda() {
+    let gold: GoldGraph =
+        serde_json::from_str(include_str!("../testdata/one-on-one.gold.json")).unwrap();
+    let read_through = gold.nodes.iter().find(|node| node.id == "i3").unwrap();
+    assert_eq!(read_through.parent, None);
 }

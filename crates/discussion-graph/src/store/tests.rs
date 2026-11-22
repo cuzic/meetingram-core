@@ -479,3 +479,52 @@ fn stores_and_reloads_sub_issue_edges() {
     assert_eq!(graph.edges["e1"].kind, crate::EdgeKind::SubIssueOf);
     assert_eq!(graph.issue_parents(), [("n2", "n1")].into());
 }
+
+#[test]
+fn issue_consolidation_replaces_a_stored_parent() {
+    let (dir, session, mut store) = stores();
+    let sid = create_session(&session);
+    append(&session, sid, "Synthetic first turn");
+    store.import_utterances(sid).unwrap();
+    let initial = parse_ops(
+        r#"{"ops":[
+            {"op":"add_node","tmp":"old","kind":"issue","text":"Old parent","confidence":0.8,"grounds":[{"uid":"u1"}]},
+            {"op":"add_node","tmp":"new","kind":"issue","text":"New parent","confidence":0.8,"grounds":[{"uid":"u1"}]},
+            {"op":"add_node","tmp":"child","kind":"issue","text":"Child","confidence":0.8,"grounds":[{"uid":"u1"}]},
+            {"op":"add_edge","src":"child","dst":"old","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u1"}]}
+        ]}"#,
+    )
+    .unwrap();
+    let initial = store
+        .apply_patch(sid, PatchSource::Flush, None, &initial, &["u1"], &[])
+        .unwrap();
+    assert!(initial.rejected.is_empty());
+    let ops = parse_ops(
+        r#"{"ops":[
+            {"op":"remove_edge","src":"n3","dst":"n1","kind":"sub_issue_of","grounds":[{"uid":"u1"}]},
+            {"op":"add_edge","src":"n3","dst":"n2","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u1"}]}
+        ]}"#,
+    )
+    .unwrap();
+    let result = store
+        .apply_patch_with_context(
+            sid,
+            PatchSource::Consolidate,
+            None,
+            &ops,
+            &[],
+            &["u1"],
+            PatchContext::IssueConsolidation,
+        )
+        .unwrap();
+    assert!(result.rejected.is_empty());
+    assert_eq!(result.applied.len(), 2);
+    drop(store);
+
+    let reopened = GraphStore::open(&dir.path().join("sessions.sqlite")).unwrap();
+    let snapshot = reopened.load_graph(sid).unwrap();
+    assert_eq!(snapshot.rev, result.graph.rev);
+    assert_eq!(snapshot.issue_parents().get("n3"), Some(&"n2"));
+    assert!(!snapshot.edges.contains_key("e1"));
+    assert!(snapshot.grounds.iter().all(|ground| ground.target != "e1"));
+}

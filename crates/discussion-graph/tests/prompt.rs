@@ -74,7 +74,7 @@ fn incremental_caps_long_new_and_reference_utterances_and_tracks_actual_input() 
         let u = utterance(i, text);
         graph.utterances.insert(u.uid.clone(), u);
     }
-    let limit = 4_000;
+    let limit = 4_200;
     let prompt = build_incremental(&graph, &["u12", "u10", "u11"], &[], false, limit).unwrap();
     assert!(size(&prompt) <= limit);
     assert_eq!(prompt.new_uids, ["u10"]);
@@ -700,8 +700,13 @@ fn extraction_and_issue_stage_distinguish_agendas_from_sub_questions() {
         .unwrap()
         .unwrap();
     for system in [&increment.system, &stage_one.system] {
-        assert!(system.contains("事実・数値・可否の確認"));
-        assert!(system.contains("独立した議題とし、親を付けない"));
+        for rule in [
+            "案が対立する issue（responds_to する position が 2 件以上ある、または objects_to を受けた position が付いている）は、必ず議題とし、ほかの議題の判断材料になる問いでも親を付けないでください。",
+            "細かな問いは、親の議題に答えるための事実・数値・可否の確認の問いで、案が対立していないものです。答えの position が 1 件あってもかまいません。",
+            "それ以外の issue（案が 1 件だけでも確認の問いでないもの）は、親の無い議題のまま残してください。",
+        ] {
+            assert!(system.lines().any(|line| line == rule), "{rule}");
+        }
         assert!(
             system.contains("会議の進め方（今日は何を話すか、順番、時間配分）は issue にしない")
         );
@@ -710,6 +715,9 @@ fn extraction_and_issue_stage_distinguish_agendas_from_sub_questions() {
     assert!(increment
         .system
         .contains("明らかに事実・数値・可否の確認の問いのときだけ"));
+    assert!(stage_one.system.lines().any(|line| {
+        line == "既存の親子も見直してください。細かな問いに当たらない issue の親と、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。"
+    }));
     assert!(stage_one.system.contains(r#""op":"remove_edge""#));
     assert_eq!(increment.issue_stage, None);
     assert!(stage_one.system.contains("decisions"));

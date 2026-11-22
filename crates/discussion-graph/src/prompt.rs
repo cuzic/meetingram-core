@@ -36,7 +36,7 @@ const ISSUE_OPERATIONS: &str = concat!(
 全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge で統合してください。ground_count が多い方を into にしてください。
 parent_nid は既存の親です。親の無い細かな問いは、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。
 {"op":"add_edge","src":"n8","dst":"n5","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u3"}]}
-既存の親子も見直してください。議題の条件に当たる issue の親や、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。
+既存の親子も見直してください。細かな問いに当たらない issue の親と、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。
 {"op":"remove_edge","src":"n8","dst":"n5","kind":"sub_issue_of","grounds":[{"uid":"u3"}]}
 position_count はその issue に responds_to する position の数です。has_objection はその中に objects_to を受けた position があることを示します。
 decisions はその issue に resolves する決定、positions はその issue に responds_to する案の本文です。issue の本文が違っても、決定や案が同じなら同じ問いの言い換えとして merge を検討してください。
