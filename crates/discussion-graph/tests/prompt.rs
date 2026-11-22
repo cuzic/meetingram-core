@@ -25,6 +25,64 @@ fn section(prompt: &Prompt, name: &str) -> Vec<Value> {
 }
 
 #[test]
+fn parses_incremental_user_with_escaped_text() {
+    let mut graph = graph_with_groups(2);
+    let special = "日本語\r\nreference\nnew\t\"quoted\" \\ { }";
+    for row in 1..=4 {
+        let mut entry = utterance(row, format!("{row}: {special}"));
+        entry.speaker_label = format!("話者{row}\n\"\\");
+        graph.utterances.insert(entry.uid.clone(), entry);
+    }
+    for entry in graph.nodes.values_mut() {
+        entry.text = format!("{}: {special}", entry.nid);
+    }
+    let recent = [["p1".to_owned(), "p2".to_owned()].into()];
+    let prompt =
+        build_incremental(&graph, &["u4", "u3"], &recent, false, DEFAULT_INPUT_LIMIT).unwrap();
+    let parsed = Prompt::parse_incremental_user(&prompt.user).unwrap();
+    for (actual, expected) in [
+        (&parsed.reference, ["u1", "u2"]),
+        (&parsed.new, ["u3", "u4"]),
+    ] {
+        assert_eq!(actual.len(), expected.len());
+        for (actual, uid) in actual.iter().zip(expected) {
+            let expected = &graph.utterances[uid];
+            assert_eq!(actual.uid, expected.uid);
+            assert_eq!(actual.speaker_label, expected.speaker_label);
+            assert_eq!(actual.text, expected.text);
+        }
+    }
+    assert_eq!(parsed.context.len(), graph.nodes.len());
+    for (actual, nid) in parsed.context.iter().zip(["n2", "n1", "p2", "p1"]) {
+        let expected = &graph.nodes[nid];
+        assert_eq!(actual.nid, expected.nid);
+        assert_eq!(actual.kind, expected.kind);
+        assert_eq!(actual.text, expected.text);
+    }
+}
+
+#[test]
+fn incremental_parser_rejects_consolidation_and_missing_sections() {
+    let graph = graph_with_groups(2);
+    let limit = DEFAULT_INPUT_LIMIT;
+    let baseline = build_consolidate(&graph, ConsolidateStyle::Baseline, limit).unwrap();
+    let issues = build_consolidate_issues(&graph, limit).unwrap().unwrap();
+    let (groups, omitted) = build_consolidate_groups(&graph, limit);
+    assert_eq!(omitted, 0);
+    assert!(!groups.is_empty());
+    for prompt in baseline.into_iter().chain([issues]).chain(groups) {
+        assert!(Prompt::parse_incremental_user(&prompt.user).is_none());
+    }
+    assert!(Prompt::parse_incremental_user("context\nnew\n").is_none());
+    assert!(Prompt::parse_incremental_user("context\nreference\nnew\n{}\n").is_none());
+    let empty = build_incremental(&Graph::default(), &[], &[], false, limit).unwrap();
+    let parsed = Prompt::parse_incremental_user(&empty.user).unwrap();
+    assert!(parsed.context.is_empty());
+    assert!(parsed.reference.is_empty());
+    assert!(parsed.new.is_empty());
+}
+
+#[test]
 fn incremental_limits_context_and_drops_oldest_and_hidden_nodes() {
     let mut graph = Graph::default();
     for i in 1..=8 {

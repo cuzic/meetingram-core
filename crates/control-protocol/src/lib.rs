@@ -99,6 +99,21 @@ pub struct StatusDto {
     /// status`, or a future UI) see the rebinding FSM's per-track health without
     /// this crate depending on `app_service`'s supervisor features.
     pub capture_health: CaptureHealthDto,
+    /// Graph status for the session reported by the server, when available.
+    // Use the explicit default for older payloads whose graph field is absent.
+    #[serde(default, deserialize_with = "Deserialize::deserialize")]
+    pub graph: Option<GraphStatusDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct GraphStatusDto {
+    pub session_id: String,
+    pub rev: u64,
+    pub enabled: bool,
+    pub running: bool,
+    pub pending: usize,
+    /// Whether the session has a record of completed consolidation.
+    pub consolidated: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
@@ -179,6 +194,52 @@ mod tests {
             Response::Err { message, .. } => assert_eq!(message, "not recording"),
             Response::Ok(_) => panic!("expected Err"),
         }
+    }
+
+    #[test]
+    fn status_reads_legacy_json_without_graph() {
+        let legacy = serde_json::json!({
+            "recording": true,
+            "elapsed_ms": 42,
+            "self_rms": 0.0,
+            "self_peak": 0.0,
+            "remote_rms": 0.0,
+            "remote_peak": 0.0,
+            "consent_confirmed": true,
+            "uploaded_segments": 3,
+            "pending_segments": 1,
+            "last_error": null,
+            "last_session_id": "session-1",
+            "last_total_duration_ms": 42,
+            "transcription_status": {
+                "self_status": "Connected",
+                "remote_status": "NotConfigured"
+            },
+            "capture_health": { "self_health": "Ok", "remote_health": "Ok" }
+        });
+        let status: StatusDto = serde_json::from_value(legacy).unwrap();
+        assert!(status.recording);
+        assert!(status.graph.is_none());
+    }
+
+    #[test]
+    fn graph_status_roundtrips_through_json() {
+        let graph = GraphStatusDto {
+            session_id: "session-1".into(),
+            rev: 12,
+            enabled: true,
+            running: false,
+            pending: 0,
+            consolidated: true,
+        };
+        let status = StatusDto {
+            graph: Some(graph.clone()),
+            ..Default::default()
+        };
+        let json = serde_json::to_value(status).unwrap();
+        assert_eq!(json["graph"]["rev"], 12);
+        let decoded: StatusDto = serde_json::from_value(json).unwrap();
+        assert_eq!(decoded.graph, Some(graph));
     }
 
     #[test]

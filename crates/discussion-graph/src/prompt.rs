@@ -1,10 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::json;
 
 use crate::{Edge, EdgeKind, Graph, Node, NodeKind, Status, Utterance};
 
 pub const DEFAULT_INPUT_LIMIT: usize = 24_000;
+
+const CONTEXT_HEADER: &str = "context";
+const REFERENCE_HEADER: &str = "reference";
+const NEW_HEADER: &str = "new";
 
 const EXTRACT: &str = concat!(
     include_str!("extraction.txt"),
@@ -61,6 +66,33 @@ pub struct Prompt {
     pub omitted_issues: usize,
     /// The input reduction needed for stage one, if this is an issue prompt.
     pub issue_stage: Option<IssuePromptStage>,
+}
+
+/// The sections of an incremental prompt, in their original row order.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct IncrementalPromptView {
+    pub context: Vec<PromptContextNode>,
+    pub reference: Vec<PromptUtterance>,
+    pub new: Vec<PromptUtterance>,
+}
+
+/// An utterance as rendered in the prompt. Its text may have been truncated.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[non_exhaustive]
+pub struct PromptUtterance {
+    pub uid: String,
+    pub speaker_label: String,
+    pub text: String,
+}
+
+/// A graph node as rendered in the incremental context.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[non_exhaustive]
+pub struct PromptContextNode {
+    pub nid: String,
+    pub kind: NodeKind,
+    pub text: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -263,7 +295,11 @@ fn fit_utterance(utterance: &Utterance, cap: usize, budget: usize) -> Option<Str
 
 fn incremental_user(context: &[String], refs: &[String], new: &[String]) -> String {
     let mut output = String::new();
-    for (header, lines) in [("context", context), ("reference", refs), ("new", new)] {
+    for (header, lines) in [
+        (CONTEXT_HEADER, context),
+        (REFERENCE_HEADER, refs),
+        (NEW_HEADER, new),
+    ] {
         output.push_str(header);
         output.push('\n');
         for line in lines {
@@ -272,6 +308,20 @@ fn incremental_user(context: &[String], refs: &[String], new: &[String]) -> Stri
         }
     }
     output
+}
+
+fn parse_section<T: DeserializeOwned>(
+    lines: &mut std::str::Lines<'_>,
+    next_header: Option<&str>,
+) -> Option<Vec<T>> {
+    let mut rows = Vec::new();
+    for line in lines {
+        if Some(line) == next_header {
+            return Some(rows);
+        }
+        rows.push(serde_json::from_str(line).ok()?);
+    }
+    next_header.is_none().then_some(rows)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -402,6 +452,20 @@ pub fn build_consolidate_groups(graph: &Graph, limit: usize) -> (Vec<Prompt>, us
 }
 
 impl Prompt {
+    /// Parse the user text produced by [`build_incremental`].
+    /// Returns `None` for consolidation prompts and malformed input.
+    pub fn parse_incremental_user(user: &str) -> Option<IncrementalPromptView> {
+        let mut lines = user.lines();
+        if lines.next()? != CONTEXT_HEADER {
+            return None;
+        }
+        Some(IncrementalPromptView {
+            context: parse_section(&mut lines, Some(REFERENCE_HEADER))?,
+            reference: parse_section(&mut lines, Some(NEW_HEADER))?,
+            new: parse_section(&mut lines, None)?,
+        })
+    }
+
     fn fits(&self, limit: usize) -> bool {
         chars(&self.system) + chars(&self.user) <= limit
     }
