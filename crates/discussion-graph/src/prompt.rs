@@ -34,7 +34,10 @@ const CONSOLIDATE_EDITS: &str = concat!(
 const ISSUE_OPERATIONS: &str = concat!(
     r#"
 全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge で統合してください。ground_count が多い方を into にしてください。
-parent_nid は既存の親です。親の無い細かな問いは、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。
+parent_nid は既存の親です。first_row はその issue の根拠の発話のうち最初の行の番号です。
+親の無い細かな問いはすべて、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。
+親は問いの中身で選んでください。その問いが答えるのに役立つ議題を親にしてください。
+中身で決まらないときだけ、問いが出た位置の直前に話していた議題を親にしてください。議題より前に出た問いは直後の議題につないでください。
 {"op":"add_edge","src":"n8","dst":"n5","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u3"}]}
 既存の親子も見直してください。細かな問いに当たらない issue の親と、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。
 {"op":"remove_edge","src":"n8","dst":"n5","kind":"sub_issue_of","grounds":[{"uid":"u3"}]}
@@ -628,6 +631,9 @@ impl<'a> Consolidation<'a> {
                     "ground_count":utterances.len(), "grounds":grounds,
                     "position_count":positions.len(), "has_objection":has_objection,
                 });
+                if let Some(first) = utterances.first() {
+                    line["first_row"] = json!(first.row_id);
+                }
                 let (count, cap) = match stage {
                     IssuePromptStage::FullAnnotations => (2, 60),
                     IssuePromptStage::ShortDecision => (1, 40),
