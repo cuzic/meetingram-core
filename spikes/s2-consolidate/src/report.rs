@@ -23,6 +23,7 @@ struct Measurement {
     pairs: usize,
     gold_issues: usize,
     complete: bool,
+    baseline_not_applicable: bool,
 }
 
 pub(crate) fn report(out: &Path) -> Result<()> {
@@ -31,6 +32,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
         "# S2 results\n\n         | Meeting | Style | Trial | Agendas | Gold issues | Sub-questions | Recall | Precision | Edge F1 | Wrong merges | Duplicate pairs merged | ms | Timeouts | Calls | Omitted issues | Omitted group nodes | Status |\n         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
     );
     let mut all = BTreeMap::new();
+    let mut flush_recalls = BTreeMap::new();
     for &meeting in config.meetings() {
         let (_, gold) = data::load(meeting)?;
         let gold_issues = gold
@@ -41,12 +43,19 @@ pub(crate) fn report(out: &Path) -> Result<()> {
             .count();
         let flush = out.join(meeting).join("flush.json");
         let before: Option<Graph> = read_if_present(&flush)?;
+        if let Some(before) = &before {
+            flush_recalls.insert(
+                meeting,
+                evaluate(before, &gold.graph, before, &[]).node_recall,
+            );
+        }
         for &style in config.styles() {
             for repeat in 1..=config.repeats {
                 let path = data::trial_path(out, meeting, style.label(), repeat);
                 if let (Some(before), Some(trial)) = (&before, read_if_present::<Trial>(&path)?) {
                     let scores = evaluate(&trial.graph, &gold.graph, before, &trial.applied);
                     let pairs = merged_pairs(before, &trial.graph, &gold);
+                    let baseline_not_applicable = trial.baseline_not_applicable(style);
                     writeln!(
                         results,
                         "| {meeting} | {} | {repeat} | {} | {gold_issues} | {} | {:.3} | {:.3} | {:.3} | {} | {}/{} | {} | {} | {} | {} | {} | {} |",
@@ -64,7 +73,9 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                         trial.calls,
                         trial.omitted_issues,
                         trial.omitted_group_nodes,
-                        if trial.complete {
+                        if baseline_not_applicable {
+                            "baseline not applicable"
+                        } else if trial.complete {
                             "complete"
                         } else {
                             "consolidation stopped"
@@ -77,6 +88,7 @@ pub(crate) fn report(out: &Path) -> Result<()> {
                             pairs,
                             gold_issues,
                             complete: trial.complete,
+                            baseline_not_applicable,
                         });
                 } else {
                     let status = if before.is_some() {
@@ -94,14 +106,14 @@ pub(crate) fn report(out: &Path) -> Result<()> {
         }
     }
 
-    writeln!(results, "\n## Task 4b gate\n")?;
+    writeln!(results, "\n## Task 4b gate (ADR r13)\n")?;
     if !config.is_sonnet_gate() {
         writeln!(
             results,
             "Not evaluated. The gate requires Claude CLI Sonnet, 6/45 windows, all seven meetings, both styles and three trials."
         )?;
     } else {
-        write_gate(&mut results, &all)?;
+        write_gate(&mut results, &all, &flush_recalls)?;
     }
     fs::write(out.join("RESULTS.md"), results)?;
     Ok(())
@@ -117,6 +129,7 @@ fn read_if_present<T: serde::de::DeserializeOwned>(path: &Path) -> Result<Option
 fn write_gate(
     results: &mut String,
     all: &BTreeMap<(&str, &str), Vec<Measurement>>,
+    flush_recalls: &BTreeMap<&str, f64>,
 ) -> std::fmt::Result {
     let baseline = Style::Baseline.label();
     let two_stage = Style::TwoStage.label();
@@ -124,46 +137,74 @@ fn write_gate(
         all.get(&(meeting, style))
             .filter(|rows| rows.len() == 3 && rows.iter().all(|row| row.complete))
     };
-    let mut agenda_ratios = Vec::new();
+    let mut agenda_ratio_sum = 0.0;
+    let mut agenda_details = Vec::new();
+    let mut recall_details = Vec::new();
     let mut wrong_merges = 0;
     let mut recall_ok = true;
     for &meeting in crate::SHORT_MEETINGS {
-        let (Some(base), Some(two_stage)) =
-            (complete(meeting, baseline), complete(meeting, two_stage))
-        else {
+        let Some(two_stage) = complete(meeting, two_stage) else {
             return write_inconclusive(results);
         };
         let gold_issues = two_stage[0].gold_issues;
         if gold_issues == 0 {
             return writeln!(results, "Inconclusive. {meeting} has no gold issues.");
         }
-        agenda_ratios.push(median(two_stage, |row| row.scores.agendas) as f64 / gold_issues as f64);
+        let ratio = median(two_stage, |row| row.scores.agendas) as f64 / gold_issues as f64;
+        agenda_ratio_sum += ratio;
+        agenda_details.push(format!("{meeting} {ratio:.3}"));
         wrong_merges += median(two_stage, |row| row.scores.wrong_merges);
-        recall_ok &= median(two_stage, |row| row.scores.node_recall)
-            >= median(base, |row| row.scores.node_recall);
+
+        let (reference, source) = if let Some(base) = complete(meeting, baseline) {
+            (median(base, |row| row.scores.node_recall), "baseline")
+        } else if all.get(&(meeting, baseline)).is_some_and(|rows| {
+            rows.len() == 3 && rows.iter().all(|row| row.baseline_not_applicable)
+        }) {
+            let Some(&recall) = flush_recalls.get(meeting) else {
+                return write_inconclusive(results);
+            };
+            (recall, "flush")
+        } else {
+            return write_inconclusive(results);
+        };
+        let recall = median(two_stage, |row| row.scores.node_recall);
+        recall_ok &= recall >= reference;
+        recall_details.push(format!(
+            "{meeting} {recall:.3} vs {reference:.3} ({source})"
+        ));
     }
     let Some(long) = complete("long", two_stage) else {
         return write_inconclusive(results);
     };
-    let mean_ratio = agenda_ratios.iter().sum::<f64>() / agenda_ratios.len() as f64;
-    let long_ok = median(long, |row| row.pairs) > 0;
-    let pass = mean_ratio <= 1.5 && wrong_merges <= 2 && recall_ok && long_ok;
-    writeln!(results, "**{}**\n", if pass { "PASS" } else { "FAIL" })?;
+    let mean_ratio = agenda_ratio_sum / crate::SHORT_MEETINGS.len() as f64;
+    let long_pairs = median(long, |row| row.pairs);
+    let agenda_ok = mean_ratio <= 1.5;
+    let merges_ok = wrong_merges <= 2;
+    let long_ok = long_pairs > 0;
+    let pass = agenda_ok && merges_ok && recall_ok && long_ok;
+    let status = |ok| if ok { "PASS" } else { "FAIL" };
+    writeln!(results, "**{}**\n", status(pass))?;
     writeln!(
         results,
-        "- Mean agenda-to-gold-issue ratio across six meetings (target ≤1.5): {mean_ratio:.3}."
+        "- Mean agenda-to-gold-issue ratio (target ≤1.5): {} ({mean_ratio:.3}; {}).",
+        status(agenda_ok),
+        agenda_details.join(", ")
     )?;
     writeln!(
         results,
-        "- Sum of the six two-stage wrong-merge medians (target ≤2): {wrong_merges}."
+        "- Sum of wrong-merge medians (target ≤2): {} ({wrong_merges}).",
+        status(merges_ok)
     )?;
     writeln!(
         results,
-        "- Recall median preserved in all six meetings: {recall_ok}."
+        "- Recall across six meetings: {} ({}).",
+        status(recall_ok),
+        recall_details.join(", ")
     )?;
     writeln!(
         results,
-        "- At least one correct duplicate pair merged in at least two long trials: {long_ok}."
+        "- Long-meeting correct duplicate pairs merged (median, target ≥1): {} ({long_pairs}).",
+        status(long_ok)
     )
 }
 
@@ -264,6 +305,7 @@ mod tests {
             pairs: 1,
             gold_issues: 2,
             complete: true,
+            baseline_not_applicable: false,
         };
         let mut all = BTreeMap::new();
         for &meeting in crate::SHORT_MEETINGS {
@@ -280,7 +322,7 @@ mod tests {
             };
         let gate = |all: &BTreeMap<_, _>| {
             let mut result = String::new();
-            write_gate(&mut result, all).unwrap();
+            write_gate(&mut result, all, &BTreeMap::new()).unwrap();
             result
         };
 

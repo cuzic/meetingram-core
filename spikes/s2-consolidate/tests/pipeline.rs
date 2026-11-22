@@ -10,9 +10,8 @@ fn fake_runs_and_reports_all_seven_meetings() {
         .arg(&out)
         .output()
         .unwrap();
-    assert!(!run.status.success());
+    assert!(run.status.success());
     let stderr = String::from_utf8(run.stderr).unwrap();
-    assert_eq!(stderr.lines().count(), 4);
     assert_eq!(
         stderr.matches("could not fit consolidation input").count(),
         3
@@ -52,11 +51,66 @@ fn fake_runs_and_reports_all_seven_meetings() {
     assert_eq!(
         rows.iter()
             .filter(|row| row.starts_with("| long | baseline |"))
-            .filter(|row| row.ends_with("| consolidation stopped |"))
+            .filter(|row| row.ends_with("| baseline not applicable |"))
             .count(),
         3
     );
     assert!(report.contains("Not evaluated."));
+    assert!(report.contains("## Task 4b gate (ADR r13)"));
+
+    // Use the fake artifacts to exercise the Sonnet gate. A short meeting's
+    // empty flush graph has zero recall, even though its saved baseline graphs
+    // still have full recall.
+    let config_path = out.join("config.json");
+    let mut config = read_json(&config_path);
+    config["backend"] = "ClaudeCli".into();
+    fs::write(config_path, serde_json::to_vec(&config).unwrap()).unwrap();
+    let flush_path = out.join("m1/flush.json");
+    let full_flush = read_json(&flush_path);
+    let empty = serde_json::to_value(discussion_graph::Graph::default()).unwrap();
+    fs::write(&flush_path, serde_json::to_vec(&empty).unwrap()).unwrap();
+    for repeat in 1..=3 {
+        for style in ["baseline", "two-stage"] {
+            let path = out.join(format!("m1/{style}-{repeat}.json"));
+            let mut trial = read_json(&path);
+            if style == "baseline" {
+                if repeat == 1 {
+                    // Older runs did not explicitly record the input-limit skip.
+                    trial
+                        .as_object_mut()
+                        .unwrap()
+                        .remove("baseline_not_applicable");
+                } else {
+                    trial["baseline_not_applicable"] = true.into();
+                }
+                trial["complete"] = false.into();
+                trial["calls"] = 0.into();
+            } else {
+                trial["graph"] = empty.clone();
+            }
+            fs::write(path, serde_json::to_vec(&trial).unwrap()).unwrap();
+        }
+    }
+    let gate_report = || {
+        assert!(
+            Command::new(binary)
+                .args(["report", "--out"])
+                .arg(&out)
+                .status()
+                .unwrap()
+                .success()
+        );
+        fs::read_to_string(out.join("RESULTS.md")).unwrap()
+    };
+    let report = gate_report();
+    assert!(report.contains("**FAIL**")); // Fake consolidation merges no long-meeting pairs.
+    assert!(report.contains("m1 0.000 vs 0.000 (flush)"));
+    assert!(report.contains("- Recall across six meetings: PASS"));
+    fs::write(flush_path, serde_json::to_vec(&full_flush).unwrap()).unwrap();
+    let report = gate_report();
+    assert!(report.contains("m1 0.000 vs 1.000 (flush)"));
+    assert!(report.contains("- Recall across six meetings: FAIL"));
+
     let retry = Command::new(binary)
         .args(["run", "--backend", "fake", "--out"])
         .arg(&out)
@@ -74,6 +128,10 @@ fn fake_runs_and_reports_all_seven_meetings() {
     }
 }
 
+fn read_json(path: &std::path::Path) -> serde_json::Value {
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
 #[test]
 fn call_cap_stops_before_the_next_call() {
     let dir = tempfile::tempdir().unwrap();
@@ -84,6 +142,7 @@ fn call_cap_stops_before_the_next_call() {
         .output()
         .unwrap();
     assert!(!run.status.success());
+    assert_eq!(run.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&run.stderr).contains("--max-calls reached"));
     let calls = fs::read_to_string(out.join("calls.jsonl")).unwrap();
     assert_eq!(calls.lines().count(), 2);
@@ -114,6 +173,8 @@ fn three_failures_skip_consolidation_and_keep_cli_body_out_of_logs() {
     assert!(!run.status.success());
     let stderr = String::from_utf8(run.stderr).unwrap();
     assert_eq!(stderr.matches("flush stopped").count(), 6);
+    assert_eq!(run.status.code(), Some(1));
+    assert!(stderr.contains("were incomplete"));
     assert!(!stderr.contains(marker));
     assert!(!String::from_utf8_lossy(&run.stdout).contains(marker));
     let calls = fs::read_to_string(out.join("calls.jsonl")).unwrap();

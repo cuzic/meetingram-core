@@ -8,8 +8,8 @@ use std::{
 
 use anyhow::{Result, bail, ensure};
 use discussion_graph::{
-    AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, Graph, PatchResult, Prompt, Utterance,
-    apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
+    AppliedOp, ConsolidateStyle, DEFAULT_INPUT_LIMIT, Graph, PatchResult, Prompt, PromptError,
+    Utterance, apply_patch, build_consolidate, build_consolidate_groups, build_consolidate_issues,
     build_incremental, eval::GoldGraph, parse_ops,
 };
 use serde::{Deserialize, Serialize};
@@ -44,6 +44,17 @@ pub(crate) struct Trial {
     pub omitted_issues: usize,
     pub omitted_group_nodes: usize,
     pub complete: bool,
+    baseline_not_applicable: Option<bool>,
+}
+
+impl Trial {
+    pub fn baseline_not_applicable(&self, style: Style) -> bool {
+        // Older runs only saved a stopped baseline with zero calls on input overflow.
+        style == Style::Baseline
+            && self
+                .baseline_not_applicable
+                .unwrap_or(!self.complete && self.calls == 0)
+    }
 }
 
 struct Runner<'a> {
@@ -188,6 +199,7 @@ impl Runner<'_> {
             omitted_issues: 0,
             omitted_group_nodes: 0,
             complete: false,
+            baseline_not_applicable: Some(false),
         };
         let first = match style {
             Style::Baseline => {
@@ -196,13 +208,18 @@ impl Runner<'_> {
             Style::TwoStage => build_consolidate_issues(before, DEFAULT_INPUT_LIMIT)
                 .map(|prompt| prompt.into_iter().collect()),
         };
-        let Ok(first) = first else {
-            eprintln!(
-                "{meeting}: {} trial {repeat} could not fit consolidation input",
-                style.label()
-            );
-            trial.elapsed_ms = start.elapsed().as_millis();
-            return Ok(trial);
+        let first = match first {
+            Ok(prompts) => prompts,
+            Err(PromptError::InputLimit) => {
+                eprintln!(
+                    "{meeting}: {} trial {repeat} could not fit consolidation input",
+                    style.label()
+                );
+                trial.baseline_not_applicable = Some(style == Style::Baseline);
+                trial.elapsed_ms = start.elapsed().as_millis();
+                return Ok(trial);
+            }
+            Err(error) => return Err(error.into()),
         };
 
         for prompt in first {
@@ -297,7 +314,7 @@ pub(crate) async fn run(config: &Config, out: &Path) -> Result<()> {
                 let trial = runner
                     .consolidate(meeting, &graph, &gold.graph, style, repeat)
                     .await?;
-                incomplete |= !trial.complete;
+                incomplete |= !trial.complete && !trial.baseline_not_applicable(style);
                 data::write_json(
                     &data::trial_path(out, meeting, style.label(), repeat),
                     &trial,
