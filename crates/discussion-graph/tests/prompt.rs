@@ -385,6 +385,8 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     ] {
         assert_eq!(prompt.issue_stage, Some(stage));
         let issues = section(prompt, "graph nodes");
+        assert_eq!(issues[0]["first_row"], 1);
+        assert_eq!(issues[1]["first_row"], 3);
         assert_eq!(issues[0]["position_count"], 4);
         assert_eq!(issues[0]["has_objection"], true);
         assert_eq!(issues[1]["position_count"], 1);
@@ -715,6 +717,16 @@ fn extraction_and_issue_stage_distinguish_agendas_from_sub_questions() {
     assert!(increment
         .system
         .contains("明らかに事実・数値・可否の確認の問いのときだけ"));
+    let issues = section(&stage_one, "graph nodes");
+    assert!(issues[1].get("first_row").is_none());
+
+    for rule in [
+        "親の無い細かな問いはすべて、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。",
+        "親は問いの中身で選んでください。その問いが答えるのに役立つ議題を親にしてください。",
+        "中身で決まらないときだけ、問いが出た位置の直前に話していた議題を親にしてください。議題より前に出た問いは直後の議題につないでください。",
+    ] {
+        assert!(stage_one.system.lines().any(|line| line == rule), "{rule}");
+    }
     assert!(stage_one.system.lines().any(|line| {
         line == "既存の親子も見直してください。細かな問いに当たらない issue の親と、進め方の問いへの親は remove_edge で外してください。必要なら同じ応答の後続の add_edge で別の親に付け直せます。remove_edge は段 1 の sub_issue_of に限ります。"
     }));
