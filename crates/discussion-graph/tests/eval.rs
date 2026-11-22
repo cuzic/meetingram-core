@@ -276,6 +276,79 @@ fn evaluates_agendas_and_shared_nodes_without_sub_question_branches() {
     assert_eq!(score.agendas, 1);
     assert_eq!(score.sub_questions, 2);
     assert_eq!(score.live_nodes, 6);
+    assert_eq!(score.content_recall, 1.0);
+    assert_eq!(score.sub_question_only_agendas, 0);
+    let [change] = score.changed_matches.as_slice() else {
+        panic!("expected one changed match");
+    };
+    assert_eq!(change.gold_id, "shared");
+    assert_eq!(change.agenda_prediction_id.as_deref(), Some("shared"));
+    assert_eq!(change.content_prediction_id.as_deref(), Some("private"));
+}
+
+#[test]
+fn content_recall_counts_an_agenda_and_its_nodes_under_another_agenda() {
+    let gold = GoldGraph {
+        nodes: vec![
+            gold_node("agenda", NodeKind::Issue, 1),
+            gold_node("position", NodeKind::Position, 2),
+            gold_node("action", NodeKind::Action, 3),
+        ],
+        edges: vec![
+            gold_edge("position", "agenda", EdgeKind::RespondsTo),
+            gold_edge("action", "agenda", EdgeKind::Assigns),
+        ],
+    };
+
+    let mut detail = gold_node("n-detail", NodeKind::Issue, 1);
+    detail.parent = Some("n-parent".into());
+    let mut prediction = graph_from_gold(
+        (1..=4).map(|id| utterance(id, String::new())).collect(),
+        &GoldGraph {
+            nodes: vec![
+                detail,
+                gold_node("n-position", NodeKind::Position, 2),
+                gold_node("n-action", NodeKind::Action, 3),
+                gold_node("n-parent", NodeKind::Issue, 4),
+            ],
+            edges: vec![
+                gold_edge("n-position", "n-detail", EdgeKind::RespondsTo),
+                gold_edge("n-action", "n-detail", EdgeKind::Assigns),
+            ],
+        },
+    );
+    let score = evaluate(&prediction, &gold, &prediction, &[]);
+    assert_eq!(score.node_recall, 0.0);
+    assert_eq!(score.content_recall, 1.0);
+    assert_eq!(score.sub_question_only_agendas, 1);
+    let changes: Vec<_> = score
+        .changed_matches
+        .iter()
+        .map(|change| {
+            (
+                change.gold_id.as_str(),
+                change.agenda_prediction_id.as_deref(),
+                change.content_prediction_id.as_deref(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        changes,
+        [
+            ("action", None, Some("n-action")),
+            ("agenda", None, Some("n-detail")),
+            ("position", None, Some("n-position")),
+        ]
+    );
+
+    prediction
+        .edges
+        .retain(|_, edge| edge.kind != EdgeKind::SubIssueOf);
+    let score = evaluate(&prediction, &gold, &prediction, &[]);
+    assert_eq!(score.node_recall, 1.0);
+    assert_eq!(score.content_recall, 1.0);
+    assert_eq!(score.sub_question_only_agendas, 0);
+    assert!(score.changed_matches.is_empty());
 }
 
 #[test]
@@ -510,6 +583,8 @@ fn gold_parents_exclude_sub_questions_and_their_private_nodes_from_recall() {
     let score = evaluate(&prediction, &gold, &prediction, &[]);
     assert_eq!(gold_agenda_count(&gold), 1);
     assert_eq!(score.node_recall, 1.0);
+    assert_eq!(score.content_recall, 1.0);
+    assert!(score.changed_matches.is_empty());
     assert_eq!(score.node_precision, 2.0 / 3.0);
     assert_eq!(score.edge_f1, 1.0);
 }

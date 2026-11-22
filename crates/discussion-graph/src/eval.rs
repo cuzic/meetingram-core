@@ -47,6 +47,12 @@ pub struct GoldEdge {
 #[non_exhaustive]
 pub struct Evaluation {
     pub node_recall: f64,
+    /// Recall against the same gold nodes, matching all live prediction nodes.
+    pub content_recall: f64,
+    /// Gold agendas matched for content recall only.
+    pub sub_question_only_agendas: usize,
+    /// Gold nodes with different assignments across the two matchings, ordered by gold ID.
+    pub changed_matches: Vec<ChangedMatch>,
     pub node_precision: f64,
     pub edge_f1: f64,
     pub live_nodes: usize,
@@ -61,6 +67,17 @@ pub struct Evaluation {
     pub undetermined_merges: Vec<(String, String)>,
 }
 
+/// A gold node whose assigned prediction differs between the two recall metrics.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct ChangedMatch {
+    pub gold_id: String,
+    /// Predicted node ID in the matching for `node_recall`.
+    pub agenda_prediction_id: Option<String>,
+    /// Predicted node ID in the matching for `content_recall`.
+    pub content_prediction_id: Option<String>,
+}
+
 /// Count gold issues without a parent.
 pub fn gold_agenda_count(gold: &GoldGraph) -> usize {
     gold.nodes
@@ -70,7 +87,10 @@ pub fn gold_agenda_count(gold: &GoldGraph) -> usize {
 }
 
 /// Evaluate live nodes and edges against agenda-level gold annotations.
-/// Exclude sub-questions and nodes attached only to sub-questions from scoring.
+/// Exclude gold sub-questions and nodes attached only to them from both recall metrics.
+///
+/// Content recall matches against all live prediction nodes. The other metrics
+/// also exclude sub-question branches from the prediction.
 /// Pass the graph immediately after the final flush, before consolidation stage 1,
 /// as `before_consolidation`. Pass the applied operations from stage 1 followed
 /// by those from stage 2 as `consolidation_ops`, in application order.
@@ -123,6 +143,35 @@ pub fn evaluate(
         |node| node.is_live() && !excluded.contains(node.nid.as_str()),
         &gold_excluded,
     );
+    let content_matched = matching(prediction, gold, crate::Node::is_live, &gold_excluded);
+    let agenda_by_gold: BTreeMap<_, _> = matched.iter().map(|(&nid, &id)| (id, nid)).collect();
+    let content_by_gold: BTreeMap<_, _> = content_matched
+        .iter()
+        .map(|(&nid, &id)| (id, nid))
+        .collect();
+    let mut sub_question_only_agendas = 0;
+    let mut changed_matches = Vec::new();
+    for node in &gold.nodes {
+        let agenda_prediction = agenda_by_gold.get(node.id.as_str()).copied();
+        let content_prediction = content_by_gold.get(node.id.as_str()).copied();
+        if agenda_prediction == content_prediction {
+            continue;
+        }
+        if node.kind == NodeKind::Issue
+            && node.parent.is_none()
+            && agenda_prediction.is_none()
+            && content_prediction.is_some()
+        {
+            sub_question_only_agendas += 1;
+        }
+        changed_matches.push(ChangedMatch {
+            gold_id: node.id.clone(),
+            agenda_prediction_id: agenda_prediction.map(str::to_owned),
+            content_prediction_id: content_prediction.map(str::to_owned),
+        });
+    }
+    changed_matches.sort_by(|left, right| left.gold_id.cmp(&right.gold_id));
+
     let live_nodes = prediction.nodes.values().filter(|n| n.is_live()).count();
     let gold_edges: BTreeSet<_> = gold
         .edges
@@ -165,14 +214,16 @@ pub fn evaluate(
             }
         }
     }
+    let gold_node_count = gold
+        .nodes
+        .iter()
+        .filter(|node| !gold_excluded.contains(node.id.as_str()))
+        .count();
     Evaluation {
-        node_recall: ratio(
-            matched.len(),
-            gold.nodes
-                .iter()
-                .filter(|node| !gold_excluded.contains(node.id.as_str()))
-                .count(),
-        ),
+        node_recall: ratio(matched.len(), gold_node_count),
+        content_recall: ratio(content_matched.len(), gold_node_count),
+        sub_question_only_agendas,
+        changed_matches,
         node_precision: ratio(matched.len(), live_nodes - excluded.len()),
         edge_f1: ratio(2 * matched_edges.len(), edge_count + gold_edges.len()),
         live_nodes,
