@@ -220,6 +220,8 @@ pub fn unanswered_by_agenda(graph: &Graph) -> BTreeMap<String, usize> {
 pub struct OutlineNode<'a> {
     pub node: &'a Node,
     pub relation: Option<EdgeKind>,
+    /// True for a repeated occurrence. References have no children.
+    pub is_reference: bool,
     pub children: Vec<OutlineNode<'a>>,
 }
 
@@ -233,7 +235,8 @@ pub struct Outline<'a> {
 }
 
 /// Build an outline rooted at each agenda issue, following live edges toward
-/// questions, positions, arguments, decisions and actions.
+/// questions, positions, arguments, decisions and actions. Each node expands
+/// at its first occurrence across the outline. Later occurrences are references.
 pub fn build_outline(graph: &Graph) -> Outline<'_> {
     fn branch<'a>(
         graph: &'a Graph,
@@ -243,25 +246,28 @@ pub fn build_outline(graph: &Graph) -> Outline<'_> {
         path: &mut BTreeSet<&'a str>,
         attached: &mut BTreeSet<&'a str>,
     ) -> OutlineNode<'a> {
-        path.insert(node.nid.as_str());
-        attached.insert(node.nid.as_str());
+        let is_reference = !attached.insert(node.nid.as_str());
         let mut children = Vec::new();
-        for edge in incoming.get(node.nid.as_str()).into_iter().flatten() {
-            if !path.contains(edge.src.as_str()) {
-                children.push(branch(
-                    graph,
-                    incoming,
-                    &graph.nodes[&edge.src],
-                    Some(edge.kind),
-                    path,
-                    attached,
-                ));
+        if !is_reference {
+            path.insert(node.nid.as_str());
+            for edge in incoming.get(node.nid.as_str()).into_iter().flatten() {
+                if !path.contains(edge.src.as_str()) {
+                    children.push(branch(
+                        graph,
+                        incoming,
+                        &graph.nodes[&edge.src],
+                        Some(edge.kind),
+                        path,
+                        attached,
+                    ));
+                }
             }
+            path.remove(node.nid.as_str());
         }
-        path.remove(node.nid.as_str());
         OutlineNode {
             node,
             relation,
+            is_reference,
             children,
         }
     }
@@ -317,4 +323,98 @@ pub struct GraphUpdated {
     pub added: usize,
     pub merged: usize,
     pub rejected: usize,
+}
+
+#[cfg(test)]
+mod outline_tests {
+    use super::*;
+
+    #[test]
+    fn outline_expands_shared_children_once() {
+        for depth in [2, 20] {
+            let mut graph = Graph::default();
+            let mut add_node = |id: &str, kind| {
+                graph.nodes.insert(
+                    id.to_owned(),
+                    Node {
+                        nid: id.to_owned(),
+                        kind,
+                        text: id.to_owned(),
+                        status: Status::Open,
+                        merged_into: None,
+                        confidence: 1.0,
+                        review: Review::Auto,
+                        created_rev: 1,
+                        updated_rev: 1,
+                    },
+                );
+            };
+            let mut add_edge = |src: &str, dst: &str, kind| {
+                let eid = format!("{src}:{dst}");
+                graph.edges.insert(
+                    eid.clone(),
+                    Edge {
+                        eid,
+                        src: src.to_owned(),
+                        dst: dst.to_owned(),
+                        kind,
+                        confidence: 1.0,
+                        review: Review::Auto,
+                        created_rev: 1,
+                    },
+                );
+            };
+            add_node("agenda-a", NodeKind::Issue);
+            add_node("agenda-b", NodeKind::Issue);
+            add_node("position", NodeKind::Position);
+            add_edge("position", "agenda-a", EdgeKind::RespondsTo);
+            add_edge("position", "agenda-b", EdgeKind::RespondsTo);
+            let mut parent = "position".to_owned();
+            for level in 0..depth {
+                let left = format!("{level}-left");
+                let right = format!("{level}-right");
+                let shared = format!("{level}-shared");
+                for id in [&left, &right, &shared] {
+                    add_node(id, NodeKind::Argument);
+                }
+                add_edge(&left, &parent, EdgeKind::Supports);
+                add_edge(&right, &parent, EdgeKind::ObjectsTo);
+                add_edge(&shared, &left, EdgeKind::Supports);
+                add_edge(&shared, &right, EdgeKind::ObjectsTo);
+                parent = shared;
+            }
+
+            let outline = build_outline(&graph);
+            assert!(outline.unattached.is_empty());
+            let mut pending: Vec<_> = outline.agendas.iter().collect();
+            let mut count = 0;
+            while let Some(node) = pending.pop() {
+                count += 1;
+                pending.extend(&node.children);
+            }
+            assert_eq!(count, graph.nodes.len() + depth + 1);
+
+            let position_reference = &outline.agendas[1].children[0];
+            assert_eq!(position_reference.node.nid, "position");
+            assert!(position_reference.is_reference);
+            assert!(position_reference.children.is_empty());
+
+            let mut branch = &outline.agendas[0].children[0];
+            assert!(!branch.is_reference);
+            for level in 0..depth {
+                let [left, right] = branch.children.as_slice() else {
+                    panic!("expected two argument branches at level {level}");
+                };
+                let expanded = &left.children[0];
+                let reference = &right.children[0];
+                assert_eq!(expanded.node.nid, format!("{level}-shared"));
+                assert_eq!(reference.node.nid, expanded.node.nid);
+                assert_eq!(reference.relation, Some(EdgeKind::ObjectsTo));
+                assert!(!expanded.is_reference);
+                assert!(reference.is_reference);
+                assert!(reference.children.is_empty());
+                branch = expanded;
+            }
+        }
+    }
 }
