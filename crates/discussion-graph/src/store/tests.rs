@@ -244,6 +244,51 @@ fn patches_consume_only_input_and_reviews_protect_human_decisions() {
 }
 
 #[test]
+fn consolidation_is_derived_from_the_saved_patch_history() {
+    let (dir, session, mut graph) = stores();
+    let sid = create_session(&session);
+    let other = create_session(&session);
+    assert!(!graph.is_consolidated(sid).unwrap());
+
+    graph
+        .apply_patch(other, PatchSource::Consolidate, None, &[], &[], &[])
+        .unwrap();
+    assert!(graph.is_consolidated(other).unwrap());
+    assert!(!graph.is_consolidated(sid).unwrap());
+
+    append(&session, sid, "Synthetic turn");
+    graph.import_utterances(sid).unwrap();
+    graph
+        .apply_patch(sid, PatchSource::Live, None, &add_issue(), &["u1"], &[])
+        .unwrap();
+    assert!(!graph.is_consolidated(sid).unwrap());
+
+    for source in [PatchSource::Live, PatchSource::Flush] {
+        graph
+            .apply_patch(sid, PatchSource::Consolidate, None, &[], &[], &[])
+            .unwrap();
+        assert!(graph.is_consolidated(sid).unwrap());
+        graph.apply_patch(sid, source, None, &[], &[], &[]).unwrap();
+        assert!(!graph.is_consolidated(sid).unwrap());
+    }
+
+    graph
+        .apply_patch(sid, PatchSource::Consolidate, None, &[], &[], &[])
+        .unwrap();
+    graph
+        .set_review(sid, ReviewTarget::Node("n1"), ReviewDecision::Approve)
+        .unwrap();
+    assert!(graph.is_consolidated(sid).unwrap());
+
+    drop(graph);
+    let mut graph = GraphStore::open(&dir.path().join("sessions.sqlite")).unwrap();
+    assert!(graph.is_consolidated(sid).unwrap());
+    graph.delete_session(sid).unwrap();
+    assert!(!graph.is_consolidated(sid).unwrap());
+    assert!(graph.is_consolidated(other).unwrap());
+}
+
+#[test]
 fn deleting_one_session_keeps_the_other_and_allows_reimport() {
     let (_dir, session, mut graph) = stores();
     let first = create_session(&session);

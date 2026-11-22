@@ -135,6 +135,22 @@ impl GraphStore {
         Ok(revision(&self.conn, &session_id.to_string())?)
     }
 
+    /// Return whether a saved consolidation covers the latest live or flush patch.
+    /// A consolidation with no live or flush patches also counts. Reviews are ignored.
+    pub fn is_consolidated(&self, session_id: SessionId) -> Result<bool, StoreError> {
+        Ok(self.conn.query_row(
+            "WITH revisions AS (
+                 SELECT MAX(CASE WHEN source = 'consolidate' THEN rev END) AS consolidated_rev,
+                        MAX(CASE WHEN source IN ('live', 'flush') THEN rev END) AS extracted_rev
+                 FROM graph_patches WHERE session_id = ?1
+             )
+             SELECT COALESCE(consolidated_rev >= COALESCE(extracted_rev, consolidated_rev), 0)
+             FROM revisions",
+            [session_id.to_string()],
+            |row| row.get(0),
+        )?)
+    }
+
     /// Apply parsed operations. Only `input_uids` are consumed. Reference IDs
     /// can supply grounds without changing their extraction status.
     /// Every stored patch advances `result.graph.rev`, including empty patches.
