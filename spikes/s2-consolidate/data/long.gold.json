@@ -1,0 +1,3920 @@
+{
+  "nodes": [
+    {
+      "id": "g1",
+      "kind": "issue",
+      "text": "入口の待機列は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        1
+      ]
+    },
+    {
+      "id": "g2",
+      "kind": "position",
+      "text": "私は、雨よけの下で二列に並べる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        3
+      ]
+    },
+    {
+      "id": "g3",
+      "kind": "argument",
+      "text": "そうすると、広場の中央を空けられることが利点です。",
+      "status": "open",
+      "grounds": [
+        5
+      ]
+    },
+    {
+      "id": "g4",
+      "kind": "decision",
+      "text": "では、入口の待機列はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        7
+      ]
+    },
+    {
+      "id": "g5",
+      "kind": "issue",
+      "text": "夜間の誘導灯は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        11
+      ]
+    },
+    {
+      "id": "g6",
+      "kind": "position",
+      "text": "私は、足元の灯りを通路の片側に置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        13
+      ]
+    },
+    {
+      "id": "g7",
+      "kind": "argument",
+      "text": "そうすると、投影の色を打ち消さずに段差が見えることが利点です。",
+      "status": "open",
+      "grounds": [
+        15
+      ]
+    },
+    {
+      "id": "g8",
+      "kind": "decision",
+      "text": "では、夜間の誘導灯はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        17
+      ]
+    },
+    {
+      "id": "g9",
+      "kind": "issue",
+      "text": "試作品の搬入は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        21
+      ]
+    },
+    {
+      "id": "g10",
+      "kind": "position",
+      "text": "私は、台車ごと裏口で受け取る案で試したいです。",
+      "status": "open",
+      "grounds": [
+        23
+      ]
+    },
+    {
+      "id": "g11",
+      "kind": "argument",
+      "text": "そうすると、来場者と搬入が交差しないことが利点です。",
+      "status": "open",
+      "grounds": [
+        25
+      ]
+    },
+    {
+      "id": "g12",
+      "kind": "decision",
+      "text": "では、試作品の搬入はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        27
+      ]
+    },
+    {
+      "id": "g13",
+      "kind": "issue",
+      "text": "受付の名札は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        31
+      ]
+    },
+    {
+      "id": "g14",
+      "kind": "position",
+      "text": "私は、役割を色で示す案で試したいです。",
+      "status": "open",
+      "grounds": [
+        33
+      ]
+    },
+    {
+      "id": "g15",
+      "kind": "argument",
+      "text": "そうすると、初参加の人にも質問先が分かることが利点です。",
+      "status": "open",
+      "grounds": [
+        35
+      ]
+    },
+    {
+      "id": "g16",
+      "kind": "decision",
+      "text": "では、受付の名札はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        37
+      ]
+    },
+    {
+      "id": "g17",
+      "kind": "issue",
+      "text": "模型の台座は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        41
+      ]
+    },
+    {
+      "id": "g18",
+      "kind": "position",
+      "text": "私は、高さを二段から選べるようにする案で試したいです。",
+      "status": "open",
+      "grounds": [
+        43
+      ]
+    },
+    {
+      "id": "g19",
+      "kind": "argument",
+      "text": "そうすると、車椅子から見える位置が増えることが利点です。",
+      "status": "open",
+      "grounds": [
+        45
+      ]
+    },
+    {
+      "id": "g20",
+      "kind": "decision",
+      "text": "では、模型の台座はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        47
+      ]
+    },
+    {
+      "id": "g21",
+      "kind": "issue",
+      "text": "風の計測は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        51
+      ]
+    },
+    {
+      "id": "g22",
+      "kind": "position",
+      "text": "私は、開始前に屋上で三回測る案で試したいです。",
+      "status": "open",
+      "grounds": [
+        53
+      ]
+    },
+    {
+      "id": "g23",
+      "kind": "argument",
+      "text": "そうすると、突風と平常時を区別できることが利点です。",
+      "status": "open",
+      "grounds": [
+        55
+      ]
+    },
+    {
+      "id": "g24",
+      "kind": "decision",
+      "text": "では、風の計測はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        57
+      ]
+    },
+    {
+      "id": "g25",
+      "kind": "issue",
+      "text": "雨天の置き傘は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        61
+      ]
+    },
+    {
+      "id": "g26",
+      "kind": "position",
+      "text": "私は、出口の内側に返却箱を置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        63
+      ]
+    },
+    {
+      "id": "g27",
+      "kind": "argument",
+      "text": "そうすると、濡れた床を一箇所に絞れることが利点です。",
+      "status": "open",
+      "grounds": [
+        65
+      ]
+    },
+    {
+      "id": "g28",
+      "kind": "decision",
+      "text": "では、雨天の置き傘はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        67
+      ]
+    },
+    {
+      "id": "g29",
+      "kind": "issue",
+      "text": "作品解説は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        71
+      ]
+    },
+    {
+      "id": "g30",
+      "kind": "position",
+      "text": "私は、文字と触れる見本を並べる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        73
+      ]
+    },
+    {
+      "id": "g31",
+      "kind": "argument",
+      "text": "そうすると、音声を聞けない場所でも使えることが利点です。",
+      "status": "open",
+      "grounds": [
+        75
+      ]
+    },
+    {
+      "id": "g32",
+      "kind": "decision",
+      "text": "では、作品解説はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        77
+      ]
+    },
+    {
+      "id": "g33",
+      "kind": "issue",
+      "text": "会場電源は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        81
+      ]
+    },
+    {
+      "id": "g34",
+      "kind": "position",
+      "text": "私は、通路を横切る配線をなくす案で試したいです。",
+      "status": "open",
+      "grounds": [
+        83
+      ]
+    },
+    {
+      "id": "g35",
+      "kind": "argument",
+      "text": "そうすると、撤収時にも引っ掛けにくいことが利点です。",
+      "status": "open",
+      "grounds": [
+        85
+      ]
+    },
+    {
+      "id": "g36",
+      "kind": "decision",
+      "text": "では、会場電源はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        87
+      ]
+    },
+    {
+      "id": "g37",
+      "kind": "issue",
+      "text": "投影の焦点は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        91
+      ]
+    },
+    {
+      "id": "g38",
+      "kind": "position",
+      "text": "私は、開場前に格子を投影して合わせる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        93
+      ]
+    },
+    {
+      "id": "g39",
+      "kind": "argument",
+      "text": "そうすると、布の張り具合も同時に見られることが利点です。",
+      "status": "open",
+      "grounds": [
+        95
+      ]
+    },
+    {
+      "id": "g40",
+      "kind": "decision",
+      "text": "では、投影の焦点はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        97
+      ]
+    },
+    {
+      "id": "g41",
+      "kind": "issue",
+      "text": "予備の布は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        101
+      ]
+    },
+    {
+      "id": "g42",
+      "kind": "position",
+      "text": "私は、乾いた布を受付裏に一枚置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        103
+      ]
+    },
+    {
+      "id": "g43",
+      "kind": "argument",
+      "text": "そうすると、交換にかかる移動が短いことが利点です。",
+      "status": "open",
+      "grounds": [
+        105
+      ]
+    },
+    {
+      "id": "g44",
+      "kind": "decision",
+      "text": "では、予備の布はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        107
+      ]
+    },
+    {
+      "id": "g45",
+      "kind": "issue",
+      "text": "休憩席は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        111
+      ]
+    },
+    {
+      "id": "g46",
+      "kind": "position",
+      "text": "私は、列から離れた壁際に椅子を並べる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        113
+      ]
+    },
+    {
+      "id": "g47",
+      "kind": "argument",
+      "text": "そうすると、入場と退出の流れが詰まらないことが利点です。",
+      "status": "open",
+      "grounds": [
+        115
+      ]
+    },
+    {
+      "id": "g48",
+      "kind": "decision",
+      "text": "では、休憩席はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        117
+      ]
+    },
+    {
+      "id": "g49",
+      "kind": "issue",
+      "text": "案内地図は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        121
+      ]
+    },
+    {
+      "id": "g50",
+      "kind": "position",
+      "text": "私は、入口の向きに合わせて地図を回す案で試したいです。",
+      "status": "open",
+      "grounds": [
+        123
+      ]
+    },
+    {
+      "id": "g51",
+      "kind": "argument",
+      "text": "そうすると、左右を読み替えずに歩けることが利点です。",
+      "status": "open",
+      "grounds": [
+        125
+      ]
+    },
+    {
+      "id": "g52",
+      "kind": "decision",
+      "text": "では、案内地図はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        127
+      ]
+    },
+    {
+      "id": "g53",
+      "kind": "issue",
+      "text": "子どもの見学は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        131
+      ]
+    },
+    {
+      "id": "g54",
+      "kind": "position",
+      "text": "私は、触ってよい部品だけを緑にする案で試したいです。",
+      "status": "open",
+      "grounds": [
+        133
+      ]
+    },
+    {
+      "id": "g55",
+      "kind": "argument",
+      "text": "そうすると、付き添いが離れていても伝わることが利点です。",
+      "status": "open",
+      "grounds": [
+        135
+      ]
+    },
+    {
+      "id": "g56",
+      "kind": "decision",
+      "text": "では、子どもの見学はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        137
+      ]
+    },
+    {
+      "id": "g57",
+      "kind": "issue",
+      "text": "無線連絡は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        141
+      ]
+    },
+    {
+      "id": "g58",
+      "kind": "position",
+      "text": "私は、受付と巡回でチャンネルを分ける案で試したいです。",
+      "status": "open",
+      "grounds": [
+        143
+      ]
+    },
+    {
+      "id": "g59",
+      "kind": "argument",
+      "text": "そうすると、呼び出しが重ならないことが利点です。",
+      "status": "open",
+      "grounds": [
+        145
+      ]
+    },
+    {
+      "id": "g60",
+      "kind": "decision",
+      "text": "では、無線連絡はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        147
+      ]
+    },
+    {
+      "id": "g61",
+      "kind": "issue",
+      "text": "休憩交代は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        151
+      ]
+    },
+    {
+      "id": "g62",
+      "kind": "position",
+      "text": "私は、引き継ぎに五分ずつ重ねる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        153
+      ]
+    },
+    {
+      "id": "g63",
+      "kind": "argument",
+      "text": "そうすると、受付が空になる時間を作らずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        155
+      ]
+    },
+    {
+      "id": "g64",
+      "kind": "decision",
+      "text": "では、休憩交代はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        157
+      ]
+    },
+    {
+      "id": "g65",
+      "kind": "issue",
+      "text": "試演の時刻は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        161
+      ]
+    },
+    {
+      "id": "g66",
+      "kind": "position",
+      "text": "私は、日没前に一回だけ通す案で試したいです。",
+      "status": "open",
+      "grounds": [
+        163
+      ]
+    },
+    {
+      "id": "g67",
+      "kind": "argument",
+      "text": "そうすると、明るいうちに配線を確認できることが利点です。",
+      "status": "open",
+      "grounds": [
+        165
+      ]
+    },
+    {
+      "id": "g68",
+      "kind": "decision",
+      "text": "では、試演の時刻はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        167
+      ]
+    },
+    {
+      "id": "g69",
+      "kind": "issue",
+      "text": "列の人数は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        171
+      ]
+    },
+    {
+      "id": "g70",
+      "kind": "position",
+      "text": "私は、入口係が十分ごとに数える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        173
+      ]
+    },
+    {
+      "id": "g71",
+      "kind": "argument",
+      "text": "そうすると、手元の札で待ち時間を更新できることが利点です。",
+      "status": "open",
+      "grounds": [
+        175
+      ]
+    },
+    {
+      "id": "g72",
+      "kind": "decision",
+      "text": "では、列の人数はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        177
+      ]
+    },
+    {
+      "id": "g73",
+      "kind": "issue",
+      "text": "音量は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        181
+      ]
+    },
+    {
+      "id": "g74",
+      "kind": "position",
+      "text": "私は、中央通路でも小声が通る水準にする案で試したいです。",
+      "status": "open",
+      "grounds": [
+        183
+      ]
+    },
+    {
+      "id": "g75",
+      "kind": "argument",
+      "text": "そうすると、隣の屋台の案内が聞こえることが利点です。",
+      "status": "open",
+      "grounds": [
+        185
+      ]
+    },
+    {
+      "id": "g76",
+      "kind": "decision",
+      "text": "では、音量はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        187
+      ]
+    },
+    {
+      "id": "g77",
+      "kind": "issue",
+      "text": "写真の場所は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        191
+      ]
+    },
+    {
+      "id": "g78",
+      "kind": "position",
+      "text": "私は、台座の横に撮影位置を表示する案で試したいです。",
+      "status": "open",
+      "grounds": [
+        193
+      ]
+    },
+    {
+      "id": "g79",
+      "kind": "argument",
+      "text": "そうすると、撮影待ちが見学の列に混じらないことが利点です。",
+      "status": "open",
+      "grounds": [
+        195
+      ]
+    },
+    {
+      "id": "g80",
+      "kind": "decision",
+      "text": "では、写真の場所はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        197
+      ]
+    },
+    {
+      "id": "g81",
+      "kind": "issue",
+      "text": "貸し出し袋は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        201
+      ]
+    },
+    {
+      "id": "g82",
+      "kind": "position",
+      "text": "私は、返却済みと未使用の袋を別の箱に置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        203
+      ]
+    },
+    {
+      "id": "g83",
+      "kind": "argument",
+      "text": "そうすると、片付けのときに混ざらないことが利点です。",
+      "status": "open",
+      "grounds": [
+        205
+      ]
+    },
+    {
+      "id": "g84",
+      "kind": "decision",
+      "text": "では、貸し出し袋はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        207
+      ]
+    },
+    {
+      "id": "g85",
+      "kind": "issue",
+      "text": "紛失物は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        211
+      ]
+    },
+    {
+      "id": "g86",
+      "kind": "position",
+      "text": "私は、発見場所と時刻だけを控える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        213
+      ]
+    },
+    {
+      "id": "g87",
+      "kind": "argument",
+      "text": "そうすると、照会のたびに全員へ確認せずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        215
+      ]
+    },
+    {
+      "id": "g88",
+      "kind": "decision",
+      "text": "では、紛失物はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        217
+      ]
+    },
+    {
+      "id": "g89",
+      "kind": "issue",
+      "text": "忘れ物の掲示は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        221
+      ]
+    },
+    {
+      "id": "g90",
+      "kind": "position",
+      "text": "私は、品物の分類だけを受付に出す案で試したいです。",
+      "status": "open",
+      "grounds": [
+        223
+      ]
+    },
+    {
+      "id": "g91",
+      "kind": "argument",
+      "text": "そうすると、持ち主だけが細部を答えられることが利点です。",
+      "status": "open",
+      "grounds": [
+        225
+      ]
+    },
+    {
+      "id": "g92",
+      "kind": "decision",
+      "text": "では、忘れ物の掲示はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        227
+      ]
+    },
+    {
+      "id": "g93",
+      "kind": "issue",
+      "text": "水分補給は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        231
+      ]
+    },
+    {
+      "id": "g94",
+      "kind": "position",
+      "text": "私は、作品から離れた所に給水台を置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        233
+      ]
+    },
+    {
+      "id": "g95",
+      "kind": "argument",
+      "text": "そうすると、水が模型にかかりにくいことが利点です。",
+      "status": "open",
+      "grounds": [
+        235
+      ]
+    },
+    {
+      "id": "g96",
+      "kind": "decision",
+      "text": "では、水分補給はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        237
+      ]
+    },
+    {
+      "id": "g97",
+      "kind": "issue",
+      "text": "作業手袋は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        241
+      ]
+    },
+    {
+      "id": "g98",
+      "kind": "position",
+      "text": "私は、入口裏にサイズ別で掛ける案で試したいです。",
+      "status": "open",
+      "grounds": [
+        243
+      ]
+    },
+    {
+      "id": "g99",
+      "kind": "argument",
+      "text": "そうすると、交換のたびに倉庫へ行かずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        245
+      ]
+    },
+    {
+      "id": "g100",
+      "kind": "decision",
+      "text": "では、作業手袋はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        247
+      ]
+    },
+    {
+      "id": "g101",
+      "kind": "issue",
+      "text": "閉場の合図は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        251
+      ]
+    },
+    {
+      "id": "g102",
+      "kind": "position",
+      "text": "私は、出口側から順に小さな札を替える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        253
+      ]
+    },
+    {
+      "id": "g103",
+      "kind": "argument",
+      "text": "そうすると、最後の来場者を急かさずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        255
+      ]
+    },
+    {
+      "id": "g104",
+      "kind": "decision",
+      "text": "では、閉場の合図はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        257
+      ]
+    },
+    {
+      "id": "g105",
+      "kind": "issue",
+      "text": "通路の掃除は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        261
+      ]
+    },
+    {
+      "id": "g106",
+      "kind": "position",
+      "text": "私は、巡回の折り返しで床を見る案で試したいです。",
+      "status": "open",
+      "grounds": [
+        263
+      ]
+    },
+    {
+      "id": "g107",
+      "kind": "argument",
+      "text": "そうすると、紙くずを列が伸びる前に拾えることが利点です。",
+      "status": "open",
+      "grounds": [
+        265
+      ]
+    },
+    {
+      "id": "g108",
+      "kind": "decision",
+      "text": "では、通路の掃除はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        267
+      ]
+    },
+    {
+      "id": "g109",
+      "kind": "issue",
+      "text": "部品の在庫は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        271
+      ]
+    },
+    {
+      "id": "g110",
+      "kind": "position",
+      "text": "私は、欠けやすい留め具だけを多めに置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        273
+      ]
+    },
+    {
+      "id": "g111",
+      "kind": "argument",
+      "text": "そうすると、箱が重くなりすぎないことが利点です。",
+      "status": "open",
+      "grounds": [
+        275
+      ]
+    },
+    {
+      "id": "g112",
+      "kind": "decision",
+      "text": "では、部品の在庫はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        277
+      ]
+    },
+    {
+      "id": "g113",
+      "kind": "issue",
+      "text": "展示の記録は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        281
+      ]
+    },
+    {
+      "id": "g114",
+      "kind": "position",
+      "text": "私は、各台座の写真を閉場後に撮る案で試したいです。",
+      "status": "open",
+      "grounds": [
+        283
+      ]
+    },
+    {
+      "id": "g115",
+      "kind": "argument",
+      "text": "そうすると、来場者が写り込まないことが利点です。",
+      "status": "open",
+      "grounds": [
+        285
+      ]
+    },
+    {
+      "id": "g116",
+      "kind": "decision",
+      "text": "では、展示の記録はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        287
+      ]
+    },
+    {
+      "id": "g117",
+      "kind": "issue",
+      "text": "撤収の箱は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        291
+      ]
+    },
+    {
+      "id": "g118",
+      "kind": "position",
+      "text": "私は、箱に展示台番号を記す案で試したいです。",
+      "status": "open",
+      "grounds": [
+        293
+      ]
+    },
+    {
+      "id": "g119",
+      "kind": "argument",
+      "text": "そうすると、翌日の再設置で中身を探さずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        295
+      ]
+    },
+    {
+      "id": "g120",
+      "kind": "decision",
+      "text": "では、撤収の箱はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        297
+      ]
+    },
+    {
+      "id": "g121",
+      "kind": "issue",
+      "text": "入場を待つ人をどう並ばせるか、ここでもう一度決めませんか。",
+      "status": "decided",
+      "grounds": [
+        301
+      ]
+    },
+    {
+      "id": "g122",
+      "kind": "position",
+      "text": "私は、雨よけの下で二列に並べる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        303
+      ]
+    },
+    {
+      "id": "g123",
+      "kind": "argument",
+      "text": "そうすると、広場の中央を空けられることが利点です。",
+      "status": "open",
+      "grounds": [
+        305
+      ]
+    },
+    {
+      "id": "g124",
+      "kind": "decision",
+      "text": "では、入口の待機列はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        307
+      ]
+    },
+    {
+      "id": "g125",
+      "kind": "issue",
+      "text": "暗くなってから足元をどう見せるか、ここでもう一度決めませんか。",
+      "status": "decided",
+      "grounds": [
+        311
+      ]
+    },
+    {
+      "id": "g126",
+      "kind": "position",
+      "text": "私は、足元の灯りを通路の片側に置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        313
+      ]
+    },
+    {
+      "id": "g127",
+      "kind": "argument",
+      "text": "そうすると、投影の色を打ち消さずに段差が見えることが利点です。",
+      "status": "open",
+      "grounds": [
+        315
+      ]
+    },
+    {
+      "id": "g128",
+      "kind": "decision",
+      "text": "では、夜間の誘導灯はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        317
+      ]
+    },
+    {
+      "id": "g129",
+      "kind": "issue",
+      "text": "展示品をどの動線で運び込むか、ここでもう一度決めませんか。",
+      "status": "decided",
+      "grounds": [
+        321
+      ]
+    },
+    {
+      "id": "g130",
+      "kind": "position",
+      "text": "私は、台車ごと裏口で受け取る案で試したいです。",
+      "status": "open",
+      "grounds": [
+        323
+      ]
+    },
+    {
+      "id": "g131",
+      "kind": "argument",
+      "text": "そうすると、来場者と搬入が交差しないことが利点です。",
+      "status": "open",
+      "grounds": [
+        325
+      ]
+    },
+    {
+      "id": "g132",
+      "kind": "decision",
+      "text": "では、試作品の搬入はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        327
+      ]
+    },
+    {
+      "id": "g133",
+      "kind": "issue",
+      "text": "受付の筆記具は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        331
+      ]
+    },
+    {
+      "id": "g134",
+      "kind": "position",
+      "text": "私は、受付机の左右に一本ずつ固定する案で試したいです。",
+      "status": "open",
+      "grounds": [
+        333
+      ]
+    },
+    {
+      "id": "g135",
+      "kind": "argument",
+      "text": "そうすると、書くために列から抜ける人が減ることが利点です。",
+      "status": "open",
+      "grounds": [
+        335
+      ]
+    },
+    {
+      "id": "g136",
+      "kind": "decision",
+      "text": "では、受付の筆記具はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        337
+      ]
+    },
+    {
+      "id": "g137",
+      "kind": "issue",
+      "text": "模型の名前は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        341
+      ]
+    },
+    {
+      "id": "g138",
+      "kind": "position",
+      "text": "私は、全台に短い読み仮名を付ける案で試したいです。",
+      "status": "open",
+      "grounds": [
+        343
+      ]
+    },
+    {
+      "id": "g139",
+      "kind": "argument",
+      "text": "そうすると、呼び出すときに人によって読み方が変わらないことが利点です。",
+      "status": "open",
+      "grounds": [
+        345
+      ]
+    },
+    {
+      "id": "g140",
+      "kind": "decision",
+      "text": "では、模型の名前はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        347
+      ]
+    },
+    {
+      "id": "g141",
+      "kind": "issue",
+      "text": "留め具の点検は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        351
+      ]
+    },
+    {
+      "id": "g142",
+      "kind": "position",
+      "text": "私は、模型の裏側に点検札を付ける案で試したいです。",
+      "status": "open",
+      "grounds": [
+        353
+      ]
+    },
+    {
+      "id": "g143",
+      "kind": "argument",
+      "text": "そうすると、済んだ台をもう一度ひっくり返さずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        355
+      ]
+    },
+    {
+      "id": "g144",
+      "kind": "decision",
+      "text": "では、留め具の点検はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        357
+      ]
+    },
+    {
+      "id": "g145",
+      "kind": "issue",
+      "text": "鉛筆の削りかすは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        361
+      ]
+    },
+    {
+      "id": "g146",
+      "kind": "position",
+      "text": "私は、蓋付きの容器を受付の裏に置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        363
+      ]
+    },
+    {
+      "id": "g147",
+      "kind": "argument",
+      "text": "そうすると、風で模型に飛んでいかないことが利点です。",
+      "status": "open",
+      "grounds": [
+        365
+      ]
+    },
+    {
+      "id": "g148",
+      "kind": "decision",
+      "text": "では、鉛筆の削りかすはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        367
+      ]
+    },
+    {
+      "id": "g149",
+      "kind": "issue",
+      "text": "進行表は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        371
+      ]
+    },
+    {
+      "id": "g150",
+      "kind": "position",
+      "text": "私は、開始時刻と担当の欄だけ大きく印刷する案で試したいです。",
+      "status": "open",
+      "grounds": [
+        373
+      ]
+    },
+    {
+      "id": "g151",
+      "kind": "argument",
+      "text": "そうすると、交代の直前でも読みやすいことが利点です。",
+      "status": "open",
+      "grounds": [
+        375
+      ]
+    },
+    {
+      "id": "g152",
+      "kind": "decision",
+      "text": "では、進行表はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        377
+      ]
+    },
+    {
+      "id": "g153",
+      "kind": "issue",
+      "text": "見本の交換は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        381
+      ]
+    },
+    {
+      "id": "g154",
+      "kind": "position",
+      "text": "私は、試作品に交換時刻の札を添える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        383
+      ]
+    },
+    {
+      "id": "g155",
+      "kind": "argument",
+      "text": "そうすると、並んでいる人にも戻り時間が分かることが利点です。",
+      "status": "open",
+      "grounds": [
+        385
+      ]
+    },
+    {
+      "id": "g156",
+      "kind": "decision",
+      "text": "では、見本の交換はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        387
+      ]
+    },
+    {
+      "id": "g157",
+      "kind": "issue",
+      "text": "開場前の待ち合わせは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        391
+      ]
+    },
+    {
+      "id": "g158",
+      "kind": "position",
+      "text": "私は、入口から離れた時計の下に集まる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        393
+      ]
+    },
+    {
+      "id": "g159",
+      "kind": "argument",
+      "text": "そうすると、入場を待つ人と区別しやすいことが利点です。",
+      "status": "open",
+      "grounds": [
+        395
+      ]
+    },
+    {
+      "id": "g160",
+      "kind": "decision",
+      "text": "では、開場前の待ち合わせはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        397
+      ]
+    },
+    {
+      "id": "g161",
+      "kind": "issue",
+      "text": "降雨の記録は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        401
+      ]
+    },
+    {
+      "id": "g162",
+      "kind": "position",
+      "text": "私は、雨が始まった時刻だけを進行表の裏に書く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        403
+      ]
+    },
+    {
+      "id": "g163",
+      "kind": "argument",
+      "text": "そうすると、変更の順序を振り返りやすいことが利点です。",
+      "status": "open",
+      "grounds": [
+        405
+      ]
+    },
+    {
+      "id": "g164",
+      "kind": "decision",
+      "text": "では、降雨の記録はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        407
+      ]
+    },
+    {
+      "id": "g165",
+      "kind": "issue",
+      "text": "屋根に落ちる葉は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        411
+      ]
+    },
+    {
+      "id": "g166",
+      "kind": "position",
+      "text": "私は、開場の直前に柄の長い道具で落とす案で試したいです。",
+      "status": "open",
+      "grounds": [
+        413
+      ]
+    },
+    {
+      "id": "g167",
+      "kind": "argument",
+      "text": "そうすると、見学中に大きな音がしないことが利点です。",
+      "status": "open",
+      "grounds": [
+        415
+      ]
+    },
+    {
+      "id": "g168",
+      "kind": "decision",
+      "text": "では、屋根に落ちる葉はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        417
+      ]
+    },
+    {
+      "id": "g169",
+      "kind": "issue",
+      "text": "紙の配布は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        421
+      ]
+    },
+    {
+      "id": "g170",
+      "kind": "position",
+      "text": "私は、折り目を付けたものを手前に置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        423
+      ]
+    },
+    {
+      "id": "g171",
+      "kind": "argument",
+      "text": "そうすると、片手でも地図を広げやすいことが利点です。",
+      "status": "open",
+      "grounds": [
+        425
+      ]
+    },
+    {
+      "id": "g172",
+      "kind": "decision",
+      "text": "では、紙の配布はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        427
+      ]
+    },
+    {
+      "id": "g173",
+      "kind": "issue",
+      "text": "停電の案内は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        431
+      ]
+    },
+    {
+      "id": "g174",
+      "kind": "position",
+      "text": "私は、照明担当が受付に口頭で伝える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        433
+      ]
+    },
+    {
+      "id": "g175",
+      "kind": "argument",
+      "text": "そうすると、無線の充電に依存しなくて済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        435
+      ]
+    },
+    {
+      "id": "g176",
+      "kind": "decision",
+      "text": "では、停電の案内はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        437
+      ]
+    },
+    {
+      "id": "g177",
+      "kind": "issue",
+      "text": "非常口の札は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        441
+      ]
+    },
+    {
+      "id": "g178",
+      "kind": "position",
+      "text": "私は、人の頭より高い所に吊るす案で試したいです。",
+      "status": "open",
+      "grounds": [
+        443
+      ]
+    },
+    {
+      "id": "g179",
+      "kind": "argument",
+      "text": "そうすると、列ができていても見えることが利点です。",
+      "status": "open",
+      "grounds": [
+        445
+      ]
+    },
+    {
+      "id": "g180",
+      "kind": "decision",
+      "text": "では、非常口の札はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        447
+      ]
+    },
+    {
+      "id": "g181",
+      "kind": "issue",
+      "text": "展示番号の読み上げは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        451
+      ]
+    },
+    {
+      "id": "g182",
+      "kind": "position",
+      "text": "私は、番号の前に会場の区画を呼ぶ案で試したいです。",
+      "status": "open",
+      "grounds": [
+        453
+      ]
+    },
+    {
+      "id": "g183",
+      "kind": "argument",
+      "text": "そうすると、離れた場所で同じ番号を聞き違えないことが利点です。",
+      "status": "open",
+      "grounds": [
+        455
+      ]
+    },
+    {
+      "id": "g184",
+      "kind": "decision",
+      "text": "では、展示番号の読み上げはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        457
+      ]
+    },
+    {
+      "id": "g185",
+      "kind": "issue",
+      "text": "触れる見本の手入れは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        461
+      ]
+    },
+    {
+      "id": "g186",
+      "kind": "position",
+      "text": "私は、布と木の見本に別々の刷毛を使う案で試したいです。",
+      "status": "open",
+      "grounds": [
+        463
+      ]
+    },
+    {
+      "id": "g187",
+      "kind": "argument",
+      "text": "そうすると、木の粉が布に付くのを防げることが利点です。",
+      "status": "open",
+      "grounds": [
+        465
+      ]
+    },
+    {
+      "id": "g188",
+      "kind": "decision",
+      "text": "では、触れる見本の手入れはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        467
+      ]
+    },
+    {
+      "id": "g189",
+      "kind": "issue",
+      "text": "開場時の気温は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        471
+      ]
+    },
+    {
+      "id": "g190",
+      "kind": "position",
+      "text": "私は、入口と屋台裏で別々に測る案で試したいです。",
+      "status": "open",
+      "grounds": [
+        473
+      ]
+    },
+    {
+      "id": "g191",
+      "kind": "argument",
+      "text": "そうすると、日陰の差を把握できることが利点です。",
+      "status": "open",
+      "grounds": [
+        475
+      ]
+    },
+    {
+      "id": "g192",
+      "kind": "decision",
+      "text": "では、開場時の気温はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        477
+      ]
+    },
+    {
+      "id": "g193",
+      "kind": "issue",
+      "text": "巡回係の靴は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        481
+      ]
+    },
+    {
+      "id": "g194",
+      "kind": "position",
+      "text": "私は、雨のときだけ滑りにくい靴へ替える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        483
+      ]
+    },
+    {
+      "id": "g195",
+      "kind": "argument",
+      "text": "そうすると、屋内で長く立つ負担を抑えられることが利点です。",
+      "status": "open",
+      "grounds": [
+        485
+      ]
+    },
+    {
+      "id": "g196",
+      "kind": "decision",
+      "text": "では、巡回係の靴はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        487
+      ]
+    },
+    {
+      "id": "g197",
+      "kind": "issue",
+      "text": "交換用ラベルは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        491
+      ]
+    },
+    {
+      "id": "g198",
+      "kind": "position",
+      "text": "私は、番号を書かずに余分を切っておく案で試したいです。",
+      "status": "open",
+      "grounds": [
+        493
+      ]
+    },
+    {
+      "id": "g199",
+      "kind": "argument",
+      "text": "そうすると、どの展示が破れても使えることが利点です。",
+      "status": "open",
+      "grounds": [
+        495
+      ]
+    },
+    {
+      "id": "g200",
+      "kind": "decision",
+      "text": "では、交換用ラベルはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        497
+      ]
+    },
+    {
+      "id": "g201",
+      "kind": "issue",
+      "text": "補助台の片付けは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        501
+      ]
+    },
+    {
+      "id": "g202",
+      "kind": "position",
+      "text": "私は、空いた台を受付裏で畳む案で試したいです。",
+      "status": "open",
+      "grounds": [
+        503
+      ]
+    },
+    {
+      "id": "g203",
+      "kind": "argument",
+      "text": "そうすると、会場に畳む音が響きにくいことが利点です。",
+      "status": "open",
+      "grounds": [
+        505
+      ]
+    },
+    {
+      "id": "g204",
+      "kind": "decision",
+      "text": "では、補助台の片付けはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        507
+      ]
+    },
+    {
+      "id": "g205",
+      "kind": "issue",
+      "text": "閉場後の明かりは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        511
+      ]
+    },
+    {
+      "id": "g206",
+      "kind": "position",
+      "text": "私は、搬出口の灯りだけ最後まで点けておく案で試したいです。",
+      "status": "open",
+      "grounds": [
+        513
+      ]
+    },
+    {
+      "id": "g207",
+      "kind": "argument",
+      "text": "そうすると、台車の戻りが終わるまで段差が見えることが利点です。",
+      "status": "open",
+      "grounds": [
+        515
+      ]
+    },
+    {
+      "id": "g208",
+      "kind": "decision",
+      "text": "では、閉場後の明かりはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        517
+      ]
+    },
+    {
+      "id": "g209",
+      "kind": "issue",
+      "text": "連絡用の紙は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        521
+      ]
+    },
+    {
+      "id": "g210",
+      "kind": "position",
+      "text": "私は、机ごとに小さい束に分ける案で試したいです。",
+      "status": "open",
+      "grounds": [
+        523
+      ]
+    },
+    {
+      "id": "g211",
+      "kind": "argument",
+      "text": "そうすると、走って取りに来る必要がなくなることが利点です。",
+      "status": "open",
+      "grounds": [
+        525
+      ]
+    },
+    {
+      "id": "g212",
+      "kind": "decision",
+      "text": "では、連絡用の紙はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        527
+      ]
+    },
+    {
+      "id": "g213",
+      "kind": "issue",
+      "text": "転倒の報告は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        531
+      ]
+    },
+    {
+      "id": "g214",
+      "kind": "position",
+      "text": "私は、巡回係が場所と床の状態を控える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        533
+      ]
+    },
+    {
+      "id": "g215",
+      "kind": "argument",
+      "text": "そうすると、次回の配置を考える材料になることが利点です。",
+      "status": "open",
+      "grounds": [
+        535
+      ]
+    },
+    {
+      "id": "g216",
+      "kind": "decision",
+      "text": "では、転倒の報告はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        537
+      ]
+    },
+    {
+      "id": "g217",
+      "kind": "issue",
+      "text": "空き時間の試写は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        541
+      ]
+    },
+    {
+      "id": "g218",
+      "kind": "position",
+      "text": "私は、布の端だけで色を試す案で試したいです。",
+      "status": "open",
+      "grounds": [
+        543
+      ]
+    },
+    {
+      "id": "g219",
+      "kind": "argument",
+      "text": "そうすると、片付け中の仲間の目に光が入らないことが利点です。",
+      "status": "open",
+      "grounds": [
+        545
+      ]
+    },
+    {
+      "id": "g220",
+      "kind": "decision",
+      "text": "では、空き時間の試写はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        547
+      ]
+    },
+    {
+      "id": "g221",
+      "kind": "issue",
+      "text": "会場裏の鍵は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        551
+      ]
+    },
+    {
+      "id": "g222",
+      "kind": "position",
+      "text": "私は、最後に返す人を進行表に書く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        553
+      ]
+    },
+    {
+      "id": "g223",
+      "kind": "argument",
+      "text": "そうすると、返却を二人が互いに任せずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        555
+      ]
+    },
+    {
+      "id": "g224",
+      "kind": "decision",
+      "text": "では、会場裏の鍵はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        557
+      ]
+    },
+    {
+      "id": "g225",
+      "kind": "issue",
+      "text": "清掃の道具は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        561
+      ]
+    },
+    {
+      "id": "g226",
+      "kind": "position",
+      "text": "私は、出口と展示台に一組ずつ置く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        563
+      ]
+    },
+    {
+      "id": "g227",
+      "kind": "argument",
+      "text": "そうすると、濡れた道具を長く持ち運ばずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        565
+      ]
+    },
+    {
+      "id": "g228",
+      "kind": "decision",
+      "text": "では、清掃の道具はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        567
+      ]
+    },
+    {
+      "id": "g229",
+      "kind": "issue",
+      "text": "翌日の連絡は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        571
+      ]
+    },
+    {
+      "id": "g230",
+      "kind": "position",
+      "text": "私は、変更した集合時刻だけを札の裏に書く案で試したいです。",
+      "status": "open",
+      "grounds": [
+        573
+      ]
+    },
+    {
+      "id": "g231",
+      "kind": "argument",
+      "text": "そうすると、記録用の一覧をその場で作り直さずに済むことが利点です。",
+      "status": "open",
+      "grounds": [
+        575
+      ]
+    },
+    {
+      "id": "g232",
+      "kind": "decision",
+      "text": "では、翌日の連絡はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        577
+      ]
+    },
+    {
+      "id": "g233",
+      "kind": "issue",
+      "text": "予備部品の返却は、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        581
+      ]
+    },
+    {
+      "id": "g234",
+      "kind": "position",
+      "text": "私は、未開封の袋から先に数える案で試したいです。",
+      "status": "open",
+      "grounds": [
+        583
+      ]
+    },
+    {
+      "id": "g235",
+      "kind": "argument",
+      "text": "そうすると、端数を数え直す手間が減ることが利点です。",
+      "status": "open",
+      "grounds": [
+        585
+      ]
+    },
+    {
+      "id": "g236",
+      "kind": "decision",
+      "text": "では、予備部品の返却はその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        587
+      ]
+    },
+    {
+      "id": "g237",
+      "kind": "issue",
+      "text": "手順の振り返りは、当日どんな運用にしましょうか。",
+      "status": "decided",
+      "grounds": [
+        591
+      ]
+    },
+    {
+      "id": "g238",
+      "kind": "position",
+      "text": "私は、待ち時間と交換回数を先に確かめる案で試したいです。",
+      "status": "open",
+      "grounds": [
+        593
+      ]
+    },
+    {
+      "id": "g239",
+      "kind": "argument",
+      "text": "そうすると、体感と実際の混雑を照合できることが利点です。",
+      "status": "open",
+      "grounds": [
+        595
+      ]
+    },
+    {
+      "id": "g240",
+      "kind": "decision",
+      "text": "では、手順の振り返りはその案で試すと決めます。",
+      "status": "open",
+      "grounds": [
+        597
+      ]
+    },
+    {
+      "id": "g241",
+      "kind": "action",
+      "text": "記録係が入口の待機列の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        8
+      ]
+    },
+    {
+      "id": "g242",
+      "kind": "action",
+      "text": "記録係が夜間の誘導灯の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        18
+      ]
+    },
+    {
+      "id": "g243",
+      "kind": "action",
+      "text": "記録係が試作品の搬入の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        28
+      ]
+    },
+    {
+      "id": "g244",
+      "kind": "action",
+      "text": "記録係が受付の名札の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        38
+      ]
+    },
+    {
+      "id": "g245",
+      "kind": "action",
+      "text": "記録係が模型の台座の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        48
+      ]
+    },
+    {
+      "id": "g246",
+      "kind": "action",
+      "text": "記録係が風の計測の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        58
+      ]
+    },
+    {
+      "id": "g247",
+      "kind": "action",
+      "text": "記録係が雨天の置き傘の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        68
+      ]
+    },
+    {
+      "id": "g248",
+      "kind": "action",
+      "text": "記録係が作品解説の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        78
+      ]
+    },
+    {
+      "id": "g249",
+      "kind": "action",
+      "text": "記録係が会場電源の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        88
+      ]
+    },
+    {
+      "id": "g250",
+      "kind": "action",
+      "text": "記録係が投影の焦点の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        98
+      ]
+    },
+    {
+      "id": "g251",
+      "kind": "action",
+      "text": "記録係が予備の布の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        108
+      ]
+    },
+    {
+      "id": "g252",
+      "kind": "action",
+      "text": "記録係が休憩席の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        118
+      ]
+    },
+    {
+      "id": "g253",
+      "kind": "action",
+      "text": "記録係が案内地図の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        128
+      ]
+    },
+    {
+      "id": "g254",
+      "kind": "action",
+      "text": "記録係が子どもの見学の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        138
+      ]
+    },
+    {
+      "id": "g255",
+      "kind": "action",
+      "text": "記録係が無線連絡の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        148
+      ]
+    },
+    {
+      "id": "g256",
+      "kind": "action",
+      "text": "記録係が休憩交代の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        158
+      ]
+    },
+    {
+      "id": "g257",
+      "kind": "action",
+      "text": "記録係が試演の時刻の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        168
+      ]
+    },
+    {
+      "id": "g258",
+      "kind": "action",
+      "text": "記録係が列の人数の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        178
+      ]
+    },
+    {
+      "id": "g259",
+      "kind": "action",
+      "text": "記録係が音量の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        188
+      ]
+    },
+    {
+      "id": "g260",
+      "kind": "action",
+      "text": "記録係が写真の場所の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        198
+      ]
+    },
+    {
+      "id": "g261",
+      "kind": "action",
+      "text": "記録係が貸し出し袋の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        208
+      ]
+    },
+    {
+      "id": "g262",
+      "kind": "action",
+      "text": "記録係が紛失物の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        218
+      ]
+    },
+    {
+      "id": "g263",
+      "kind": "action",
+      "text": "記録係が忘れ物の掲示の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        228
+      ]
+    },
+    {
+      "id": "g264",
+      "kind": "action",
+      "text": "記録係が水分補給の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        238
+      ]
+    },
+    {
+      "id": "g265",
+      "kind": "action",
+      "text": "記録係が作業手袋の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        248
+      ]
+    },
+    {
+      "id": "g266",
+      "kind": "action",
+      "text": "記録係が閉場の合図の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        258
+      ]
+    },
+    {
+      "id": "g267",
+      "kind": "action",
+      "text": "記録係が通路の掃除の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        268
+      ]
+    },
+    {
+      "id": "g268",
+      "kind": "action",
+      "text": "記録係が部品の在庫の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        278
+      ]
+    },
+    {
+      "id": "g269",
+      "kind": "action",
+      "text": "記録係が展示の記録の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        288
+      ]
+    },
+    {
+      "id": "g270",
+      "kind": "action",
+      "text": "記録係が撤収の箱の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        298
+      ]
+    },
+    {
+      "id": "g271",
+      "kind": "action",
+      "text": "記録係が入口の待機列の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        308
+      ]
+    },
+    {
+      "id": "g272",
+      "kind": "action",
+      "text": "記録係が夜間の誘導灯の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        318
+      ]
+    },
+    {
+      "id": "g273",
+      "kind": "action",
+      "text": "記録係が試作品の搬入の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        328
+      ]
+    },
+    {
+      "id": "g274",
+      "kind": "action",
+      "text": "記録係が受付の筆記具の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        338
+      ]
+    },
+    {
+      "id": "g275",
+      "kind": "action",
+      "text": "記録係が模型の名前の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        348
+      ]
+    },
+    {
+      "id": "g276",
+      "kind": "action",
+      "text": "記録係が留め具の点検の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        358
+      ]
+    },
+    {
+      "id": "g277",
+      "kind": "action",
+      "text": "記録係が鉛筆の削りかすの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        368
+      ]
+    },
+    {
+      "id": "g278",
+      "kind": "action",
+      "text": "記録係が進行表の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        378
+      ]
+    },
+    {
+      "id": "g279",
+      "kind": "action",
+      "text": "記録係が見本の交換の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        388
+      ]
+    },
+    {
+      "id": "g280",
+      "kind": "action",
+      "text": "記録係が開場前の待ち合わせの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        398
+      ]
+    },
+    {
+      "id": "g281",
+      "kind": "action",
+      "text": "記録係が降雨の記録の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        408
+      ]
+    },
+    {
+      "id": "g282",
+      "kind": "action",
+      "text": "記録係が屋根に落ちる葉の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        418
+      ]
+    },
+    {
+      "id": "g283",
+      "kind": "action",
+      "text": "記録係が紙の配布の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        428
+      ]
+    },
+    {
+      "id": "g284",
+      "kind": "action",
+      "text": "記録係が停電の案内の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        438
+      ]
+    },
+    {
+      "id": "g285",
+      "kind": "action",
+      "text": "記録係が非常口の札の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        448
+      ]
+    },
+    {
+      "id": "g286",
+      "kind": "action",
+      "text": "記録係が展示番号の読み上げの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        458
+      ]
+    },
+    {
+      "id": "g287",
+      "kind": "action",
+      "text": "記録係が触れる見本の手入れの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        468
+      ]
+    },
+    {
+      "id": "g288",
+      "kind": "action",
+      "text": "記録係が開場時の気温の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        478
+      ]
+    },
+    {
+      "id": "g289",
+      "kind": "action",
+      "text": "記録係が巡回係の靴の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        488
+      ]
+    },
+    {
+      "id": "g290",
+      "kind": "action",
+      "text": "記録係が交換用ラベルの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        498
+      ]
+    },
+    {
+      "id": "g291",
+      "kind": "action",
+      "text": "記録係が補助台の片付けの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        508
+      ]
+    },
+    {
+      "id": "g292",
+      "kind": "action",
+      "text": "記録係が閉場後の明かりの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        518
+      ]
+    },
+    {
+      "id": "g293",
+      "kind": "action",
+      "text": "記録係が連絡用の紙の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        528
+      ]
+    },
+    {
+      "id": "g294",
+      "kind": "action",
+      "text": "記録係が転倒の報告の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        538
+      ]
+    },
+    {
+      "id": "g295",
+      "kind": "action",
+      "text": "記録係が空き時間の試写の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        548
+      ]
+    },
+    {
+      "id": "g296",
+      "kind": "action",
+      "text": "記録係が会場裏の鍵の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        558
+      ]
+    },
+    {
+      "id": "g297",
+      "kind": "action",
+      "text": "記録係が清掃の道具の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        568
+      ]
+    },
+    {
+      "id": "g298",
+      "kind": "action",
+      "text": "記録係が翌日の連絡の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        578
+      ]
+    },
+    {
+      "id": "g299",
+      "kind": "action",
+      "text": "記録係が予備部品の返却の欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        588
+      ]
+    },
+    {
+      "id": "g300",
+      "kind": "action",
+      "text": "記録係が手順の振り返りの欄に今日の判断を転記する",
+      "status": "open",
+      "grounds": [
+        598
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "g2",
+      "dst": "g1",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g3",
+      "dst": "g2",
+      "kind": "supports"
+    },
+    {
+      "src": "g4",
+      "dst": "g1",
+      "kind": "resolves"
+    },
+    {
+      "src": "g6",
+      "dst": "g5",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g7",
+      "dst": "g6",
+      "kind": "supports"
+    },
+    {
+      "src": "g8",
+      "dst": "g5",
+      "kind": "resolves"
+    },
+    {
+      "src": "g10",
+      "dst": "g9",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g11",
+      "dst": "g10",
+      "kind": "supports"
+    },
+    {
+      "src": "g12",
+      "dst": "g9",
+      "kind": "resolves"
+    },
+    {
+      "src": "g14",
+      "dst": "g13",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g15",
+      "dst": "g14",
+      "kind": "supports"
+    },
+    {
+      "src": "g16",
+      "dst": "g13",
+      "kind": "resolves"
+    },
+    {
+      "src": "g18",
+      "dst": "g17",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g19",
+      "dst": "g18",
+      "kind": "supports"
+    },
+    {
+      "src": "g20",
+      "dst": "g17",
+      "kind": "resolves"
+    },
+    {
+      "src": "g22",
+      "dst": "g21",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g23",
+      "dst": "g22",
+      "kind": "supports"
+    },
+    {
+      "src": "g24",
+      "dst": "g21",
+      "kind": "resolves"
+    },
+    {
+      "src": "g26",
+      "dst": "g25",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g27",
+      "dst": "g26",
+      "kind": "supports"
+    },
+    {
+      "src": "g28",
+      "dst": "g25",
+      "kind": "resolves"
+    },
+    {
+      "src": "g30",
+      "dst": "g29",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g31",
+      "dst": "g30",
+      "kind": "supports"
+    },
+    {
+      "src": "g32",
+      "dst": "g29",
+      "kind": "resolves"
+    },
+    {
+      "src": "g34",
+      "dst": "g33",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g35",
+      "dst": "g34",
+      "kind": "supports"
+    },
+    {
+      "src": "g36",
+      "dst": "g33",
+      "kind": "resolves"
+    },
+    {
+      "src": "g38",
+      "dst": "g37",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g39",
+      "dst": "g38",
+      "kind": "supports"
+    },
+    {
+      "src": "g40",
+      "dst": "g37",
+      "kind": "resolves"
+    },
+    {
+      "src": "g42",
+      "dst": "g41",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g43",
+      "dst": "g42",
+      "kind": "supports"
+    },
+    {
+      "src": "g44",
+      "dst": "g41",
+      "kind": "resolves"
+    },
+    {
+      "src": "g46",
+      "dst": "g45",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g47",
+      "dst": "g46",
+      "kind": "supports"
+    },
+    {
+      "src": "g48",
+      "dst": "g45",
+      "kind": "resolves"
+    },
+    {
+      "src": "g50",
+      "dst": "g49",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g51",
+      "dst": "g50",
+      "kind": "supports"
+    },
+    {
+      "src": "g52",
+      "dst": "g49",
+      "kind": "resolves"
+    },
+    {
+      "src": "g54",
+      "dst": "g53",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g55",
+      "dst": "g54",
+      "kind": "supports"
+    },
+    {
+      "src": "g56",
+      "dst": "g53",
+      "kind": "resolves"
+    },
+    {
+      "src": "g58",
+      "dst": "g57",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g59",
+      "dst": "g58",
+      "kind": "supports"
+    },
+    {
+      "src": "g60",
+      "dst": "g57",
+      "kind": "resolves"
+    },
+    {
+      "src": "g62",
+      "dst": "g61",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g63",
+      "dst": "g62",
+      "kind": "supports"
+    },
+    {
+      "src": "g64",
+      "dst": "g61",
+      "kind": "resolves"
+    },
+    {
+      "src": "g66",
+      "dst": "g65",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g67",
+      "dst": "g66",
+      "kind": "supports"
+    },
+    {
+      "src": "g68",
+      "dst": "g65",
+      "kind": "resolves"
+    },
+    {
+      "src": "g70",
+      "dst": "g69",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g71",
+      "dst": "g70",
+      "kind": "supports"
+    },
+    {
+      "src": "g72",
+      "dst": "g69",
+      "kind": "resolves"
+    },
+    {
+      "src": "g74",
+      "dst": "g73",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g75",
+      "dst": "g74",
+      "kind": "supports"
+    },
+    {
+      "src": "g76",
+      "dst": "g73",
+      "kind": "resolves"
+    },
+    {
+      "src": "g78",
+      "dst": "g77",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g79",
+      "dst": "g78",
+      "kind": "supports"
+    },
+    {
+      "src": "g80",
+      "dst": "g77",
+      "kind": "resolves"
+    },
+    {
+      "src": "g82",
+      "dst": "g81",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g83",
+      "dst": "g82",
+      "kind": "supports"
+    },
+    {
+      "src": "g84",
+      "dst": "g81",
+      "kind": "resolves"
+    },
+    {
+      "src": "g86",
+      "dst": "g85",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g87",
+      "dst": "g86",
+      "kind": "supports"
+    },
+    {
+      "src": "g88",
+      "dst": "g85",
+      "kind": "resolves"
+    },
+    {
+      "src": "g90",
+      "dst": "g89",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g91",
+      "dst": "g90",
+      "kind": "supports"
+    },
+    {
+      "src": "g92",
+      "dst": "g89",
+      "kind": "resolves"
+    },
+    {
+      "src": "g94",
+      "dst": "g93",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g95",
+      "dst": "g94",
+      "kind": "supports"
+    },
+    {
+      "src": "g96",
+      "dst": "g93",
+      "kind": "resolves"
+    },
+    {
+      "src": "g98",
+      "dst": "g97",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g99",
+      "dst": "g98",
+      "kind": "supports"
+    },
+    {
+      "src": "g100",
+      "dst": "g97",
+      "kind": "resolves"
+    },
+    {
+      "src": "g102",
+      "dst": "g101",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g103",
+      "dst": "g102",
+      "kind": "supports"
+    },
+    {
+      "src": "g104",
+      "dst": "g101",
+      "kind": "resolves"
+    },
+    {
+      "src": "g106",
+      "dst": "g105",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g107",
+      "dst": "g106",
+      "kind": "supports"
+    },
+    {
+      "src": "g108",
+      "dst": "g105",
+      "kind": "resolves"
+    },
+    {
+      "src": "g110",
+      "dst": "g109",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g111",
+      "dst": "g110",
+      "kind": "supports"
+    },
+    {
+      "src": "g112",
+      "dst": "g109",
+      "kind": "resolves"
+    },
+    {
+      "src": "g114",
+      "dst": "g113",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g115",
+      "dst": "g114",
+      "kind": "supports"
+    },
+    {
+      "src": "g116",
+      "dst": "g113",
+      "kind": "resolves"
+    },
+    {
+      "src": "g118",
+      "dst": "g117",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g119",
+      "dst": "g118",
+      "kind": "supports"
+    },
+    {
+      "src": "g120",
+      "dst": "g117",
+      "kind": "resolves"
+    },
+    {
+      "src": "g122",
+      "dst": "g121",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g123",
+      "dst": "g122",
+      "kind": "supports"
+    },
+    {
+      "src": "g124",
+      "dst": "g121",
+      "kind": "resolves"
+    },
+    {
+      "src": "g126",
+      "dst": "g125",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g127",
+      "dst": "g126",
+      "kind": "supports"
+    },
+    {
+      "src": "g128",
+      "dst": "g125",
+      "kind": "resolves"
+    },
+    {
+      "src": "g130",
+      "dst": "g129",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g131",
+      "dst": "g130",
+      "kind": "supports"
+    },
+    {
+      "src": "g132",
+      "dst": "g129",
+      "kind": "resolves"
+    },
+    {
+      "src": "g134",
+      "dst": "g133",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g135",
+      "dst": "g134",
+      "kind": "supports"
+    },
+    {
+      "src": "g136",
+      "dst": "g133",
+      "kind": "resolves"
+    },
+    {
+      "src": "g138",
+      "dst": "g137",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g139",
+      "dst": "g138",
+      "kind": "supports"
+    },
+    {
+      "src": "g140",
+      "dst": "g137",
+      "kind": "resolves"
+    },
+    {
+      "src": "g142",
+      "dst": "g141",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g143",
+      "dst": "g142",
+      "kind": "supports"
+    },
+    {
+      "src": "g144",
+      "dst": "g141",
+      "kind": "resolves"
+    },
+    {
+      "src": "g146",
+      "dst": "g145",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g147",
+      "dst": "g146",
+      "kind": "supports"
+    },
+    {
+      "src": "g148",
+      "dst": "g145",
+      "kind": "resolves"
+    },
+    {
+      "src": "g150",
+      "dst": "g149",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g151",
+      "dst": "g150",
+      "kind": "supports"
+    },
+    {
+      "src": "g152",
+      "dst": "g149",
+      "kind": "resolves"
+    },
+    {
+      "src": "g154",
+      "dst": "g153",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g155",
+      "dst": "g154",
+      "kind": "supports"
+    },
+    {
+      "src": "g156",
+      "dst": "g153",
+      "kind": "resolves"
+    },
+    {
+      "src": "g158",
+      "dst": "g157",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g159",
+      "dst": "g158",
+      "kind": "supports"
+    },
+    {
+      "src": "g160",
+      "dst": "g157",
+      "kind": "resolves"
+    },
+    {
+      "src": "g162",
+      "dst": "g161",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g163",
+      "dst": "g162",
+      "kind": "supports"
+    },
+    {
+      "src": "g164",
+      "dst": "g161",
+      "kind": "resolves"
+    },
+    {
+      "src": "g166",
+      "dst": "g165",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g167",
+      "dst": "g166",
+      "kind": "supports"
+    },
+    {
+      "src": "g168",
+      "dst": "g165",
+      "kind": "resolves"
+    },
+    {
+      "src": "g170",
+      "dst": "g169",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g171",
+      "dst": "g170",
+      "kind": "supports"
+    },
+    {
+      "src": "g172",
+      "dst": "g169",
+      "kind": "resolves"
+    },
+    {
+      "src": "g174",
+      "dst": "g173",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g175",
+      "dst": "g174",
+      "kind": "supports"
+    },
+    {
+      "src": "g176",
+      "dst": "g173",
+      "kind": "resolves"
+    },
+    {
+      "src": "g178",
+      "dst": "g177",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g179",
+      "dst": "g178",
+      "kind": "supports"
+    },
+    {
+      "src": "g180",
+      "dst": "g177",
+      "kind": "resolves"
+    },
+    {
+      "src": "g182",
+      "dst": "g181",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g183",
+      "dst": "g182",
+      "kind": "supports"
+    },
+    {
+      "src": "g184",
+      "dst": "g181",
+      "kind": "resolves"
+    },
+    {
+      "src": "g186",
+      "dst": "g185",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g187",
+      "dst": "g186",
+      "kind": "supports"
+    },
+    {
+      "src": "g188",
+      "dst": "g185",
+      "kind": "resolves"
+    },
+    {
+      "src": "g190",
+      "dst": "g189",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g191",
+      "dst": "g190",
+      "kind": "supports"
+    },
+    {
+      "src": "g192",
+      "dst": "g189",
+      "kind": "resolves"
+    },
+    {
+      "src": "g194",
+      "dst": "g193",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g195",
+      "dst": "g194",
+      "kind": "supports"
+    },
+    {
+      "src": "g196",
+      "dst": "g193",
+      "kind": "resolves"
+    },
+    {
+      "src": "g198",
+      "dst": "g197",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g199",
+      "dst": "g198",
+      "kind": "supports"
+    },
+    {
+      "src": "g200",
+      "dst": "g197",
+      "kind": "resolves"
+    },
+    {
+      "src": "g202",
+      "dst": "g201",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g203",
+      "dst": "g202",
+      "kind": "supports"
+    },
+    {
+      "src": "g204",
+      "dst": "g201",
+      "kind": "resolves"
+    },
+    {
+      "src": "g206",
+      "dst": "g205",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g207",
+      "dst": "g206",
+      "kind": "supports"
+    },
+    {
+      "src": "g208",
+      "dst": "g205",
+      "kind": "resolves"
+    },
+    {
+      "src": "g210",
+      "dst": "g209",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g211",
+      "dst": "g210",
+      "kind": "supports"
+    },
+    {
+      "src": "g212",
+      "dst": "g209",
+      "kind": "resolves"
+    },
+    {
+      "src": "g214",
+      "dst": "g213",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g215",
+      "dst": "g214",
+      "kind": "supports"
+    },
+    {
+      "src": "g216",
+      "dst": "g213",
+      "kind": "resolves"
+    },
+    {
+      "src": "g218",
+      "dst": "g217",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g219",
+      "dst": "g218",
+      "kind": "supports"
+    },
+    {
+      "src": "g220",
+      "dst": "g217",
+      "kind": "resolves"
+    },
+    {
+      "src": "g222",
+      "dst": "g221",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g223",
+      "dst": "g222",
+      "kind": "supports"
+    },
+    {
+      "src": "g224",
+      "dst": "g221",
+      "kind": "resolves"
+    },
+    {
+      "src": "g226",
+      "dst": "g225",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g227",
+      "dst": "g226",
+      "kind": "supports"
+    },
+    {
+      "src": "g228",
+      "dst": "g225",
+      "kind": "resolves"
+    },
+    {
+      "src": "g230",
+      "dst": "g229",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g231",
+      "dst": "g230",
+      "kind": "supports"
+    },
+    {
+      "src": "g232",
+      "dst": "g229",
+      "kind": "resolves"
+    },
+    {
+      "src": "g234",
+      "dst": "g233",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g235",
+      "dst": "g234",
+      "kind": "supports"
+    },
+    {
+      "src": "g236",
+      "dst": "g233",
+      "kind": "resolves"
+    },
+    {
+      "src": "g238",
+      "dst": "g237",
+      "kind": "responds_to"
+    },
+    {
+      "src": "g239",
+      "dst": "g238",
+      "kind": "supports"
+    },
+    {
+      "src": "g240",
+      "dst": "g237",
+      "kind": "resolves"
+    },
+    {
+      "src": "g241",
+      "dst": "g4",
+      "kind": "assigns"
+    },
+    {
+      "src": "g242",
+      "dst": "g8",
+      "kind": "assigns"
+    },
+    {
+      "src": "g243",
+      "dst": "g12",
+      "kind": "assigns"
+    },
+    {
+      "src": "g244",
+      "dst": "g16",
+      "kind": "assigns"
+    },
+    {
+      "src": "g245",
+      "dst": "g20",
+      "kind": "assigns"
+    },
+    {
+      "src": "g246",
+      "dst": "g24",
+      "kind": "assigns"
+    },
+    {
+      "src": "g247",
+      "dst": "g28",
+      "kind": "assigns"
+    },
+    {
+      "src": "g248",
+      "dst": "g32",
+      "kind": "assigns"
+    },
+    {
+      "src": "g249",
+      "dst": "g36",
+      "kind": "assigns"
+    },
+    {
+      "src": "g250",
+      "dst": "g40",
+      "kind": "assigns"
+    },
+    {
+      "src": "g251",
+      "dst": "g44",
+      "kind": "assigns"
+    },
+    {
+      "src": "g252",
+      "dst": "g48",
+      "kind": "assigns"
+    },
+    {
+      "src": "g253",
+      "dst": "g52",
+      "kind": "assigns"
+    },
+    {
+      "src": "g254",
+      "dst": "g56",
+      "kind": "assigns"
+    },
+    {
+      "src": "g255",
+      "dst": "g60",
+      "kind": "assigns"
+    },
+    {
+      "src": "g256",
+      "dst": "g64",
+      "kind": "assigns"
+    },
+    {
+      "src": "g257",
+      "dst": "g68",
+      "kind": "assigns"
+    },
+    {
+      "src": "g258",
+      "dst": "g72",
+      "kind": "assigns"
+    },
+    {
+      "src": "g259",
+      "dst": "g76",
+      "kind": "assigns"
+    },
+    {
+      "src": "g260",
+      "dst": "g80",
+      "kind": "assigns"
+    },
+    {
+      "src": "g261",
+      "dst": "g84",
+      "kind": "assigns"
+    },
+    {
+      "src": "g262",
+      "dst": "g88",
+      "kind": "assigns"
+    },
+    {
+      "src": "g263",
+      "dst": "g92",
+      "kind": "assigns"
+    },
+    {
+      "src": "g264",
+      "dst": "g96",
+      "kind": "assigns"
+    },
+    {
+      "src": "g265",
+      "dst": "g100",
+      "kind": "assigns"
+    },
+    {
+      "src": "g266",
+      "dst": "g104",
+      "kind": "assigns"
+    },
+    {
+      "src": "g267",
+      "dst": "g108",
+      "kind": "assigns"
+    },
+    {
+      "src": "g268",
+      "dst": "g112",
+      "kind": "assigns"
+    },
+    {
+      "src": "g269",
+      "dst": "g116",
+      "kind": "assigns"
+    },
+    {
+      "src": "g270",
+      "dst": "g120",
+      "kind": "assigns"
+    },
+    {
+      "src": "g271",
+      "dst": "g124",
+      "kind": "assigns"
+    },
+    {
+      "src": "g272",
+      "dst": "g128",
+      "kind": "assigns"
+    },
+    {
+      "src": "g273",
+      "dst": "g132",
+      "kind": "assigns"
+    },
+    {
+      "src": "g274",
+      "dst": "g136",
+      "kind": "assigns"
+    },
+    {
+      "src": "g275",
+      "dst": "g140",
+      "kind": "assigns"
+    },
+    {
+      "src": "g276",
+      "dst": "g144",
+      "kind": "assigns"
+    },
+    {
+      "src": "g277",
+      "dst": "g148",
+      "kind": "assigns"
+    },
+    {
+      "src": "g278",
+      "dst": "g152",
+      "kind": "assigns"
+    },
+    {
+      "src": "g279",
+      "dst": "g156",
+      "kind": "assigns"
+    },
+    {
+      "src": "g280",
+      "dst": "g160",
+      "kind": "assigns"
+    },
+    {
+      "src": "g281",
+      "dst": "g164",
+      "kind": "assigns"
+    },
+    {
+      "src": "g282",
+      "dst": "g168",
+      "kind": "assigns"
+    },
+    {
+      "src": "g283",
+      "dst": "g172",
+      "kind": "assigns"
+    },
+    {
+      "src": "g284",
+      "dst": "g176",
+      "kind": "assigns"
+    },
+    {
+      "src": "g285",
+      "dst": "g180",
+      "kind": "assigns"
+    },
+    {
+      "src": "g286",
+      "dst": "g184",
+      "kind": "assigns"
+    },
+    {
+      "src": "g287",
+      "dst": "g188",
+      "kind": "assigns"
+    },
+    {
+      "src": "g288",
+      "dst": "g192",
+      "kind": "assigns"
+    },
+    {
+      "src": "g289",
+      "dst": "g196",
+      "kind": "assigns"
+    },
+    {
+      "src": "g290",
+      "dst": "g200",
+      "kind": "assigns"
+    },
+    {
+      "src": "g291",
+      "dst": "g204",
+      "kind": "assigns"
+    },
+    {
+      "src": "g292",
+      "dst": "g208",
+      "kind": "assigns"
+    },
+    {
+      "src": "g293",
+      "dst": "g212",
+      "kind": "assigns"
+    },
+    {
+      "src": "g294",
+      "dst": "g216",
+      "kind": "assigns"
+    },
+    {
+      "src": "g295",
+      "dst": "g220",
+      "kind": "assigns"
+    },
+    {
+      "src": "g296",
+      "dst": "g224",
+      "kind": "assigns"
+    },
+    {
+      "src": "g297",
+      "dst": "g228",
+      "kind": "assigns"
+    },
+    {
+      "src": "g298",
+      "dst": "g232",
+      "kind": "assigns"
+    },
+    {
+      "src": "g299",
+      "dst": "g236",
+      "kind": "assigns"
+    },
+    {
+      "src": "g300",
+      "dst": "g240",
+      "kind": "assigns"
+    }
+  ],
+  "duplicate_issue_pairs": [
+    [
+      "g1",
+      "g121"
+    ],
+    [
+      "g5",
+      "g125"
+    ],
+    [
+      "g9",
+      "g129"
+    ]
+  ]
+}
