@@ -39,14 +39,14 @@ pub struct Evaluation {
     pub agendas: usize,
     /// Live issues with a parent, including nested questions.
     pub sub_questions: usize,
+    /// Merges whose endpoints each share a ground row with at least one
+    /// same-kind gold node before consolidation, with disjoint sets of matches.
     pub wrong_merges: usize,
 }
 
 /// Evaluate live nodes and edges against agenda-level gold annotations.
 /// Exclude sub-questions and nodes attached only to sub-questions from scoring.
-/// Pass the applied operations from
-/// consolidation in order. Each merge endpoint is independently matched to
-/// the best overlapping gold node from the graph before consolidation.
+/// Pass the applied consolidation operations in order.
 pub fn evaluate(
     prediction: &Graph,
     gold: &GoldGraph,
@@ -107,16 +107,18 @@ pub fn evaluate(
         }
     }
 
-    let mut before = BTreeMap::new();
+    let mut before = BTreeMap::<_, BTreeSet<_>>::new();
     for (_, prediction_id, gold_id) in candidates(before_consolidation, gold, |_| true) {
-        before.entry(prediction_id).or_insert(gold_id);
+        before.entry(prediction_id).or_default().insert(gold_id);
     }
     let wrong_merges = consolidation_ops
         .iter()
         .filter(|op| {
             if let AppliedOp::Merge { from, into, .. } = op {
-                let source = before.get(from.as_str());
-                source.is_some() && source != before.get(into.as_str())
+                before
+                    .get(from.as_str())
+                    .zip(before.get(into.as_str()))
+                    .is_some_and(|(source, target)| source.is_disjoint(target))
             } else {
                 false
             }

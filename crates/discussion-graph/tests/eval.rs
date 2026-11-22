@@ -119,7 +119,7 @@ fn metrics_match_hand_calculated_counts() {
     assert_eq!(result.node_recall, 2.0 / 3.0);
     assert_eq!(result.edge_f1, 0.4);
     assert_eq!(result.live_nodes, 4);
-    assert_eq!(result.wrong_merges, 2);
+    assert_eq!(result.wrong_merges, 1);
 }
 
 #[derive(Deserialize)]
@@ -385,4 +385,49 @@ fn outline_puts_sub_questions_before_positions() {
             .collect::<Vec<_>>(),
         ["z-question", "a-position"]
     );
+}
+
+#[test]
+fn wrong_merges_require_two_disjoint_nonempty_gold_match_sets() {
+    use NodeKind::Issue;
+
+    let mut first = gold_node("first", Issue, 1);
+    first.grounds.extend([2, 3]);
+    let gold = GoldGraph {
+        nodes: vec![
+            first,
+            gold_node("second", Issue, 3),
+            gold_node("third", Issue, 4),
+        ],
+        edges: vec![],
+    };
+    let before = graph_from_gold(
+        (1..=5).map(|id| utterance(id, String::new())).collect(),
+        &GoldGraph {
+            nodes: vec![
+                gold_node("paraphrase", Issue, 3),
+                gold_node("original", Issue, 1),
+                gold_node("unrelated", Issue, 4),
+                gold_node("unmatched", Issue, 5),
+            ],
+            edges: vec![],
+        },
+    );
+    for (from, into, expected) in [
+        ("paraphrase", "original", 0),
+        ("original", "unrelated", 1),
+        ("original", "unmatched", 0),
+        ("unmatched", "original", 0),
+    ] {
+        let op = AppliedOp::Merge {
+            from: from.into(),
+            into: into.into(),
+            grounds: vec![],
+        };
+        assert_eq!(
+            evaluate(&Graph::default(), &gold, &before, &[op]).wrong_merges,
+            expected,
+            "{from} -> {into}"
+        );
+    }
 }

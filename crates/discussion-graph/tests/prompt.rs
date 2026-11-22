@@ -263,6 +263,41 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     add_ground(&mut graph, "n2", 3, 400);
     add_ground(&mut graph, "n3", 4, 400);
     add_ground(&mut graph, "p1", 5, 400);
+    graph.nodes.get_mut("p1").unwrap().created_rev = 5;
+
+    for (kind, edge_kind) in [
+        (NodeKind::Decision, EdgeKind::Resolves),
+        (NodeKind::Position, EdgeKind::RespondsTo),
+    ] {
+        for (index, created_rev, review, status, link_kind) in [
+            (0, 4, Review::Auto, Status::Open, edge_kind),
+            (1, 3, Review::Auto, Status::Open, edge_kind),
+            (2, 2, Review::Auto, Status::Open, edge_kind),
+            (3, 0, Review::Rejected, Status::Open, edge_kind),
+            (4, 0, Review::Auto, Status::Merged, edge_kind),
+            (5, 0, Review::Auto, Status::Open, EdgeKind::Supports),
+        ] {
+            let id = format!("{kind:?}{index}");
+            let mut annotation = node(&id, kind);
+            annotation.created_rev = created_rev;
+            annotation.review = review;
+            annotation.status = status;
+            annotation.text = format!("{index}{}", "添".repeat(70));
+            graph.nodes.insert(id.clone(), annotation);
+            graph.edges.insert(
+                id.clone(),
+                Edge {
+                    eid: id.clone(),
+                    src: id,
+                    dst: "n1".into(),
+                    kind: link_kind,
+                    confidence: 1.0,
+                    review: Review::Auto,
+                    created_rev: 1,
+                },
+            );
+        }
+    }
 
     let build = |graph: &Graph, limit| build_consolidate_issues(graph, limit).unwrap().unwrap();
     let full = build(&graph, DEFAULT_INPUT_LIMIT);
@@ -276,11 +311,40 @@ fn issue_stage_uses_only_live_issues_and_drops_newest_after_evidence() {
     assert_eq!(issues[0]["ground_count"], 2);
     assert_eq!(issues[0]["grounds"][0]["text"], "根".repeat(100));
 
+    for key in ["decisions", "positions"] {
+        assert_eq!(
+            issues[0][key],
+            serde_json::json!([
+                format!("2{}", "添".repeat(59)),
+                format!("1{}", "添".repeat(59))
+            ])
+        );
+    }
+
     let limit = size(&full) - 1;
+    let without_annotations = build(&graph, limit);
+    assert_graph_prompt(&without_annotations, 0, 3, limit);
+    assert_eq!(without_annotations.omitted_issues, 0);
+    assert_eq!(without_annotations.allowed_uids, ["u1", "u3", "u4"]);
+    let issues = section(&without_annotations, "graph nodes");
+    assert_eq!(issues[0]["grounds"][0]["text"], "根".repeat(100));
+    assert!(issues
+        .iter()
+        .all(|issue| issue.get("decisions").is_none() && issue.get("positions").is_none()));
+
+    let limit = size(&without_annotations) - 1;
     let without_evidence = build(&graph, limit);
     assert_graph_prompt(&without_evidence, 0, 3, limit);
     assert_eq!(without_evidence.omitted_issues, 0);
     assert_eq!(without_evidence.allowed_uids, ["u1", "u2", "u3", "u4"]);
+    let issues = section(&without_evidence, "graph nodes");
+    assert_eq!(
+        issues[0]["grounds"],
+        serde_json::json!([{"uid":"u1"}, {"uid":"u2"}])
+    );
+    assert!(issues
+        .iter()
+        .all(|issue| issue.get("decisions").is_none() && issue.get("positions").is_none()));
 
     let limit = size(&without_evidence) - 1;
     let trimmed = build(&graph, limit);
@@ -523,7 +587,10 @@ fn prompts_show_parents_and_stage_one_can_attach_a_question_using_uid_only() {
     let full = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
         .unwrap()
         .unwrap();
-    let issues = build_consolidate_issues(&graph, size(&full) - 1)
+    let without_annotations = build_consolidate_issues(&graph, size(&full) - 1)
+        .unwrap()
+        .unwrap();
+    let issues = build_consolidate_issues(&graph, size(&without_annotations) - 1)
         .unwrap()
         .unwrap();
     assert!(issues.system.contains("sub_issue_of の add_edge"));
@@ -579,4 +646,24 @@ fn stage_two_keeps_an_earlier_child_in_its_agenda_group() {
         section(&prompts[0], "graph groups"),
         [serde_json::json!({"nids":["n1","n2","p1","p2"]})]
     );
+}
+
+#[test]
+fn extraction_and_issue_stage_distinguish_agendas_from_sub_questions() {
+    let mut graph = graph_with_groups(2);
+    add_ground(&mut graph, "n1", 1, 20);
+    let increment = build_incremental(&graph, &["u1"], &[], false, DEFAULT_INPUT_LIMIT).unwrap();
+    let stage_one = build_consolidate_issues(&graph, DEFAULT_INPUT_LIMIT)
+        .unwrap()
+        .unwrap();
+    for system in [&increment.system, &stage_one.system] {
+        assert!(system.contains("事実・数値・可否の確認"));
+        assert!(system.contains("独立した議題とし、親を付けない"));
+        assert!(
+            system.contains("会議の進め方（今日は何を話すか、順番、時間配分）は issue にしない")
+        );
+        assert!(system.contains("議題を進め方の問いの子にしない"));
+    }
+    assert!(stage_one.system.contains("decisions"));
+    assert!(stage_one.system.contains("positions"));
 }

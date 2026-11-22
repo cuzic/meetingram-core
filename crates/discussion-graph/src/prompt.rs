@@ -9,7 +9,8 @@ pub const DEFAULT_INPUT_LIMIT: usize = 24_000;
 const EXTRACT: &str = concat!(
     include_str!("extraction.txt"),
     include_str!("extraction-r11.txt"),
-    include_str!("extraction-r12.txt")
+    include_str!("extraction-r12.txt"),
+    include_str!("extraction-r13.txt")
 );
 const BASELINE: &str = concat!(
     include_str!("extraction.txt"),
@@ -29,11 +30,15 @@ const CONSOLIDATE_EDITS: &str = concat!(
     include_str!("consolidation.txt"),
     include_str!("consolidation-edits.txt")
 );
-const ISSUE_OPERATIONS: &str = r#"
+const ISSUE_OPERATIONS: &str = concat!(
+    r#"
 全 issue の組を比較し、同じ問いの言い換えは issue 同士の merge で統合してください。ground_count が多い方を into にしてください。
 parent_nid は既存の親です。親の無い細かな問いは、子を src、親の議題を dst にして sub_issue_of の add_edge でつないでください。親は 1 つまでで、循環させないでください。
 {"op":"add_edge","src":"n8","dst":"n5","kind":"sub_issue_of","confidence":0.8,"grounds":[{"uid":"u3"}]}
-"#;
+decisions はその issue に resolves する決定、positions はその issue に responds_to する案の本文です。issue の本文が違っても、決定や案が同じなら同じ問いの言い換えとして merge を検討してください。
+"#,
+    include_str!("extraction-r13.txt")
+);
 const GROUP_OPERATIONS: &str = "\ngraph groups はまとまりごとの nid の一覧です。同じまとまりの中で重複を比較して merge し、不足するエッジを add_edge、状態の訂正を set_status で返してください。external のエッジも既に存在するので、add_edge で出し直さないでください。\n";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -302,19 +307,21 @@ pub fn build_consolidate_issues(
     });
     let system = format!("{CONSOLIDATE}{ISSUE_OPERATIONS}");
     let issue_count = issues.len();
-    let render = |issues: &[&Node], evidence| {
+    let render = |issues: &[&Node], evidence, annotations| {
         let nodes = issues
             .iter()
             .map(|node| (node.nid.as_str(), evidence))
             .collect();
-        renderer.render(&system, &nodes, &[], Layout::Issues)
+        renderer.render(&system, &nodes, &[], Layout::Issues { annotations })
     };
-    let full = render(&issues, (100, 1));
-    if full.fits(limit) {
-        return Ok(Some(full));
+    for annotations in [true, false] {
+        let prompt = render(&issues, (100, 1), annotations);
+        if prompt.fits(limit) {
+            return Ok(Some(prompt));
+        }
     }
     while issues.len() >= 2 {
-        let mut prompt = render(&issues, UID_ONLY);
+        let mut prompt = render(&issues, UID_ONLY, false);
         if prompt.fits(limit) {
             prompt.omitted_issues = issue_count - issues.len();
             return Ok(Some(prompt));
@@ -378,7 +385,7 @@ impl Prompt {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Layout {
     Baseline,
-    Issues,
+    Issues { annotations: bool },
     Groups,
 }
 
@@ -431,6 +438,22 @@ impl<'a> Consolidation<'a> {
             .values()
             .copied()
             .filter(|node| node.kind == NodeKind::Issue)
+    }
+
+    fn issue_annotations(&self, nid: &str, kind: EdgeKind) -> Vec<&'a str> {
+        let mut linked: Vec<_> = self
+            .edges
+            .iter()
+            .filter(|edge| edge.dst == nid && edge.kind == kind)
+            .map(|edge| self.nodes[edge.src.as_str()])
+            .collect();
+        linked.sort_unstable_by_key(|node| (node.created_rev, &node.nid));
+        linked.dedup_by_key(|node| &node.nid);
+        linked
+            .into_iter()
+            .take(2)
+            .map(|node| prefix(&node.text, 60))
+            .collect()
     }
 
     fn groups(&self, all: &BTreeSet<&'a str>) -> Vec<BTreeSet<&'a str>> {
@@ -522,7 +545,9 @@ impl<'a> Consolidation<'a> {
         for edge in &self.edges {
             let has_src = evidence.contains_key(edge.src.as_str());
             let has_dst = evidence.contains_key(edge.dst.as_str());
-            if (layout != Layout::Issues || edge.kind == EdgeKind::SubIssueOf) && has_src && has_dst
+            if (!matches!(layout, Layout::Issues { .. }) || edge.kind == EdgeKind::SubIssueOf)
+                && has_src
+                && has_dst
             {
                 push_line(
                     &mut edges,
@@ -568,8 +593,13 @@ impl<'a> Consolidation<'a> {
                     json!({"uid":u.uid, "speaker_label":u.speaker_label, "text":prefix(&u.text, cap)})
                 }
             }).collect();
-            let line = if layout == Layout::Issues {
-                json!({"nid":nid, "parent_nid":self.parents.get(nid), "text":node.text, "ground_count":utterances.len(), "grounds":grounds})
+            let line = if let Layout::Issues { annotations } = layout {
+                let mut line = json!({"nid":nid, "parent_nid":self.parents.get(nid), "text":node.text, "ground_count":utterances.len(), "grounds":grounds});
+                if annotations {
+                    line["decisions"] = json!(self.issue_annotations(nid, EdgeKind::Resolves));
+                    line["positions"] = json!(self.issue_annotations(nid, EdgeKind::RespondsTo));
+                }
+                line
             } else {
                 json!({
                     "nid":nid, "kind":node.kind, "status":node.status, "text":node.text,
