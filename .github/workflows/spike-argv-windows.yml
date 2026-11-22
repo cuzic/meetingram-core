@@ -1,0 +1,35 @@
+# Spike S1 for meetingram ADR 0001 (branch spike/discussion-graph only; never merged).
+name: spike-argv-windows
+on:
+  push:
+    branches: [spike/discussion-graph]
+    paths: ["spike/discussion-graph/argv-probe/**", ".github/workflows/spike-argv-windows.yml"]
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: spike/discussion-graph/argv-probe
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo build --release
+      - name: probe (no CLIs installed)
+        run: ./target/release/argv-probe.exe
+      - name: install CLIs via npm
+        run: |
+          npm install -g @anthropic-ai/claude-code @openai/codex
+          where.exe claude
+          where.exe codex
+      - name: probe (npm-installed CLIs)
+        run: ./target/release/argv-probe.exe
+      - name: install claude native
+        shell: pwsh
+        run: |
+          irm https://claude.ai/install.ps1 | iex
+          echo "$env:USERPROFILE\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: probe (native claude first on PATH)
+        shell: pwsh
+        run: |
+          where.exe claude
+          ./target/release/argv-probe.exe

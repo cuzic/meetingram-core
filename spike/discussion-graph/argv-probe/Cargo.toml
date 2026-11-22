@@ -1,0 +1,10 @@
+[package]
+name = "argv-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+tokio = { version = "1", features = ["process", "rt", "macros", "io-util"] }
