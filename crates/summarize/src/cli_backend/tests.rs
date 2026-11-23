@@ -200,35 +200,53 @@ fn run_fixture<'a>(
 #[tokio::test]
 async fn herdr_sends_prompt_on_stdin_and_accepts_cli_result() {
     let dir = tempfile::tempdir().unwrap();
+    use crate::Summarizer;
     let hc = script(
         dir.path(),
         r#"
-[ "$HC_SESSION:$1:$2:$3:$4:$5" = "synthetic:exec:-i:--timeout:600:--cwd" ] || exit 41
-[ -f "$6/system.txt" ] || exit 42
-[ "$7:$8" = "--:/synthetic/claude" ] || exit 43
-[ "$(cat)" = "synthetic transcript" ] || exit 44
-printf '%s\n' '{"is_error":false,"result":"synthetic result"}'
+[ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 41
+IFS= read -r auth || exit 42
+case "$auth" in *'"input":null'*) ;; *) exit 43 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
+[ ! -e "$(dirname "$0")/disconnect" ] || exit 0
+IFS= read -r request || exit 44
+case "$request" in *'"input":"c3ludGhldGljIHRyYW5zY3JpcHQ="'*) ;; *) exit 45 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJpc19lcnJvciI6ZmFsc2UsInJlc3VsdCI6InN5bnRoZXRpYyByZXN1bHQifQ==","stderr":"","timed_out":false,"truncated":false}}'
 "#,
     );
-    let result = run_cli(
+    let summarizer = HerdrSummarizer::new(
         CliBackend::ClaudeCode,
-        Path::new("/synthetic/claude"),
-        CliInput {
-            system: "synthetic instruction",
-            user: "synthetic transcript",
-            model: None,
-        },
-        Some(dir.path()),
-        Duration::from_secs(3),
-        &AtomicBool::new(true),
-        Some(&HerdrCommand {
-            binary: hc,
-            session: "synthetic".into(),
-        }),
-    )
-    .await
-    .unwrap();
+        hc,
+        "synthetic".into(),
+        PathBuf::from("/synthetic/claude"),
+        dir.path().to_path_buf(),
+        Arc::new(FixedPreflight(true)),
+    );
+    let result = summarizer
+        .complete(&CompletionRequest::new(
+            "synthetic instruction",
+            "synthetic transcript",
+            "",
+            Duration::from_secs(3),
+        ))
+        .await
+        .unwrap();
     assert_eq!(result, "synthetic result");
+    std::fs::write(dir.path().join("disconnect"), []).unwrap();
+    let req = CompletionRequest::new(
+        "instruction",
+        "synthetic transcript",
+        "",
+        Duration::from_secs(3),
+    );
+    assert!(matches!(
+        summarizer.complete(&req).await,
+        Err(SummarizerError::Cli(CliSummarizeError::ReadOutput(..)))
+    ));
+    assert!(matches!(
+        summarizer.complete(&req).await,
+        Err(SummarizerError::HerdrStopped)
+    ));
 }
 
 #[tokio::test]
@@ -292,14 +310,12 @@ async fn herdr_verifies_before_sending_and_does_not_resend_after_failure() {
     let hc = script(
         dir.path(),
         r#"
-[ "$HC_SESSION" = "synthetic" ] || exit 49
-if [ "$9" = "auth" ]; then
-    printf '%s\n' '{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}'
-    exit 0
-fi
+[ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 49
+IFS= read -r request || exit 42
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
+IFS= read -r request || exit 0
 printf x >> "$(dirname "$0")/attempts"
-cat >/dev/null
-exit 1
+printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":1,"stdout":"","stderr":"","timed_out":false,"truncated":false}}'
 "#,
     );
     let req = CompletionRequest::new(
@@ -328,7 +344,7 @@ exit 1
     let verified = build(true);
     assert!(matches!(
         verified.complete(&req).await,
-        Err(SummarizerError::Cli(CliSummarizeError::NonZeroExit(..)))
+        Err(SummarizerError::Cli(CliSummarizeError::ParseOutput(..)))
     ));
     assert!(matches!(
         verified.complete(&req).await,

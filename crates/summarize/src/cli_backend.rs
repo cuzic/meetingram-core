@@ -12,6 +12,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
+use base64::Engine;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader};
 
 use crate::{
@@ -360,6 +361,88 @@ impl HerdrCommand {
     }
 }
 
+struct HerdrRpc {
+    _client: tokio::process::Child,
+    stdin: tokio::process::ChildStdin,
+    stdout: BufReader<tokio::process::ChildStdout>,
+    next_id: u64,
+}
+
+#[derive(serde::Deserialize)]
+struct HerdrExecResult {
+    code: Option<i32>,
+    timed_out: bool,
+    truncated: bool,
+    stdout: String,
+    stderr: String,
+}
+
+impl HerdrRpc {
+    fn connect(herdr: &HerdrCommand) -> io::Result<Self> {
+        let mut client = herdr
+            .command()
+            .arg("connect")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()?;
+        Ok(Self {
+            stdin: client.stdin.take().expect("Herdr stdin is piped"),
+            stdout: BufReader::new(client.stdout.take().expect("Herdr stdout is piped")),
+            _client: client,
+            next_id: 0,
+        })
+    }
+
+    async fn exec(
+        &mut self,
+        binary: &Path,
+        args: &[OsString],
+        dir: &Path,
+        input: Option<&str>,
+        timeout: Duration,
+    ) -> io::Result<HerdrExecResult> {
+        let wire_error =
+            || io::Error::new(io::ErrorKind::InvalidData, "invalid Herdr exec response");
+        let argv = std::iter::once(binary.as_os_str())
+            .chain(args.iter().map(OsString::as_os_str))
+            .map(|value| value.to_str().ok_or_else(wire_error))
+            .collect::<io::Result<Vec<_>>>()?;
+        let cwd = dir.to_str().ok_or_else(wire_error)?;
+        self.next_id += 1;
+        let mut request = serde_json::to_vec(&serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": self.next_id,
+            "method": "machine.exec",
+            "params": {
+                "argv": argv,
+                "cwd": cwd,
+                "input": input.map(|body| base64::engine::general_purpose::STANDARD.encode(body)),
+                "timeout": timeout.as_secs_f64().clamp(1.0, 600.0)
+            }
+        }))
+        .map_err(|_| wire_error())?;
+        request.push(b'\n');
+        self.stdin.write_all(&request).await?;
+        self.stdin.flush().await?;
+        const MAX_REPLY_BYTES: u64 = 16 * 1024 * 1024;
+        let mut reply = Vec::new();
+        (&mut self.stdout)
+            .take(MAX_REPLY_BYTES)
+            .read_until(b'\n', &mut reply)
+            .await?;
+        if reply.last() != Some(&b'\n') {
+            return Err(wire_error());
+        }
+        let mut response: serde_json::Value =
+            serde_json::from_slice(&reply).map_err(|_| wire_error())?;
+        if response["id"].as_u64() != Some(self.next_id) || response.get("error").is_some() {
+            return Err(wire_error());
+        }
+        serde_json::from_value(response["result"].take()).map_err(|_| wire_error())
+    }
+}
+
 /// A dedicated Herdr connection shared by consumers of the same provider.
 /// Failed or cancelled calls stop the connection until it is explicitly rebuilt.
 pub struct HerdrSummarizer {
@@ -393,44 +476,40 @@ impl HerdrSummarizer {
         }
     }
 
-    async fn has_subscription_login(&self) -> bool {
-        let provider_args = match self.backend {
+    async fn has_subscription_login(&self, connection: &mut HerdrRpc) -> bool {
+        let args: Vec<OsString> = match self.backend {
             CliBackend::ClaudeCode => ["auth", "status", "--json"].as_slice(),
             CliBackend::Codex => ["login", "status"].as_slice(),
-        };
-        let args = herdr_args(&self.temp_base, &self.provider_binary, "10");
-        let Ok(mut child) = self
-            .herdr
-            .command()
-            .args(args)
-            .args(provider_args)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .kill_on_drop(true)
-            .spawn()
-        else {
+        }
+        .iter()
+        .map(OsString::from)
+        .collect();
+        let query = connection.exec(
+            &self.provider_binary,
+            &args,
+            &self.temp_base,
+            None,
+            Duration::from_secs(10),
+        );
+        let Ok(Ok(result)) = tokio::time::timeout(Duration::from_secs(12), query).await else {
             return false;
         };
-        const MAX_STATUS_BYTES: u64 = 16 * 1024;
-        let mut stdout = child
-            .stdout
-            .take()
-            .expect("status stdout is piped")
-            .take(MAX_STATUS_BYTES);
-        let mut stderr = child
-            .stderr
-            .take()
-            .expect("status stderr is piped")
-            .take(MAX_STATUS_BYTES);
-        let (mut out, mut err) = (Vec::new(), Vec::new());
-        let status = async {
-            tokio::try_join!(stdout.read_to_end(&mut out), stderr.read_to_end(&mut err))?;
-            drop((stdout, stderr));
-            child.wait().await
-        };
-        matches!(tokio::time::timeout(Duration::from_secs(12), status).await, Ok(Ok(status)) if status.success())
-            && subscription_status(self.backend, &out, &err)
+        let encoding = base64::engine::general_purpose::STANDARD;
+        if result.code != Some(0)
+            || result.timed_out
+            || result.truncated
+            || result.stdout.len() > 16 * 1024
+            || result.stderr.len() > 16 * 1024
+        {
+            return false;
+        }
+        match (
+            encoding.decode(result.stdout),
+            encoding.decode(result.stderr),
+        ) {
+            (Ok(stdout), Ok(stderr)) => subscription_status(self.backend, &stdout, &stderr),
+            _ => false,
+        }
     }
 
     async fn run(&self, input: CliInput<'_>, timeout: Duration) -> Result<String, SummarizerError> {
@@ -444,7 +523,12 @@ impl HerdrSummarizer {
             if self.herdr.session.is_empty()
                 || !self.herdr.binary.is_absolute()
                 || !self.provider_binary.is_absolute()
-                || !self.has_subscription_login().await
+            {
+                return Err(SummarizerError::HerdrUnverified);
+            }
+            let mut connection = HerdrRpc::connect(&self.herdr)
+                .map_err(|error| launch_error(self.backend, error))?;
+            if !self.has_subscription_login(&mut connection).await
                 || !self.preflight.verify(&self.herdr.session).await
             {
                 return Err(SummarizerError::HerdrUnverified);
@@ -456,7 +540,7 @@ impl HerdrSummarizer {
                 Some(&self.temp_base),
                 timeout,
                 &CLAUDE_COMPAT,
-                Some(&self.herdr),
+                Some(&mut connection),
             )
             .await?;
             *stopped = false;
@@ -517,18 +601,6 @@ fn subscription_status(backend: CliBackend, stdout: &[u8], stderr: &[u8]) -> boo
                 .any(|line| line.trim_ascii() == b"Logged in using ChatGPT")
         }),
     }
-}
-
-fn herdr_args(dir: &Path, provider: &Path, timeout: &str) -> Vec<OsString> {
-    let mut args = ["exec", "-i", "--timeout", timeout, "--cwd"]
-        .map(OsString::from)
-        .to_vec();
-    args.extend([
-        dir.as_os_str().to_owned(),
-        "--".into(),
-        provider.as_os_str().to_owned(),
-    ]);
-    args
 }
 
 fn launch_error(backend: CliBackend, error: io::Error) -> CliSummarizeError {
@@ -592,7 +664,7 @@ async fn run_cli(
     base: Option<&Path>,
     timeout: Duration,
     compatibility: &AtomicBool,
-    herdr: Option<&HerdrCommand>,
+    herdr: Option<&mut HerdrRpc>,
 ) -> Result<String, CliSummarizeError> {
     tokio::time::timeout(timeout, async {
         let dedicated_base = base.is_some();
@@ -626,28 +698,32 @@ async fn run_cli(
         .await
         .map_err(|error| CliSummarizeError::TempDir(io::Error::other(error)))?
         .map_err(CliSummarizeError::TempDir)?;
-        let compat = herdr.is_none()
-            && backend == CliBackend::ClaudeCode
-            && compatibility.load(Ordering::Relaxed);
-        let mut result = run_attempt(backend, binary, &input, &dir, compat, herdr).await?;
-        if herdr.is_none()
-            && backend == CliBackend::ClaudeCode
-            && !compat
-            && !result.status.success()
-            && result.unknown_option
-        {
-            compatibility.store(true, Ordering::Relaxed);
-            result = run_attempt(backend, binary, &input, &dir, true, None).await?;
-        }
-        if !result.status.success() {
-            return Err(CliSummarizeError::NonZeroExit(backend, result.status));
-        }
+        let require_success_envelope = herdr.is_some();
+        let stdout = if let Some(connection) = herdr {
+            run_herdr_attempt(backend, connection, binary, &input, dir.path(), timeout).await?
+        } else {
+            let compat = backend == CliBackend::ClaudeCode && compatibility.load(Ordering::Relaxed);
+            let mut result = run_attempt(backend, binary, &input, &dir, compat).await?;
+            if backend == CliBackend::ClaudeCode
+                && !compat
+                && !result.status.success()
+                && result.unknown_option
+            {
+                compatibility.store(true, Ordering::Relaxed);
+                result = run_attempt(backend, binary, &input, &dir, true).await?;
+            }
+            if !result.status.success() {
+                return Err(CliSummarizeError::NonZeroExit(backend, result.status));
+            }
+            result.stdout
+        };
 
-        let text = match result.stdout {
+        let text = match stdout {
             CliStdout::Claude(stdout) => {
                 let value: serde_json::Value = serde_json::from_slice(&stdout)
                     .map_err(|e| CliSummarizeError::ParseOutput(backend, e.to_string()))?;
-                if herdr.is_some() && value.get("is_error").and_then(|v| v.as_bool()) != Some(false)
+                if require_success_envelope
+                    && value.get("is_error").and_then(|v| v.as_bool()) != Some(false)
                 {
                     return Err(CliSummarizeError::ParseOutput(
                         backend,
@@ -772,20 +848,8 @@ async fn run_attempt(
     input: &CliInput<'_>,
     dir: &Arc<WorkingDir>,
     compat: bool,
-    herdr: Option<&HerdrCommand>,
 ) -> Result<AttemptOutput, CliSummarizeError> {
     let provider_args = cli_args(backend, dir.path(), input.model, compat);
-    if let Some(herdr) = herdr {
-        return run_herdr_attempt(
-            backend,
-            herdr,
-            binary,
-            input.user,
-            dir.path(),
-            provider_args,
-        )
-        .await;
-    }
     let mut process = platform::Process::spawn(binary, &provider_args, Some(dir))
         .map_err(|e| launch_error(backend, e))?;
     let mut stdin = process.stdin.take().expect("CLI stdin is piped");
@@ -832,39 +896,32 @@ async fn run_attempt(
 
 async fn run_herdr_attempt(
     backend: CliBackend,
-    herdr: &HerdrCommand,
+    connection: &mut HerdrRpc,
     binary: &Path,
-    user: &str,
+    input: &CliInput<'_>,
     dir: &Path,
-    provider_args: Vec<OsString>,
-) -> Result<AttemptOutput, CliSummarizeError> {
-    let mut child = herdr
-        .command()
-        .args(herdr_args(dir, binary, "600"))
-        .args(provider_args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|error| launch_error(backend, error))?;
-    let mut stdin = child.stdin.take().expect("CLI stdin is piped");
-    let stdout = child.stdout.take().expect("CLI stdout is piped");
-    let stderr = child.stderr.take().expect("CLI stderr is piped");
-    let read_error = |error| CliSummarizeError::ReadOutput(backend, error);
-    let (status, write_result, stdout, _) = tokio::try_join!(
-        async { child.wait().await.map_err(read_error) },
-        async move { Ok(stdin.write_all(user.as_bytes()).await) },
-        read_stdout(backend, stdout, true),
-        async { read_stderr(stderr, false).await.map_err(read_error) },
-    )?;
-    if status.success() {
-        write_result.map_err(read_error)?;
+    timeout: Duration,
+) -> Result<CliStdout, CliSummarizeError> {
+    let args = cli_args(backend, dir, input.model, false);
+    let result = connection
+        .exec(binary, &args, dir, Some(input.user), timeout)
+        .await
+        .map_err(|error| CliSummarizeError::ReadOutput(backend, error))?;
+    if result.timed_out {
+        return Err(CliSummarizeError::Timeout(backend));
     }
-    Ok(AttemptOutput {
-        status,
-        stdout,
-        unknown_option: false,
-    })
+    if result.code != Some(0) || result.truncated {
+        return Err(CliSummarizeError::ParseOutput(
+            backend,
+            "Herdr execution failed or output was truncated".into(),
+        ));
+    }
+    let stdout = base64::engine::general_purpose::STANDARD
+        .decode(result.stdout)
+        .map_err(|_| {
+            CliSummarizeError::ParseOutput(backend, "invalid Herdr output encoding".into())
+        })?;
+    read_stdout(backend, stdout.as_slice(), true).await
 }
 
 async fn read_stdout(
