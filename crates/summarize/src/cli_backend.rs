@@ -333,34 +333,104 @@ async fn run_named_cli(
     run_cli(backend, &binary, input, base, timeout, &CLAUDE_COMPAT, None).await
 }
 
-/// Executes one completion through a local Herdr core whose account, settings,
-/// and billing policy have already been verified by the caller.
-///
-/// The caller must use a dedicated core. This function does not select a
-/// remote machine or retry through the direct CLI.
-pub async fn complete_via_verified_herdr(
+/// Verifies the current account, tool restrictions and subscription-only
+/// billing for the dedicated Herdr connection. Receives no meeting text.
+#[async_trait::async_trait]
+pub trait HerdrPreflight: Send + Sync {
+    async fn verify(&self) -> bool;
+}
+
+/// A dedicated Herdr connection shared by consumers of the same provider.
+/// Failed or cancelled calls stop the connection until it is explicitly rebuilt.
+pub struct HerdrSummarizer {
     backend: CliBackend,
-    herdr_binary: &Path,
-    provider_binary: &Path,
-    req: &CompletionRequest,
-    temp_base: &Path,
-) -> Result<String, SummarizerError> {
-    req.validate()?;
-    let input = CliInput {
-        system: &req.system,
-        user: &req.user,
-        model: (!req.model.trim().is_empty()).then_some(req.model.as_str()),
-    };
-    Ok(run_cli(
-        backend,
-        provider_binary,
-        input,
-        Some(temp_base),
-        req.timeout,
-        &CLAUDE_COMPAT,
-        Some(herdr_binary),
-    )
-    .await?)
+    herdr_binary: PathBuf,
+    provider_binary: PathBuf,
+    temp_base: PathBuf,
+    preflight: Arc<dyn HerdrPreflight>,
+    stopped: tokio::sync::Mutex<bool>,
+}
+
+impl HerdrSummarizer {
+    pub fn new(
+        backend: CliBackend,
+        herdr_binary: PathBuf,
+        provider_binary: PathBuf,
+        temp_base: PathBuf,
+        preflight: Arc<dyn HerdrPreflight>,
+    ) -> Self {
+        Self {
+            backend,
+            herdr_binary,
+            provider_binary,
+            temp_base,
+            preflight,
+            stopped: tokio::sync::Mutex::new(false),
+        }
+    }
+
+    async fn run(&self, input: CliInput<'_>, timeout: Duration) -> Result<String, SummarizerError> {
+        tokio::time::timeout(timeout, async {
+            let mut stopped = self.stopped.lock().await;
+            if *stopped {
+                return Err(SummarizerError::HerdrStopped);
+            }
+            // Cancellation after this point leaves the connection stopped.
+            *stopped = true;
+            if !self.preflight.verify().await {
+                return Err(SummarizerError::HerdrUnverified);
+            }
+            let result = run_cli(
+                self.backend,
+                &self.provider_binary,
+                input,
+                Some(&self.temp_base),
+                timeout,
+                &CLAUDE_COMPAT,
+                Some(&self.herdr_binary),
+            )
+            .await?;
+            *stopped = false;
+            Ok(result)
+        })
+        .await
+        .map_err(|_| SummarizerError::Timeout)?
+    }
+}
+
+#[async_trait::async_trait]
+impl crate::Summarizer for HerdrSummarizer {
+    async fn summarize(
+        &self,
+        turns: &[TranscriptTurn],
+        options: &SummarizeOptions,
+    ) -> Result<String, SummarizerError> {
+        self.run(
+            CliInput {
+                system: options
+                    .system_prompt
+                    .as_deref()
+                    .unwrap_or(DEFAULT_SYSTEM_PROMPT),
+                user: &render_transcript(turns),
+                model: (!options.model.trim().is_empty()).then_some(options.model.as_str()),
+            },
+            options.cli_timeout.unwrap_or(DEFAULT_SUMMARY_TIMEOUT),
+        )
+        .await
+    }
+
+    async fn complete(&self, req: &CompletionRequest) -> Result<String, SummarizerError> {
+        req.validate()?;
+        self.run(
+            CliInput {
+                system: &req.system,
+                user: &req.user,
+                model: (!req.model.trim().is_empty()).then_some(req.model.as_str()),
+            },
+            req.timeout,
+        )
+        .await
+    }
 }
 
 fn launch_error(backend: CliBackend, error: io::Error) -> CliSummarizeError {

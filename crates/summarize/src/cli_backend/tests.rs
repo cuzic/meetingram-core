@@ -248,6 +248,65 @@ async fn herdr_codex_requires_completed_turn() {
 }
 
 #[cfg(unix)]
+struct FixedPreflight(bool);
+
+#[cfg(unix)]
+#[async_trait::async_trait]
+impl HerdrPreflight for FixedPreflight {
+    async fn verify(&self) -> bool {
+        self.0
+    }
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn herdr_verifies_before_sending_and_does_not_resend_after_failure() {
+    use crate::Summarizer;
+
+    let dir = tempfile::tempdir().unwrap();
+    let hc = script(
+        dir.path(),
+        r#"
+printf x >> "$(dirname "$0")/attempts"
+cat >/dev/null
+exit 1
+"#,
+    );
+    let req = CompletionRequest::new(
+        "synthetic instruction",
+        "synthetic data",
+        "",
+        Duration::from_secs(3),
+    );
+    let build = |verified| {
+        HerdrSummarizer::new(
+            CliBackend::ClaudeCode,
+            hc.clone(),
+            PathBuf::from("/synthetic/claude"),
+            dir.path().to_path_buf(),
+            Arc::new(FixedPreflight(verified)),
+        )
+    };
+    let unverified = build(false);
+    assert!(matches!(
+        unverified.complete(&req).await,
+        Err(SummarizerError::HerdrUnverified)
+    ));
+    assert!(!dir.path().join("attempts").exists());
+
+    let verified = build(true);
+    assert!(matches!(
+        verified.complete(&req).await,
+        Err(SummarizerError::Cli(CliSummarizeError::NonZeroExit(..)))
+    ));
+    assert!(matches!(
+        verified.complete(&req).await,
+        Err(SummarizerError::HerdrStopped)
+    ));
+    assert_eq!(std::fs::read(dir.path().join("attempts")).unwrap(), b"x");
+}
+
+#[cfg(unix)]
 fn script(dir: &Path, contents: &str) -> PathBuf {
     let script = dir.join("sample-cli");
     // Open the fixture for writing only in the shell. Parallel tests that fork
