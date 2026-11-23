@@ -337,14 +337,34 @@ async fn run_named_cli(
 /// billing for the dedicated Herdr connection. Receives no meeting text.
 #[async_trait::async_trait]
 pub trait HerdrPreflight: Send + Sync {
-    async fn verify(&self) -> bool;
+    async fn verify(&self, session: &str) -> bool;
+}
+
+struct HerdrCommand {
+    binary: PathBuf,
+    session: String,
+}
+
+impl HerdrCommand {
+    fn command(&self) -> tokio::process::Command {
+        let mut command = tokio::process::Command::new(&self.binary);
+        command
+            .env("HC_SESSION", &self.session)
+            .env_remove("HC_SOCKET")
+            .env_remove("HC_TERMINAL_ID")
+            .env_remove("SSH_CONNECTION")
+            .env_remove("SSH_CLIENT")
+            .env_remove("SSH_TTY")
+            .kill_on_drop(true);
+        command
+    }
 }
 
 /// A dedicated Herdr connection shared by consumers of the same provider.
 /// Failed or cancelled calls stop the connection until it is explicitly rebuilt.
 pub struct HerdrSummarizer {
     backend: CliBackend,
-    herdr_binary: PathBuf,
+    herdr: HerdrCommand,
     provider_binary: PathBuf,
     temp_base: PathBuf,
     preflight: Arc<dyn HerdrPreflight>,
@@ -355,13 +375,17 @@ impl HerdrSummarizer {
     pub fn new(
         backend: CliBackend,
         herdr_binary: PathBuf,
+        session: String,
         provider_binary: PathBuf,
         temp_base: PathBuf,
         preflight: Arc<dyn HerdrPreflight>,
     ) -> Self {
         Self {
             backend,
-            herdr_binary,
+            herdr: HerdrCommand {
+                binary: herdr_binary,
+                session,
+            },
             provider_binary,
             temp_base,
             preflight,
@@ -375,7 +399,9 @@ impl HerdrSummarizer {
             CliBackend::Codex => ["login", "status"].as_slice(),
         };
         let args = herdr_args(&self.temp_base, &self.provider_binary, "10");
-        let Ok(mut child) = tokio::process::Command::new(&self.herdr_binary)
+        let Ok(mut child) = self
+            .herdr
+            .command()
             .args(args)
             .args(provider_args)
             .stdin(Stdio::null())
@@ -415,7 +441,12 @@ impl HerdrSummarizer {
             }
             // Cancellation after this point leaves the connection stopped.
             *stopped = true;
-            if !self.has_subscription_login().await || !self.preflight.verify().await {
+            if self.herdr.session.is_empty()
+                || !self.herdr.binary.is_absolute()
+                || !self.provider_binary.is_absolute()
+                || !self.has_subscription_login().await
+                || !self.preflight.verify(&self.herdr.session).await
+            {
                 return Err(SummarizerError::HerdrUnverified);
             }
             let result = run_cli(
@@ -425,7 +456,7 @@ impl HerdrSummarizer {
                 Some(&self.temp_base),
                 timeout,
                 &CLAUDE_COMPAT,
-                Some(&self.herdr_binary),
+                Some(&self.herdr),
             )
             .await?;
             *stopped = false;
@@ -561,7 +592,7 @@ async fn run_cli(
     base: Option<&Path>,
     timeout: Duration,
     compatibility: &AtomicBool,
-    herdr_binary: Option<&Path>,
+    herdr: Option<&HerdrCommand>,
 ) -> Result<String, CliSummarizeError> {
     tokio::time::timeout(timeout, async {
         let dedicated_base = base.is_some();
@@ -595,11 +626,11 @@ async fn run_cli(
         .await
         .map_err(|error| CliSummarizeError::TempDir(io::Error::other(error)))?
         .map_err(CliSummarizeError::TempDir)?;
-        let compat = herdr_binary.is_none()
+        let compat = herdr.is_none()
             && backend == CliBackend::ClaudeCode
             && compatibility.load(Ordering::Relaxed);
-        let mut result = run_attempt(backend, binary, &input, &dir, compat, herdr_binary).await?;
-        if herdr_binary.is_none()
+        let mut result = run_attempt(backend, binary, &input, &dir, compat, herdr).await?;
+        if herdr.is_none()
             && backend == CliBackend::ClaudeCode
             && !compat
             && !result.status.success()
@@ -616,8 +647,7 @@ async fn run_cli(
             CliStdout::Claude(stdout) => {
                 let value: serde_json::Value = serde_json::from_slice(&stdout)
                     .map_err(|e| CliSummarizeError::ParseOutput(backend, e.to_string()))?;
-                if herdr_binary.is_some()
-                    && value.get("is_error").and_then(|v| v.as_bool()) != Some(false)
+                if herdr.is_some() && value.get("is_error").and_then(|v| v.as_bool()) != Some(false)
                 {
                     return Err(CliSummarizeError::ParseOutput(
                         backend,
@@ -742,18 +772,22 @@ async fn run_attempt(
     input: &CliInput<'_>,
     dir: &Arc<WorkingDir>,
     compat: bool,
-    herdr_binary: Option<&Path>,
+    herdr: Option<&HerdrCommand>,
 ) -> Result<AttemptOutput, CliSummarizeError> {
     let provider_args = cli_args(backend, dir.path(), input.model, compat);
-    let (binary, args) = if let Some(herdr_binary) = herdr_binary {
-        let mut args = herdr_args(dir.path(), binary, "600");
-        args.extend(provider_args);
-        (herdr_binary, args)
-    } else {
-        (binary, provider_args)
-    };
-    let mut process =
-        platform::Process::spawn(binary, &args, Some(dir)).map_err(|e| launch_error(backend, e))?;
+    if let Some(herdr) = herdr {
+        return run_herdr_attempt(
+            backend,
+            herdr,
+            binary,
+            input.user,
+            dir.path(),
+            provider_args,
+        )
+        .await;
+    }
+    let mut process = platform::Process::spawn(binary, &provider_args, Some(dir))
+        .map_err(|e| launch_error(backend, e))?;
     let mut stdin = process.stdin.take().expect("CLI stdin is piped");
     let read_error = |error| CliSummarizeError::ReadOutput(backend, error);
     let result = tokio::try_join!(
@@ -770,11 +804,11 @@ async fn run_attempt(
             .await;
             Ok(result)
         },
-        read_stdout(backend, &mut process.stdout, herdr_binary.is_some()),
+        read_stdout(backend, &mut process.stdout, false),
         async {
             read_stderr(
                 &mut process.stderr,
-                herdr_binary.is_none() && backend == CliBackend::ClaudeCode && !compat,
+                backend == CliBackend::ClaudeCode && !compat,
             )
             .await
             .map_err(read_error)
@@ -793,6 +827,43 @@ async fn run_attempt(
         status,
         stdout,
         unknown_option,
+    })
+}
+
+async fn run_herdr_attempt(
+    backend: CliBackend,
+    herdr: &HerdrCommand,
+    binary: &Path,
+    user: &str,
+    dir: &Path,
+    provider_args: Vec<OsString>,
+) -> Result<AttemptOutput, CliSummarizeError> {
+    let mut child = herdr
+        .command()
+        .args(herdr_args(dir, binary, "600"))
+        .args(provider_args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|error| launch_error(backend, error))?;
+    let mut stdin = child.stdin.take().expect("CLI stdin is piped");
+    let stdout = child.stdout.take().expect("CLI stdout is piped");
+    let stderr = child.stderr.take().expect("CLI stderr is piped");
+    let read_error = |error| CliSummarizeError::ReadOutput(backend, error);
+    let (status, write_result, stdout, _) = tokio::try_join!(
+        async { child.wait().await.map_err(read_error) },
+        async move { Ok(stdin.write_all(user.as_bytes()).await) },
+        read_stdout(backend, stdout, true),
+        async { read_stderr(stderr, false).await.map_err(read_error) },
+    )?;
+    if status.success() {
+        write_result.map_err(read_error)?;
+    }
+    Ok(AttemptOutput {
+        status,
+        stdout,
+        unknown_option: false,
     })
 }
 

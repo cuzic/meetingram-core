@@ -203,7 +203,7 @@ async fn herdr_sends_prompt_on_stdin_and_accepts_cli_result() {
     let hc = script(
         dir.path(),
         r#"
-[ "$1:$2:$3:$4:$5" = "exec:-i:--timeout:600:--cwd" ] || exit 41
+[ "$HC_SESSION:$1:$2:$3:$4:$5" = "synthetic:exec:-i:--timeout:600:--cwd" ] || exit 41
 [ -f "$6/system.txt" ] || exit 42
 [ "$7:$8" = "--:/synthetic/claude" ] || exit 43
 [ "$(cat)" = "synthetic transcript" ] || exit 44
@@ -221,7 +221,10 @@ printf '%s\n' '{"is_error":false,"result":"synthetic result"}'
         Some(dir.path()),
         Duration::from_secs(3),
         &AtomicBool::new(true),
-        Some(&hc),
+        Some(&HerdrCommand {
+            binary: hc,
+            session: "synthetic".into(),
+        }),
     )
     .await
     .unwrap();
@@ -275,8 +278,8 @@ struct FixedPreflight(bool);
 #[cfg(unix)]
 #[async_trait::async_trait]
 impl HerdrPreflight for FixedPreflight {
-    async fn verify(&self) -> bool {
-        self.0
+    async fn verify(&self, session: &str) -> bool {
+        self.0 && session == "synthetic"
     }
 }
 
@@ -289,6 +292,7 @@ async fn herdr_verifies_before_sending_and_does_not_resend_after_failure() {
     let hc = script(
         dir.path(),
         r#"
+[ "$HC_SESSION" = "synthetic" ] || exit 49
 if [ "$9" = "auth" ]; then
     printf '%s\n' '{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}'
     exit 0
@@ -308,6 +312,7 @@ exit 1
         HerdrSummarizer::new(
             CliBackend::ClaudeCode,
             hc.clone(),
+            "synthetic".into(),
             PathBuf::from("/synthetic/claude"),
             dir.path().to_path_buf(),
             Arc::new(FixedPreflight(verified)),
