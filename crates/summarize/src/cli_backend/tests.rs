@@ -192,7 +192,249 @@ fn run_fixture<'a>(
         Some(base),
         timeout,
         compatibility,
+        None,
     )
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn herdr_sends_prompt_on_stdin_and_accepts_cli_result() {
+    let dir = tempfile::tempdir().unwrap();
+    use crate::Summarizer;
+    let hc = script(
+        dir.path(),
+        r#"
+[ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 41
+[ -z "${ANTHROPIC_API_KEY+x}${OPENAI_BASE_URL+x}${HC_SOCKET+x}" ] || exit 46
+IFS= read -r identity || exit 40
+case "$identity" in *'"method":"server.status"'*) ;; *) exit 40 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"core":{"id":"test-core"},"pid":123}}'
+IFS= read -r auth || exit 42
+case "$auth" in *'"input":null'*) ;; *) exit 43 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
+[ ! -e "$(dirname "$0")/disconnect" ] || exit 0
+IFS= read -r request || exit 44
+case "$request" in *'"input":"c3ludGhldGljIHRyYW5zY3JpcHQ="'*) ;; *) exit 45 ;; esac
+case "$request" in *'"CLAUDE_CODE_MAX_RETRIES":"0"'*) ;; *) exit 47 ;; esac
+case "$request" in *'"CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK":"1"'*) ;; *) exit 48 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":0,"stdout":"eyJpc19lcnJvciI6ZmFsc2UsInJlc3VsdCI6InN5bnRoZXRpYyByZXN1bHQifQ==","stderr":"","timed_out":false,"truncated":false}}'
+"#,
+    );
+    let summarizer = HerdrSummarizer::new(
+        CliBackend::ClaudeCode,
+        hc,
+        "synthetic".into(),
+        PathBuf::from("/synthetic/claude"),
+        dir.path().to_path_buf(),
+        Arc::new(FixedPreflight(true)),
+    );
+    let result = summarizer
+        .complete(&CompletionRequest::new(
+            "synthetic instruction",
+            "synthetic transcript",
+            "",
+            Duration::from_secs(3),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(result, "synthetic result");
+    std::fs::write(dir.path().join("disconnect"), []).unwrap();
+    let req = CompletionRequest::new(
+        "instruction",
+        "synthetic transcript",
+        "",
+        Duration::from_secs(3),
+    );
+    assert!(matches!(
+        summarizer.complete(&req).await,
+        Err(SummarizerError::Cli(CliSummarizeError::ReadOutput(..)))
+    ));
+    assert!(matches!(
+        summarizer.complete(&req).await,
+        Err(SummarizerError::HerdrStopped)
+    ));
+}
+
+#[tokio::test]
+async fn herdr_codex_requires_completed_turn() {
+    let partial =
+        br#"{"type":"item.completed","item":{"type":"agent_message","text":"synthetic"}}"#;
+    assert!(matches!(
+        read_stdout(CliBackend::Codex, partial.as_slice(), true)
+            .await
+            .unwrap(),
+        CliStdout::MalformedCodexEvent
+    ));
+    let completed = [partial.as_slice(), b"\n", br#"{"type":"turn.completed"}"#].concat();
+    assert!(matches!(
+        read_stdout(CliBackend::Codex, completed.as_slice(), true)
+            .await
+            .unwrap(),
+        CliStdout::Codex
+    ));
+}
+
+#[test]
+fn herdr_recognizes_subscription_authentication_only() {
+    let claude = |output| subscription_status(CliBackend::ClaudeCode, output, b"");
+    assert!(claude(
+        br#"{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}"#
+    ));
+    assert!(!claude(
+        br#"{"loggedIn":true,"authMethod":"api_key","apiProvider":"firstParty"}"#
+    ));
+    assert!(!claude(
+        br#"{"loggedIn":true,"authMethod":"oauth_token","apiProvider":"firstParty"}"#
+    ));
+    assert!(!claude(
+        br#"{"loggedIn":true,"authMethod":"third_party","apiProvider":"bedrock"}"#
+    ));
+    assert!(!claude(b"unknown"));
+    let codex = |output| subscription_status(CliBackend::Codex, b"", output);
+    assert!(codex(b"Logged in using ChatGPT\n"));
+    assert!(!codex(b"Logged in using an API key\n"));
+    assert!(!codex(b"Not logged in\n"));
+}
+
+#[cfg(unix)]
+struct FixedPreflight(bool);
+
+#[cfg(unix)]
+#[async_trait::async_trait]
+impl HerdrPreflight for FixedPreflight {
+    async fn verify(&self, session: &str, core_id: &str, pid: u32) -> bool {
+        self.0 && session == "synthetic" && core_id == "test-core" && pid == 123
+    }
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn herdr_verifies_before_sending_and_does_not_resend_after_failure() {
+    use crate::Summarizer;
+
+    let dir = tempfile::tempdir().unwrap();
+    let hc = script(
+        dir.path(),
+        r#"
+[ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 49
+IFS= read -r identity || exit 40
+case "$identity" in *'"method":"server.status"'*) ;; *) exit 40 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"core":{"id":"test-core"},"pid":123}}'
+IFS= read -r request || exit 42
+printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
+IFS= read -r request || exit 0
+printf x >> "$(dirname "$0")/attempts"
+printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":1,"stdout":"","stderr":"","timed_out":false,"truncated":false}}'
+"#,
+    );
+    let req = CompletionRequest::new(
+        "synthetic instruction",
+        "synthetic data",
+        "",
+        Duration::from_secs(3),
+    );
+    let build = |preflight: Arc<dyn HerdrPreflight>| {
+        HerdrSummarizer::new(
+            CliBackend::ClaudeCode,
+            hc.clone(),
+            "synthetic".into(),
+            PathBuf::from("/synthetic/claude"),
+            dir.path().to_path_buf(),
+            preflight,
+        )
+    };
+    let unverified = build(Arc::new(FixedPreflight(false)));
+    assert!(matches!(
+        unverified.complete(&req).await,
+        Err(SummarizerError::HerdrUnverified)
+    ));
+    assert!(!dir.path().join("attempts").exists());
+
+    struct RevokedAfterFirstCheck(AtomicBool);
+
+    #[async_trait::async_trait]
+    impl HerdrPreflight for RevokedAfterFirstCheck {
+        async fn verify(&self, _: &str, _: &str, _: u32) -> bool {
+            !self.0.swap(true, Ordering::SeqCst)
+        }
+    }
+
+    let revoked = build(Arc::new(RevokedAfterFirstCheck(AtomicBool::new(false))));
+    assert!(matches!(
+        revoked.complete(&req).await,
+        Err(SummarizerError::HerdrUnverified)
+    ));
+    assert!(!dir.path().join("attempts").exists());
+
+    let verified = build(Arc::new(FixedPreflight(true)));
+    assert!(matches!(
+        verified.complete(&req).await,
+        Err(SummarizerError::Cli(CliSummarizeError::ParseOutput(..)))
+    ));
+    assert!(matches!(
+        verified.complete(&req).await,
+        Err(SummarizerError::HerdrStopped)
+    ));
+    assert_eq!(std::fs::read(dir.path().join("attempts")).unwrap(), b"x");
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn herdr_codex_stops_after_usage_limit_failure() {
+    use crate::Summarizer;
+
+    let dir = tempfile::tempdir().unwrap();
+    let complete = serde_json::json!({
+        "code": 1,
+        "stdout": base64::engine::general_purpose::STANDARD.encode(concat!(
+            "{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"synthetic partial output\"}}\n",
+            "{\"type\":\"turn.failed\",\"error\":{\"message\":\"usage_limit_reached\"}}\n",
+        )),
+        "stderr": "",
+        "timed_out": false,
+        "truncated": false,
+    });
+    let response = serde_json::json!({"jsonrpc": "2.0", "id": 3, "result": complete});
+    let hc = script(
+        dir.path(),
+        &format!(
+            r#"
+IFS= read -r identity || exit 40
+printf '%s\n' '{{"jsonrpc":"2.0","id":1,"result":{{"core":{{"id":"test-core"}},"pid":123}}}}'
+IFS= read -r auth || exit 41
+printf '%s\n' '{{"jsonrpc":"2.0","id":2,"result":{{"code":0,"stdout":"","stderr":"TG9nZ2VkIGluIHVzaW5nIENoYXRHUFQK","timed_out":false,"truncated":false}}}}'
+IFS= read -r request || exit 42
+printf x >> "$(dirname "$0")/attempts"
+printf '%s\n' '{response}'
+"#
+        ),
+    );
+    let summarizer = HerdrSummarizer::new(
+        CliBackend::Codex,
+        hc,
+        "synthetic".into(),
+        PathBuf::from("/synthetic/codex"),
+        dir.path().to_path_buf(),
+        Arc::new(FixedPreflight(true)),
+    );
+    let request = CompletionRequest::new(
+        "synthetic instruction",
+        "synthetic data",
+        "",
+        Duration::from_secs(3),
+    );
+    assert!(matches!(
+        summarizer.complete(&request).await,
+        Err(SummarizerError::Cli(CliSummarizeError::ParseOutput(
+            CliBackend::Codex,
+            _
+        )))
+    ));
+    assert!(matches!(
+        summarizer.complete(&request).await,
+        Err(SummarizerError::HerdrStopped)
+    ));
+    assert_eq!(std::fs::read(dir.path().join("attempts")).unwrap(), b"x");
 }
 
 #[cfg(unix)]

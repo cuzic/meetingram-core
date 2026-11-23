@@ -32,12 +32,14 @@ pub enum SummaryProvider {
     /// Claude via the Anthropic CLI’s OAuth login.
     ClaudeOAuth,
     Codex,
+    ClaudeHerdr,
+    CodexHerdr,
     /// A local or self-hosted Ollama server.
     Ollama,
 }
 
 impl SummaryProvider {
-    pub const ALL: [Self; 13] = [
+    pub const ALL: [Self; 15] = [
         Self::Claude,
         Self::OpenAi,
         Self::Gemini,
@@ -50,6 +52,8 @@ impl SummaryProvider {
         Self::ClaudeCli,
         Self::ClaudeOAuth,
         Self::Codex,
+        Self::ClaudeHerdr,
+        Self::CodexHerdr,
         Self::Ollama,
     ];
 
@@ -67,6 +71,8 @@ impl SummaryProvider {
             Self::ClaudeCli => "claude-cli",
             Self::ClaudeOAuth => "claude-oauth",
             Self::Codex => "codex",
+            Self::ClaudeHerdr => "claude-herdr",
+            Self::CodexHerdr => "codex-herdr",
             Self::Ollama => "ollama",
         }
     }
@@ -82,9 +88,9 @@ impl SummaryProvider {
             Self::ClaudeVertex => "vertex::claude-sonnet-4-5",
             Self::GeminiVertex => "vertex::gemini-3-flash-preview",
             Self::ClaudeBedrock => "bedrock_api::anthropic.claude-sonnet-4-5-20250929-v1:0",
-            Self::ClaudeCli => "sonnet",
+            Self::ClaudeCli | Self::ClaudeHerdr => "sonnet",
             Self::ClaudeOAuth => "claude-sonnet-4-5",
-            Self::Codex => "gpt-5.5",
+            Self::Codex | Self::CodexHerdr => "gpt-5.5",
             Self::Ollama => "llama3.2",
         }
     }
@@ -100,7 +106,12 @@ impl SummaryProvider {
             Self::ClaudeVertex => Some(CLAUDE_VERTEX_CREDENTIALS_ACCOUNT),
             Self::GeminiVertex => Some(GEMINI_VERTEX_CREDENTIALS_ACCOUNT),
             Self::ClaudeBedrock => Some(BEDROCK_API_KEY_ACCOUNT),
-            Self::ClaudeCli | Self::ClaudeOAuth | Self::Codex | Self::Ollama => None,
+            Self::ClaudeCli
+            | Self::ClaudeOAuth
+            | Self::Codex
+            | Self::Ollama
+            | Self::ClaudeHerdr
+            | Self::CodexHerdr => None,
         }
     }
 
@@ -118,6 +129,15 @@ impl SummaryProvider {
     /// Whether discussion graphs can use this provider.
     pub fn supports_graph(self) -> bool {
         self != Self::Codex
+    }
+
+    /// The CLI selected for a dedicated Herdr connection, if any.
+    pub fn herdr_backend(self) -> Option<CliBackend> {
+        match self {
+            Self::ClaudeHerdr => Some(CliBackend::ClaudeCode),
+            Self::CodexHerdr => Some(CliBackend::Codex),
+            _ => None,
+        }
     }
 
     pub fn cli_backend(self) -> Option<CliBackend> {
@@ -151,6 +171,8 @@ pub enum BuildSummarizerError {
     MissingApiKey,
     #[error("could not read Google Vertex AI credentials")]
     InvalidVertexCredentials,
+    #[error("configure and verify a dedicated Herdr connection in settings")]
+    HerdrNotConfigured,
     #[error("could not build the AI client")]
     Client,
 }
@@ -167,6 +189,9 @@ pub fn build_summarizer<S: CredentialStore + Send + Sync + 'static>(
     cli_temp_base: Option<PathBuf>,
 ) -> Result<Box<dyn Summarizer>, BuildSummarizerError> {
     let provider = SummaryProvider::from_key(provider_key);
+    if provider.herdr_backend().is_some() {
+        return Err(BuildSummarizerError::HerdrNotConfigured);
+    }
     if let Some(backend) = provider.cli_backend() {
         return Ok(Box::new(CliSummarizer::new(backend, cli_temp_base)));
     }
@@ -248,6 +273,8 @@ mod tests {
             ("claude-cli", "sonnet"),
             ("claude-oauth", "claude-sonnet-4-5"),
             ("codex", "gpt-5.5"),
+            ("claude-herdr", "sonnet"),
+            ("codex-herdr", "gpt-5.5"),
             ("ollama", "llama3.2"),
         ];
         assert_eq!(SummaryProvider::ALL.len(), settings.len());
@@ -304,6 +331,8 @@ mod tests {
                 BuildSummarizerError::MissingVertexCredentials,
             ),
             ("openai", BuildSummarizerError::MissingApiKey),
+            ("claude-herdr", BuildSummarizerError::HerdrNotConfigured),
+            ("codex-herdr", BuildSummarizerError::HerdrNotConfigured),
         ] {
             assert_eq!(
                 build_summarizer(key, store.clone(), None, None).err(),

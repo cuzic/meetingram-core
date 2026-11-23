@@ -204,6 +204,10 @@ pub enum SummarizerError {
     InputTooLong,
     #[error("completion timed out")]
     Timeout,
+    #[error("Herdr subscription and billing policy could not be verified")]
+    HerdrUnverified,
+    #[error("Herdr connection stopped after a previous failure")]
+    HerdrStopped,
     #[error("completion provider request failed")]
     CompletionProvider,
 }
@@ -215,6 +219,8 @@ impl SummarizerError {
         match self {
             Self::Timeout | Self::Cli(Timeout(_)) => "timeout",
             Self::InputTooLong => "input_too_long",
+            Self::HerdrUnverified => "herdr_unverified",
+            Self::HerdrStopped => "herdr_stopped",
             Self::Cli(NotFound(_)) => "not_found",
             Self::Cli(NonZeroExit(..)) => "non_zero_exit",
             Self::Cli(ParseOutput(..) | EmptyResponse(_)) => "parse",
