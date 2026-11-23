@@ -349,14 +349,36 @@ struct HerdrCommand {
 impl HerdrCommand {
     fn command(&self) -> tokio::process::Command {
         let mut command = tokio::process::Command::new(&self.binary);
-        command
-            .env("HC_SESSION", &self.session)
-            .env_remove("HC_SOCKET")
-            .env_remove("HC_TERMINAL_ID")
-            .env_remove("SSH_CONNECTION")
-            .env_remove("SSH_CLIENT")
-            .env_remove("SSH_TTY")
-            .kill_on_drop(true);
+        // hc can auto-start its core. Keep the lookup and OS profile
+        // environment, but do not copy provider keys, endpoints, SSH or Herdr
+        // routing overrides from the app's environment into a new core.
+        command.env_clear();
+        for key in [
+            "PATH",
+            "HOME",
+            "USERPROFILE",
+            "APPDATA",
+            "LOCALAPPDATA",
+            "SYSTEMROOT",
+            "WINDIR",
+            "COMSPEC",
+            "PATHEXT",
+            "TEMP",
+            "TMP",
+            "TMPDIR",
+            "XDG_CONFIG_HOME",
+            "XDG_DATA_HOME",
+            "XDG_STATE_HOME",
+            "XDG_CACHE_HOME",
+            "XDG_RUNTIME_DIR",
+            "LANG",
+            "LC_ALL",
+        ] {
+            if let Some(value) = std::env::var_os(key) {
+                command.env(key, value);
+            }
+        }
+        command.env("HC_SESSION", &self.session).kill_on_drop(true);
         command
     }
 }

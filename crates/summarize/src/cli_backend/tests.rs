@@ -205,6 +205,7 @@ async fn herdr_sends_prompt_on_stdin_and_accepts_cli_result() {
         dir.path(),
         r#"
 [ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 41
+[ -z "${ANTHROPIC_API_KEY+x}${OPENAI_BASE_URL+x}${HC_SOCKET+x}" ] || exit 46
 IFS= read -r identity || exit 40
 case "$identity" in *'"method":"server.status"'*) ;; *) exit 40 ;; esac
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"core":{"id":"test-core"},"pid":123}}'
