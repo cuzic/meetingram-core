@@ -333,24 +333,40 @@ printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":1,"stdout":"","stderr":"
         "",
         Duration::from_secs(3),
     );
-    let build = |verified| {
+    let build = |preflight: Arc<dyn HerdrPreflight>| {
         HerdrSummarizer::new(
             CliBackend::ClaudeCode,
             hc.clone(),
             "synthetic".into(),
             PathBuf::from("/synthetic/claude"),
             dir.path().to_path_buf(),
-            Arc::new(FixedPreflight(verified)),
+            preflight,
         )
     };
-    let unverified = build(false);
+    let unverified = build(Arc::new(FixedPreflight(false)));
     assert!(matches!(
         unverified.complete(&req).await,
         Err(SummarizerError::HerdrUnverified)
     ));
     assert!(!dir.path().join("attempts").exists());
 
-    let verified = build(true);
+    struct RevokedAfterFirstCheck(AtomicBool);
+
+    #[async_trait::async_trait]
+    impl HerdrPreflight for RevokedAfterFirstCheck {
+        async fn verify(&self, _: &str, _: &str, _: u32) -> bool {
+            !self.0.swap(true, Ordering::SeqCst)
+        }
+    }
+
+    let revoked = build(Arc::new(RevokedAfterFirstCheck(AtomicBool::new(false))));
+    assert!(matches!(
+        revoked.complete(&req).await,
+        Err(SummarizerError::HerdrUnverified)
+    ));
+    assert!(!dir.path().join("attempts").exists());
+
+    let verified = build(Arc::new(FixedPreflight(true)));
     assert!(matches!(
         verified.complete(&req).await,
         Err(SummarizerError::Cli(CliSummarizeError::ParseOutput(..)))
