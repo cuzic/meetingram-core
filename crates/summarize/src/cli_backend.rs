@@ -7,7 +7,7 @@
 use std::ffi::{OsStr, OsString};
 use std::io;
 use std::path::{Path, PathBuf};
-use std::process::ExitStatus;
+use std::process::{ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
@@ -369,6 +369,44 @@ impl HerdrSummarizer {
         }
     }
 
+    async fn has_subscription_login(&self) -> bool {
+        let provider_args = match self.backend {
+            CliBackend::ClaudeCode => ["auth", "status", "--json"].as_slice(),
+            CliBackend::Codex => ["login", "status"].as_slice(),
+        };
+        let args = herdr_args(&self.temp_base, &self.provider_binary, "10");
+        let Ok(mut child) = tokio::process::Command::new(&self.herdr_binary)
+            .args(args)
+            .args(provider_args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+        else {
+            return false;
+        };
+        const MAX_STATUS_BYTES: u64 = 16 * 1024;
+        let mut stdout = child
+            .stdout
+            .take()
+            .expect("status stdout is piped")
+            .take(MAX_STATUS_BYTES);
+        let mut stderr = child
+            .stderr
+            .take()
+            .expect("status stderr is piped")
+            .take(MAX_STATUS_BYTES);
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        let status = async {
+            tokio::try_join!(stdout.read_to_end(&mut out), stderr.read_to_end(&mut err))?;
+            drop((stdout, stderr));
+            child.wait().await
+        };
+        matches!(tokio::time::timeout(Duration::from_secs(12), status).await, Ok(Ok(status)) if status.success())
+            && subscription_status(self.backend, &out, &err)
+    }
+
     async fn run(&self, input: CliInput<'_>, timeout: Duration) -> Result<String, SummarizerError> {
         tokio::time::timeout(timeout, async {
             let mut stopped = self.stopped.lock().await;
@@ -377,7 +415,7 @@ impl HerdrSummarizer {
             }
             // Cancellation after this point leaves the connection stopped.
             *stopped = true;
-            if !self.preflight.verify().await {
+            if !self.has_subscription_login().await || !self.preflight.verify().await {
                 return Err(SummarizerError::HerdrUnverified);
             }
             let result = run_cli(
@@ -431,6 +469,35 @@ impl crate::Summarizer for HerdrSummarizer {
         )
         .await
     }
+}
+
+fn subscription_status(backend: CliBackend, stdout: &[u8], stderr: &[u8]) -> bool {
+    match backend {
+        CliBackend::ClaudeCode => {
+            serde_json::from_slice::<serde_json::Value>(stdout).is_ok_and(|status| {
+                status["loggedIn"].as_bool() == Some(true)
+                    && status["authMethod"].as_str() == Some("claude.ai")
+                    && status["apiProvider"].as_str() == Some("firstParty")
+            })
+        }
+        CliBackend::Codex => [stdout, stderr].into_iter().any(|stream| {
+            stream
+                .split(|byte| *byte == b'\n')
+                .any(|line| line.trim_ascii() == b"Logged in using ChatGPT")
+        }),
+    }
+}
+
+fn herdr_args(dir: &Path, provider: &Path, timeout: &str) -> Vec<OsString> {
+    let mut args = ["exec", "-i", "--timeout", timeout, "--cwd"]
+        .map(OsString::from)
+        .to_vec();
+    args.extend([
+        dir.as_os_str().to_owned(),
+        "--".into(),
+        provider.as_os_str().to_owned(),
+    ]);
+    args
 }
 
 fn launch_error(backend: CliBackend, error: io::Error) -> CliSummarizeError {
@@ -679,14 +746,7 @@ async fn run_attempt(
 ) -> Result<AttemptOutput, CliSummarizeError> {
     let provider_args = cli_args(backend, dir.path(), input.model, compat);
     let (binary, args) = if let Some(herdr_binary) = herdr_binary {
-        let mut args = ["exec", "-i", "--timeout", "600", "--cwd"]
-            .map(OsString::from)
-            .to_vec();
-        args.extend([
-            dir.path().as_os_str().to_owned(),
-            "--".into(),
-            binary.as_os_str().to_owned(),
-        ]);
+        let mut args = herdr_args(dir.path(), binary, "600");
         args.extend(provider_args);
         (herdr_binary, args)
     } else {

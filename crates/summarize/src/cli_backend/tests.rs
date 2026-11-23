@@ -247,6 +247,28 @@ async fn herdr_codex_requires_completed_turn() {
     ));
 }
 
+#[test]
+fn herdr_recognizes_subscription_authentication_only() {
+    let claude = |output| subscription_status(CliBackend::ClaudeCode, output, b"");
+    assert!(claude(
+        br#"{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}"#
+    ));
+    assert!(!claude(
+        br#"{"loggedIn":true,"authMethod":"api_key","apiProvider":"firstParty"}"#
+    ));
+    assert!(!claude(
+        br#"{"loggedIn":true,"authMethod":"oauth_token","apiProvider":"firstParty"}"#
+    ));
+    assert!(!claude(
+        br#"{"loggedIn":true,"authMethod":"third_party","apiProvider":"bedrock"}"#
+    ));
+    assert!(!claude(b"unknown"));
+    let codex = |output| subscription_status(CliBackend::Codex, b"", output);
+    assert!(codex(b"Logged in using ChatGPT\n"));
+    assert!(!codex(b"Logged in using an API key\n"));
+    assert!(!codex(b"Not logged in\n"));
+}
+
 #[cfg(unix)]
 struct FixedPreflight(bool);
 
@@ -267,6 +289,10 @@ async fn herdr_verifies_before_sending_and_does_not_resend_after_failure() {
     let hc = script(
         dir.path(),
         r#"
+if [ "$9" = "auth" ]; then
+    printf '%s\n' '{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty"}'
+    exit 0
+fi
 printf x >> "$(dirname "$0")/attempts"
 cat >/dev/null
 exit 1
