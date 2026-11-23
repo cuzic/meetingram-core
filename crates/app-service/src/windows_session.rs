@@ -17,8 +17,11 @@ use tokio::sync::mpsc::Sender;
 
 use crate::capture_health::CaptureHealth;
 use crate::error::AppServiceError;
-use crate::live_transcription::{run_live_transcription, TranscriptionStatus};
-use crate::pipeline::run_pipeline;
+use crate::live_transcription::{
+    capture_with_live_transcription, run_live_transcription, TranscriptionStatus,
+};
+use crate::pipeline::run_pipeline_with_remote;
+use crate::session_lifecycle::register_remote_session;
 use crate::windows_frame_collector::{collect_frames, CollectedFrames, LevelSnapshot};
 use crate::windows_supervisor::WindowsSupervisor;
 use crate::LiveTranscriptionOptions;
@@ -107,28 +110,32 @@ pub async fn run_windows_capture_session(
         broker,
     );
 
-    let capture_fut = tokio::task::spawn_blocking(move || {
-        run_capture_blocking(
-            callback_timeout_ms,
-            shutdown_rx,
-            level_sink,
-            stt_tx,
-            mic_device_id,
-            render_device_id,
-            health_sink,
-        )
-    });
+    let start_capture = || {
+        tokio::task::spawn_blocking(move || {
+            run_capture_blocking(
+                callback_timeout_ms,
+                shutdown_rx,
+                level_sink,
+                stt_tx,
+                mic_device_id,
+                render_device_id,
+                health_sink,
+            )
+        })
+    };
 
-    let (collected, ()) = tokio::join!(capture_fut, live_transcription_fut);
-    let collected = collected
-        .expect("capture supervisor thread panicked")
-        .map_err(|e| AppServiceError::Capture(e.to_string()))?;
+    let collected =
+        capture_with_live_transcription(store, manifest, start_capture, live_transcription_fut)
+            .await?
+            .expect("capture supervisor thread panicked")
+            .map_err(|e| AppServiceError::Capture(e.to_string()))?;
 
     let self_interval = collected.self_nominal_frame_interval_ns.max(1);
     let remote_interval = collected.remote_nominal_frame_interval_ns.max(1);
     let total_duration_ns = latest_frame_end_ns(&collected, self_interval, remote_interval);
 
-    run_pipeline(
+    let remote = register_remote_session(store, adapter, manifest).await?;
+    run_pipeline_with_remote(
         manifest,
         &collected.self_frames,
         &collected.remote_frames,
@@ -139,6 +146,7 @@ pub async fn run_windows_capture_session(
         bitrate_bps,
         store,
         adapter,
+        remote,
     )
     .await
 }

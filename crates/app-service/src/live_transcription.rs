@@ -40,6 +40,21 @@ use tokio::sync::mpsc::Receiver;
 
 use crate::LiveTranscriptionOptions;
 
+#[cfg(any(windows, all(test, feature = "live-transcription")))]
+pub(crate) async fn capture_with_live_transcription<T, F: std::future::Future<Output = T>>(
+    store: &SessionStore,
+    manifest: &recorder_domain::SessionManifest,
+    start_capture: impl FnOnce() -> F,
+    transcription: impl std::future::Future<Output = ()>,
+) -> Result<T, crate::AppServiceError> {
+    // Live transcription can write transcript data during capture. Keep the row
+    // in Preparing until the post-capture pipeline takes over. Startup recovery
+    // already reconciles this state if capture cannot start or fails mid-session.
+    store.create_session(manifest)?;
+    let (captured, ()) = tokio::join!(start_capture(), transcription);
+    Ok(captured)
+}
+
 /// Per-track Deepgram connection status (task #52): the desktop UI can't otherwise
 /// tell "nobody has spoken yet" from "STT is broken" when the transcript panel is
 /// empty. Updated by [`run_live_transcription`] as each track's session state
@@ -1859,6 +1874,136 @@ mod stt_wiring {
             })
             .await
             .expect("both tracks should receive audio and reconnect via their own providers");
+        }
+
+        #[tokio::test]
+        async fn final_transcript_is_persisted_before_capture_stops() {
+            use recorder_domain::CaptureState;
+            use upload_client::mock_server::{spawn_test_server, FaultConfig};
+            use upload_client::{HttpUploadClient, StaticTokenProvider};
+
+            let store = SessionStore::open_in_memory().unwrap();
+            let manifest = test_manifest();
+            let session_id = manifest.session_id;
+            let rate = manifest.audio.sample_rate;
+            let broker = LocalBroker::new();
+            let mut finalized =
+                broker.subscribe(&format!("transcription.{session_id}.segment.finalized"));
+
+            let (audio_tx, audio_rx) = tokio::sync::mpsc::channel(1);
+            let (self_starts_tx, mut self_starts) = tokio::sync::mpsc::unbounded_channel();
+            let (remote_starts_tx, mut remote_starts) = tokio::sync::mpsc::unbounded_channel();
+            let (provider_audio_tx, mut provider_audio_rx) = tokio::sync::mpsc::unbounded_channel();
+            let options =
+                crate::LiveTranscriptionOptions::default().with_stt_override(crate::SttOverride {
+                    self_track: Arc::new(RecordingProvider {
+                        starts: self_starts_tx,
+                        audio: provider_audio_tx.clone(),
+                    }),
+                    remote_track: Arc::new(RecordingProvider {
+                        starts: remote_starts_tx,
+                        audio: provider_audio_tx,
+                    }),
+                });
+            let (base_url, server) = spawn_test_server(FaultConfig {
+                pre_process_fault_probability: 0.0,
+                post_process_fault_probability: 0.0,
+                timeout_simulation_probability: 0.0,
+                timeout_sleep: Duration::ZERO,
+            })
+            .await;
+            let adapter = HttpUploadClient::new(
+                base_url,
+                Duration::from_secs(5),
+                Arc::new(StaticTokenProvider("test-token".to_string())),
+            );
+            let capture = || async {
+                let (_, self_events) = self_starts.recv().await.unwrap();
+                let (_, _remote_events) = remote_starts.recv().await.unwrap();
+                audio_tx
+                    .send((TrackKind::SelfMic, vec![0.25; 960], rate))
+                    .await
+                    .unwrap();
+                provider_audio_rx.recv().await.unwrap();
+                self_events
+                    .send(SttEvent::FinalTranscript {
+                        text: "synthetic transcript".to_string(),
+                        words: None,
+                        audio_start_ms: Some(0),
+                        audio_end_ms: Some(20),
+                        extra: Default::default(),
+                    })
+                    .unwrap();
+
+                // The event is published after SQLite has processed the insert.
+                finalized.recv().await.unwrap();
+                let segments = store.list_transcript_segments(session_id).unwrap();
+                assert_eq!(segments.len(), 1, "final transcript missing during capture");
+                assert!(segments[0].is_final);
+                assert_eq!(segments[0].track, Some(TrackKind::SelfMic));
+                let orphan = TranscriptSegment {
+                    session_id: SessionId::new(),
+                    ..segments[0].clone()
+                };
+                assert!(matches!(
+                    store.insert_transcript_segment(&orphan),
+                    Err(session_store::StoreError::Sqlite(err))
+                        if err.to_string().contains("FOREIGN KEY constraint failed")
+                ));
+                assert_eq!(
+                    store.capture_state(session_id).unwrap(),
+                    CaptureState::Preparing
+                );
+                assert_eq!(server.stats.lock().unwrap().requests_received, 0);
+                drop(audio_tx);
+            };
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                super::super::capture_with_live_transcription(
+                    &store,
+                    &manifest,
+                    capture,
+                    run_live_transcription(
+                        session_id,
+                        rate,
+                        None,
+                        audio_rx,
+                        &store,
+                        None,
+                        options,
+                        Some(&broker),
+                    ),
+                ),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+
+            let session_dir = tempfile::tempdir().unwrap();
+            let remote =
+                crate::session_lifecycle::register_remote_session(&store, &adapter, &manifest)
+                    .await
+                    .unwrap();
+            crate::pipeline::run_pipeline_with_remote(
+                &manifest,
+                &[],
+                &[],
+                20_000_000,
+                20_000_000,
+                0,
+                session_dir.path(),
+                32_000,
+                &store,
+                &adapter,
+                remote,
+            )
+            .await
+            .unwrap();
+            assert_eq!(
+                store.capture_state(session_id).unwrap(),
+                CaptureState::Finalized
+            );
+            assert_eq!(store.list_transcript_segments(session_id).unwrap().len(), 1);
         }
 
         #[tokio::test]

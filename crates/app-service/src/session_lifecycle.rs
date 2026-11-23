@@ -37,6 +37,15 @@ pub async fn begin_session(
     manifest: &SessionManifest,
 ) -> Result<Option<RemoteSession>, AppServiceError> {
     store.create_session(manifest)?; // starts in CaptureState::Preparing
+    register_remote_session(store, adapter, manifest).await
+}
+
+/// Registers an already-prepared local session with the upload adapter.
+pub(crate) async fn register_remote_session(
+    store: &SessionStore,
+    adapter: &dyn UploadAdapter,
+    manifest: &SessionManifest,
+) -> Result<Option<RemoteSession>, AppServiceError> {
     match adapter.create_session(manifest).await {
         Ok(remote) => {
             store.set_remote_session_id(manifest.session_id, &remote.remote_session_id)?;
