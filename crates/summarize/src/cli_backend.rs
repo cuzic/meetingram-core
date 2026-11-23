@@ -598,6 +598,10 @@ impl HerdrSummarizer {
                 .verify(&self.herdr.session, &core_id, pid)
                 .await
                 || !self.has_subscription_login(&mut connection).await
+                || !self
+                    .preflight
+                    .verify(&self.herdr.session, &core_id, pid)
+                    .await
             {
                 return Err(SummarizerError::HerdrUnverified);
             }
