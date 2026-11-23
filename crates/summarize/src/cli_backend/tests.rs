@@ -379,6 +379,65 @@ printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":1,"stdout":"","stderr":"
 }
 
 #[cfg(unix)]
+#[tokio::test]
+async fn herdr_codex_stops_after_usage_limit_failure() {
+    use crate::Summarizer;
+
+    let dir = tempfile::tempdir().unwrap();
+    let complete = serde_json::json!({
+        "code": 1,
+        "stdout": base64::engine::general_purpose::STANDARD.encode(concat!(
+            "{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"synthetic partial output\"}}\n",
+            "{\"type\":\"turn.failed\",\"error\":{\"message\":\"usage_limit_reached\"}}\n",
+        )),
+        "stderr": "",
+        "timed_out": false,
+        "truncated": false,
+    });
+    let response = serde_json::json!({"jsonrpc": "2.0", "id": 3, "result": complete});
+    let hc = script(
+        dir.path(),
+        &format!(
+            r#"
+IFS= read -r identity || exit 40
+printf '%s\n' '{{"jsonrpc":"2.0","id":1,"result":{{"core":{{"id":"test-core"}},"pid":123}}}}'
+IFS= read -r auth || exit 41
+printf '%s\n' '{{"jsonrpc":"2.0","id":2,"result":{{"code":0,"stdout":"","stderr":"TG9nZ2VkIGluIHVzaW5nIENoYXRHUFQK","timed_out":false,"truncated":false}}}}'
+IFS= read -r request || exit 42
+printf x >> "$(dirname "$0")/attempts"
+printf '%s\n' '{response}'
+"#
+        ),
+    );
+    let summarizer = HerdrSummarizer::new(
+        CliBackend::Codex,
+        hc,
+        "synthetic".into(),
+        PathBuf::from("/synthetic/codex"),
+        dir.path().to_path_buf(),
+        Arc::new(FixedPreflight(true)),
+    );
+    let request = CompletionRequest::new(
+        "synthetic instruction",
+        "synthetic data",
+        "",
+        Duration::from_secs(3),
+    );
+    assert!(matches!(
+        summarizer.complete(&request).await,
+        Err(SummarizerError::Cli(CliSummarizeError::ParseOutput(
+            CliBackend::Codex,
+            _
+        )))
+    ));
+    assert!(matches!(
+        summarizer.complete(&request).await,
+        Err(SummarizerError::HerdrStopped)
+    ));
+    assert_eq!(std::fs::read(dir.path().join("attempts")).unwrap(), b"x");
+}
+
+#[cfg(unix)]
 fn script(dir: &Path, contents: &str) -> PathBuf {
     let script = dir.join("sample-cli");
     // Open the fixture for writing only in the shell. Parallel tests that fork
