@@ -243,3 +243,64 @@ async fn a_session_interrupted_mid_commit_is_recovered_uploaded_and_finalized_at
         assert_eq!(*count, 1);
     }
 }
+
+#[tokio::test]
+async fn preparing_sessions_with_and_without_live_transcripts_are_recovered() {
+    let (base_url, _) = spawn_test_server(FaultConfig {
+        pre_process_fault_probability: 0.0,
+        post_process_fault_probability: 0.0,
+        timeout_simulation_probability: 0.0,
+        timeout_sleep: Duration::ZERO,
+    })
+    .await;
+    let adapter = HttpUploadClient::new(
+        base_url,
+        Duration::from_secs(5),
+        Arc::new(StaticTokenProvider("test-token".to_string())),
+    );
+    let store = SessionStore::open_in_memory().unwrap();
+    let sessions_root = tempfile::tempdir().unwrap();
+
+    let failed_to_start = SessionId::new();
+    let interrupted = SessionId::new();
+    for session_id in [failed_to_start, interrupted] {
+        store.create_session(&manifest(session_id)).unwrap();
+    }
+    let transcript = session_store::TranscriptSegment {
+        session_id: interrupted,
+        track: Some(TrackKind::SelfMic),
+        speaker: None,
+        text: "synthetic transcript".to_string(),
+        start_ms: Some(0),
+        end_ms: Some(20),
+        is_final: true,
+        is_retranscribed: false,
+    };
+    store.insert_transcript_segment(&transcript).unwrap();
+
+    let recovered = recover_incomplete_sessions(
+        &store,
+        &adapter,
+        sessions_root.path(),
+        SEGMENT_DURATION_MS.into(),
+        SAMPLE_RATE,
+        1,
+        Duration::from_millis(10),
+        10,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(recovered.len(), 2);
+    for session_id in [failed_to_start, interrupted] {
+        assert!(recovered.contains(&session_id));
+        assert_eq!(
+            store.capture_state(session_id).unwrap(),
+            CaptureState::Finalized
+        );
+    }
+    assert_eq!(
+        store.list_transcript_segments(interrupted).unwrap(),
+        vec![transcript]
+    );
+}

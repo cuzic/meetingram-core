@@ -38,8 +38,37 @@ pub async fn run_pipeline(
     store: &SessionStore,
     adapter: &dyn UploadAdapter,
 ) -> Result<SessionSummary, AppServiceError> {
-    let mut remote = begin_session(store, adapter, manifest).await?;
+    let remote = begin_session(store, adapter, manifest).await?;
+    run_pipeline_with_remote(
+        manifest,
+        self_frames,
+        remote_frames,
+        self_frame_interval_ns,
+        remote_frame_interval_ns,
+        total_duration_ns,
+        session_dir,
+        bitrate_bps,
+        store,
+        adapter,
+        remote,
+    )
+    .await
+}
 
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn run_pipeline_with_remote(
+    manifest: &SessionManifest,
+    self_frames: &[CapturedFrame],
+    remote_frames: &[CapturedFrame],
+    self_frame_interval_ns: u64,
+    remote_frame_interval_ns: u64,
+    total_duration_ns: u64,
+    session_dir: &Path,
+    bitrate_bps: i32,
+    store: &SessionStore,
+    adapter: &dyn UploadAdapter,
+    mut remote: Option<RemoteSession>,
+) -> Result<SessionSummary, AppServiceError> {
     let sample_rate = manifest.audio.sample_rate;
     let segment_duration_ms = manifest.audio.segment_duration_ms;
 
