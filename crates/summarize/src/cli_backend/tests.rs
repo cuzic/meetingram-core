@@ -192,7 +192,59 @@ fn run_fixture<'a>(
         Some(base),
         timeout,
         compatibility,
+        None,
     )
+}
+
+#[cfg(unix)]
+#[tokio::test]
+async fn herdr_sends_prompt_on_stdin_and_accepts_cli_result() {
+    let dir = tempfile::tempdir().unwrap();
+    let hc = script(
+        dir.path(),
+        r#"
+[ "$1:$2:$3:$4:$5" = "exec:-i:--timeout:600:--cwd" ] || exit 41
+[ -f "$6/system.txt" ] || exit 42
+[ "$7:$8" = "--:/synthetic/claude" ] || exit 43
+[ "$(cat)" = "synthetic transcript" ] || exit 44
+printf '%s\n' '{"is_error":false,"result":"synthetic result"}'
+"#,
+    );
+    let result = run_cli(
+        CliBackend::ClaudeCode,
+        Path::new("/synthetic/claude"),
+        CliInput {
+            system: "synthetic instruction",
+            user: "synthetic transcript",
+            model: None,
+        },
+        Some(dir.path()),
+        Duration::from_secs(3),
+        &AtomicBool::new(true),
+        Some(&hc),
+    )
+    .await
+    .unwrap();
+    assert_eq!(result, "synthetic result");
+}
+
+#[tokio::test]
+async fn herdr_codex_requires_completed_turn() {
+    let partial =
+        br#"{"type":"item.completed","item":{"type":"agent_message","text":"synthetic"}}"#;
+    assert!(matches!(
+        read_stdout(CliBackend::Codex, partial.as_slice(), true)
+            .await
+            .unwrap(),
+        CliStdout::MalformedCodexEvent
+    ));
+    let completed = [partial.as_slice(), b"\n", br#"{"type":"turn.completed"}"#].concat();
+    assert!(matches!(
+        read_stdout(CliBackend::Codex, completed.as_slice(), true)
+            .await
+            .unwrap(),
+        CliStdout::Codex
+    ));
 }
 
 #[cfg(unix)]

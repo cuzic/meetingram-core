@@ -330,7 +330,37 @@ async fn run_named_cli(
     timeout: Duration,
 ) -> Result<String, CliSummarizeError> {
     let binary = platform::resolve(name).map_err(|error| launch_error(backend, error))?;
-    run_cli(backend, &binary, input, base, timeout, &CLAUDE_COMPAT).await
+    run_cli(backend, &binary, input, base, timeout, &CLAUDE_COMPAT, None).await
+}
+
+/// Executes one completion through a local Herdr core whose account, settings,
+/// and billing policy have already been verified by the caller.
+///
+/// The caller must use a dedicated core. This function does not select a
+/// remote machine or retry through the direct CLI.
+pub async fn complete_via_verified_herdr(
+    backend: CliBackend,
+    herdr_binary: &Path,
+    provider_binary: &Path,
+    req: &CompletionRequest,
+    temp_base: &Path,
+) -> Result<String, SummarizerError> {
+    req.validate()?;
+    let input = CliInput {
+        system: &req.system,
+        user: &req.user,
+        model: (!req.model.trim().is_empty()).then_some(req.model.as_str()),
+    };
+    Ok(run_cli(
+        backend,
+        provider_binary,
+        input,
+        Some(temp_base),
+        req.timeout,
+        &CLAUDE_COMPAT,
+        Some(herdr_binary),
+    )
+    .await?)
 }
 
 fn launch_error(backend: CliBackend, error: io::Error) -> CliSummarizeError {
@@ -394,6 +424,7 @@ async fn run_cli(
     base: Option<&Path>,
     timeout: Duration,
     compatibility: &AtomicBool,
+    herdr_binary: Option<&Path>,
 ) -> Result<String, CliSummarizeError> {
     tokio::time::timeout(timeout, async {
         let dedicated_base = base.is_some();
@@ -427,15 +458,18 @@ async fn run_cli(
         .await
         .map_err(|error| CliSummarizeError::TempDir(io::Error::other(error)))?
         .map_err(CliSummarizeError::TempDir)?;
-        let compat = backend == CliBackend::ClaudeCode && compatibility.load(Ordering::Relaxed);
-        let mut result = run_attempt(backend, binary, &input, &dir, compat).await?;
-        if backend == CliBackend::ClaudeCode
+        let compat = herdr_binary.is_none()
+            && backend == CliBackend::ClaudeCode
+            && compatibility.load(Ordering::Relaxed);
+        let mut result = run_attempt(backend, binary, &input, &dir, compat, herdr_binary).await?;
+        if herdr_binary.is_none()
+            && backend == CliBackend::ClaudeCode
             && !compat
             && !result.status.success()
             && result.unknown_option
         {
             compatibility.store(true, Ordering::Relaxed);
-            result = run_attempt(backend, binary, &input, &dir, true).await?;
+            result = run_attempt(backend, binary, &input, &dir, true, None).await?;
         }
         if !result.status.success() {
             return Err(CliSummarizeError::NonZeroExit(backend, result.status));
@@ -445,6 +479,14 @@ async fn run_cli(
             CliStdout::Claude(stdout) => {
                 let value: serde_json::Value = serde_json::from_slice(&stdout)
                     .map_err(|e| CliSummarizeError::ParseOutput(backend, e.to_string()))?;
+                if herdr_binary.is_some()
+                    && value.get("is_error").and_then(|v| v.as_bool()) != Some(false)
+                {
+                    return Err(CliSummarizeError::ParseOutput(
+                        backend,
+                        "unsuccessful result envelope".into(),
+                    ));
+                }
                 value
                     .get("result")
                     .and_then(|v| v.as_str())
@@ -563,8 +605,23 @@ async fn run_attempt(
     input: &CliInput<'_>,
     dir: &Arc<WorkingDir>,
     compat: bool,
+    herdr_binary: Option<&Path>,
 ) -> Result<AttemptOutput, CliSummarizeError> {
-    let args = cli_args(backend, dir.path(), input.model, compat);
+    let provider_args = cli_args(backend, dir.path(), input.model, compat);
+    let (binary, args) = if let Some(herdr_binary) = herdr_binary {
+        let mut args = ["exec", "-i", "--timeout", "600", "--cwd"]
+            .map(OsString::from)
+            .to_vec();
+        args.extend([
+            dir.path().as_os_str().to_owned(),
+            "--".into(),
+            binary.as_os_str().to_owned(),
+        ]);
+        args.extend(provider_args);
+        (herdr_binary, args)
+    } else {
+        (binary, provider_args)
+    };
     let mut process =
         platform::Process::spawn(binary, &args, Some(dir)).map_err(|e| launch_error(backend, e))?;
     let mut stdin = process.stdin.take().expect("CLI stdin is piped");
@@ -583,11 +640,11 @@ async fn run_attempt(
             .await;
             Ok(result)
         },
-        read_stdout(backend, &mut process.stdout),
+        read_stdout(backend, &mut process.stdout, herdr_binary.is_some()),
         async {
             read_stderr(
                 &mut process.stderr,
-                backend == CliBackend::ClaudeCode && !compat,
+                herdr_binary.is_none() && backend == CliBackend::ClaudeCode && !compat,
             )
             .await
             .map_err(read_error)
@@ -612,6 +669,7 @@ async fn run_attempt(
 async fn read_stdout(
     backend: CliBackend,
     mut stdout: impl AsyncRead + Unpin,
+    require_completed: bool,
 ) -> Result<CliStdout, CliSummarizeError> {
     let read_error = |error| CliSummarizeError::ReadOutput(backend, error);
     if backend == CliBackend::ClaudeCode {
@@ -626,6 +684,7 @@ async fn read_stdout(
     let mut reader = BufReader::new(stdout);
     let mut line = Vec::new();
     let mut malformed = false;
+    let mut completed = false;
     while reader
         .read_until(b'\n', &mut line)
         .await
@@ -646,13 +705,17 @@ async fn read_stdout(
                     return Err(CliSummarizeError::ToolUse(backend));
                 }
             }
-            Ok(_) => {}
+            Ok(event) => match event.get("type").and_then(|v| v.as_str()) {
+                Some("turn.completed") => completed = true,
+                Some("turn.failed" | "turn.started") => completed = false,
+                _ => {}
+            },
             Err(_) if line.iter().all(u8::is_ascii_whitespace) => {}
             Err(_) => malformed = true,
         }
         line.clear();
     }
-    if malformed {
+    if malformed || (require_completed && !completed) {
         Ok(CliStdout::MalformedCodexEvent)
     } else {
         Ok(CliStdout::Codex)
