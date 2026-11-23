@@ -205,13 +205,16 @@ async fn herdr_sends_prompt_on_stdin_and_accepts_cli_result() {
         dir.path(),
         r#"
 [ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 41
+IFS= read -r identity || exit 40
+case "$identity" in *'"method":"server.status"'*) ;; *) exit 40 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"core":{"id":"test-core"},"pid":123}}'
 IFS= read -r auth || exit 42
 case "$auth" in *'"input":null'*) ;; *) exit 43 ;; esac
-printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
+printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
 [ ! -e "$(dirname "$0")/disconnect" ] || exit 0
 IFS= read -r request || exit 44
 case "$request" in *'"input":"c3ludGhldGljIHRyYW5zY3JpcHQ="'*) ;; *) exit 45 ;; esac
-printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJpc19lcnJvciI6ZmFsc2UsInJlc3VsdCI6InN5bnRoZXRpYyByZXN1bHQifQ==","stderr":"","timed_out":false,"truncated":false}}'
+printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":0,"stdout":"eyJpc19lcnJvciI6ZmFsc2UsInJlc3VsdCI6InN5bnRoZXRpYyByZXN1bHQifQ==","stderr":"","timed_out":false,"truncated":false}}'
 "#,
     );
     let summarizer = HerdrSummarizer::new(
@@ -296,8 +299,8 @@ struct FixedPreflight(bool);
 #[cfg(unix)]
 #[async_trait::async_trait]
 impl HerdrPreflight for FixedPreflight {
-    async fn verify(&self, session: &str) -> bool {
-        self.0 && session == "synthetic"
+    async fn verify(&self, session: &str, core_id: &str, pid: u32) -> bool {
+        self.0 && session == "synthetic" && core_id == "test-core" && pid == 123
     }
 }
 
@@ -311,11 +314,14 @@ async fn herdr_verifies_before_sending_and_does_not_resend_after_failure() {
         dir.path(),
         r#"
 [ "$HC_SESSION:$1" = "synthetic:connect" ] || exit 49
+IFS= read -r identity || exit 40
+case "$identity" in *'"method":"server.status"'*) ;; *) exit 40 ;; esac
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"core":{"id":"test-core"},"pid":123}}'
 IFS= read -r request || exit 42
-printf '%s\n' '{"jsonrpc":"2.0","id":1,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
+printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJsb2dnZWRJbiI6dHJ1ZSwiYXV0aE1ldGhvZCI6ImNsYXVkZS5haSIsImFwaVByb3ZpZGVyIjoiZmlyc3RQYXJ0eSJ9","stderr":"","timed_out":false,"truncated":false}}'
 IFS= read -r request || exit 0
 printf x >> "$(dirname "$0")/attempts"
-printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":1,"stdout":"","stderr":"","timed_out":false,"truncated":false}}'
+printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":1,"stdout":"","stderr":"","timed_out":false,"truncated":false}}'
 "#,
     );
     let req = CompletionRequest::new(

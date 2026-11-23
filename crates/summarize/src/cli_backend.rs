@@ -338,7 +338,7 @@ async fn run_named_cli(
 /// billing for the dedicated Herdr connection. Receives no meeting text.
 #[async_trait::async_trait]
 pub trait HerdrPreflight: Send + Sync {
-    async fn verify(&self, session: &str) -> bool;
+    async fn verify(&self, session: &str, core_id: &str, pid: u32) -> bool;
 }
 
 struct HerdrCommand {
@@ -409,17 +409,51 @@ impl HerdrRpc {
             .map(|value| value.to_str().ok_or_else(wire_error))
             .collect::<io::Result<Vec<_>>>()?;
         let cwd = dir.to_str().ok_or_else(wire_error)?;
-        self.next_id += 1;
-        let mut request = serde_json::to_vec(&serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": self.next_id,
-            "method": "machine.exec",
-            "params": {
+        self.call(
+            "machine.exec",
+            serde_json::json!({
                 "argv": argv,
                 "cwd": cwd,
                 "input": input.map(|body| base64::engine::general_purpose::STANDARD.encode(body)),
                 "timeout": timeout.as_secs_f64().clamp(1.0, 600.0)
-            }
+            }),
+        )
+        .await
+    }
+
+    async fn identity(&mut self) -> io::Result<(String, u32)> {
+        #[derive(serde::Deserialize)]
+        struct Core {
+            id: String,
+        }
+        #[derive(serde::Deserialize)]
+        struct Status {
+            core: Core,
+            pid: u32,
+        }
+        let status: Status = self.call("server.status", serde_json::json!({})).await?;
+        if status.core.id.is_empty() || status.pid == 0 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "invalid Herdr identity",
+            ));
+        }
+        Ok((status.core.id, status.pid))
+    }
+
+    async fn call<T: serde::de::DeserializeOwned>(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> io::Result<T> {
+        let wire_error =
+            || io::Error::new(io::ErrorKind::InvalidData, "invalid Herdr RPC response");
+        self.next_id += 1;
+        let mut request = serde_json::to_vec(&serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": self.next_id,
+            "method": method,
+            "params": params,
         }))
         .map_err(|_| wire_error())?;
         request.push(b'\n');
@@ -528,8 +562,15 @@ impl HerdrSummarizer {
             }
             let mut connection = HerdrRpc::connect(&self.herdr)
                 .map_err(|error| launch_error(self.backend, error))?;
-            if !self.has_subscription_login(&mut connection).await
-                || !self.preflight.verify(&self.herdr.session).await
+            let (core_id, pid) = connection
+                .identity()
+                .await
+                .map_err(|error| CliSummarizeError::ReadOutput(self.backend, error))?;
+            if !self
+                .preflight
+                .verify(&self.herdr.session, &core_id, pid)
+                .await
+                || !self.has_subscription_login(&mut connection).await
             {
                 return Err(SummarizerError::HerdrUnverified);
             }
