@@ -215,6 +215,8 @@ printf '%s\n' '{"jsonrpc":"2.0","id":2,"result":{"code":0,"stdout":"eyJsb2dnZWRJ
 [ ! -e "$(dirname "$0")/disconnect" ] || exit 0
 IFS= read -r request || exit 44
 case "$request" in *'"input":"c3ludGhldGljIHRyYW5zY3JpcHQ="'*) ;; *) exit 45 ;; esac
+case "$request" in *'"CLAUDE_CODE_MAX_RETRIES":"0"'*) ;; *) exit 47 ;; esac
+case "$request" in *'"CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK":"1"'*) ;; *) exit 48 ;; esac
 printf '%s\n' '{"jsonrpc":"2.0","id":3,"result":{"code":0,"stdout":"eyJpc19lcnJvciI6ZmFsc2UsInJlc3VsdCI6InN5bnRoZXRpYyByZXN1bHQifQ==","stderr":"","timed_out":false,"truncated":false}}'
 "#,
     );

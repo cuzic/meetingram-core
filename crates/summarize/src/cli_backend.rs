@@ -423,6 +423,7 @@ impl HerdrRpc {
         dir: &Path,
         input: Option<&str>,
         timeout: Duration,
+        env: serde_json::Value,
     ) -> io::Result<HerdrExecResult> {
         let wire_error =
             || io::Error::new(io::ErrorKind::InvalidData, "invalid Herdr exec response");
@@ -436,6 +437,7 @@ impl HerdrRpc {
             serde_json::json!({
                 "argv": argv,
                 "cwd": cwd,
+                "env": env,
                 "input": input.map(|body| base64::engine::general_purpose::STANDARD.encode(body)),
                 "timeout": timeout.as_secs_f64().clamp(1.0, 600.0)
             }),
@@ -535,7 +537,9 @@ impl HerdrSummarizer {
     async fn has_subscription_login(&self, connection: &mut HerdrRpc) -> bool {
         let args: Vec<OsString> = match self.backend {
             CliBackend::ClaudeCode => ["auth", "status", "--json"].as_slice(),
-            CliBackend::Codex => ["login", "status"].as_slice(),
+            CliBackend::Codex => {
+                ["login", "status", "-c", "forced_login_method=\"chatgpt\""].as_slice()
+            }
         }
         .iter()
         .map(OsString::from)
@@ -546,6 +550,7 @@ impl HerdrSummarizer {
             &self.temp_base,
             None,
             Duration::from_secs(10),
+            serde_json::json!({}),
         );
         let Ok(Ok(result)) = tokio::time::timeout(Duration::from_secs(12), query).await else {
             return false;
@@ -965,9 +970,28 @@ async fn run_herdr_attempt(
     dir: &Path,
     timeout: Duration,
 ) -> Result<CliStdout, CliSummarizeError> {
-    let args = cli_args(backend, dir, input.model, false);
+    let mut args = cli_args(backend, dir, input.model, false);
+    let env = match backend {
+        CliBackend::ClaudeCode => serde_json::json!({
+            "CLAUDE_CODE_MAX_RETRIES": "0",
+            "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+        }),
+        CliBackend::Codex => {
+            for setting in [
+                "forced_login_method=\"chatgpt\"",
+                "model_provider=\"openai\"",
+                "approval_policy=\"never\"",
+                "agents.enabled=false",
+                "features.multi_agent_v2=false",
+                "features.remote_plugin=false",
+            ] {
+                args.extend(["-c".into(), setting.into()]);
+            }
+            serde_json::json!({})
+        }
+    };
     let result = connection
-        .exec(binary, &args, dir, Some(input.user), timeout)
+        .exec(binary, &args, dir, Some(input.user), timeout, env)
         .await
         .map_err(|error| CliSummarizeError::ReadOutput(backend, error))?;
     if result.timed_out {
