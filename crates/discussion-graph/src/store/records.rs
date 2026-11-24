@@ -108,7 +108,10 @@ pub(super) fn load_graph(conn: &Connection, sid: &str) -> rusqlite::Result<Graph
     })
 }
 
-pub(super) fn parse_column<T: FromStr<Err = UnknownValue>>(row: &Row<'_>, col: usize) -> rusqlite::Result<T> {
+pub(super) fn parse_column<T: FromStr<Err = UnknownValue>>(
+    row: &Row<'_>,
+    col: usize,
+) -> rusqlite::Result<T> {
     parse_value(&row.get::<_, String>(col)?, col)
 }
 
