@@ -678,7 +678,8 @@ fn decision_history_preserves_revisions_and_requires_confirmed_subject() {
         {"op":"add_node","tmp":"a","kind":"decision","text":"Release Tuesday","confidence":1,"grounds":[{"uid":"u1"}]},
         {"op":"add_node","tmp":"b","kind":"decision","text":"Release Thursday","confidence":1,"grounds":[{"uid":"u2"}]},
         {"op":"add_node","tmp":"c","kind":"decision","text":"Release Friday","confidence":1,"grounds":[{"uid":"u3"}]},
-        {"op":"add_node","tmp":"d","kind":"action","text":"Test the build","confidence":1,"grounds":[{"uid":"u1"}]}
+        {"op":"add_node","tmp":"d","kind":"action","text":"Mika tests the build","confidence":1,"grounds":[{"uid":"u1"}]},
+        {"op":"add_node","tmp":"e","kind":"action","text":"Ren tests the build","confidence":1,"grounds":[{"uid":"u3"}]}
     ]}"#).unwrap();
     store
         .apply_patch(sid, PatchSource::Live, None, &ops, &["u1", "u2", "u3"], &[])
@@ -785,12 +786,33 @@ fn decision_history_preserves_revisions_and_requires_confirmed_subject() {
     assert!(store
         .review_decision_change(sid, rev, ab, Action::Revoke)
         .is_err());
+    let reassigned = store
+        .add_decision_change(sid, rev, "n4", Some("n5"), "u3")
+        .unwrap();
+    let rev = store
+        .review_decision_change(sid, reassigned, reassigned, approval)
+        .unwrap();
+    let rev = store
+        .review_decision_change(sid, rev, reassigned, Action::Revoke)
+        .unwrap();
+    assert_eq!(
+        store.load_decision_history(sid).unwrap().display("n4"),
+        Display::Unchanged
+    );
+    let rev = store
+        .review_decision_change(sid, rev, reassigned, Action::Reopen)
+        .unwrap();
+    store
+        .review_decision_change(sid, rev, reassigned, approval)
+        .unwrap();
     drop(store);
     let mut reopened = GraphStore::open(&dir.path().join("sessions.sqlite")).unwrap();
     let saved = reopened.load_decision_history(sid).unwrap();
     assert_eq!(saved.display("n1"), Display::Historical);
     assert_eq!(saved.display("n2"), Display::Historical);
     assert_eq!(saved.changes[2].state, ChangeState::Rejected);
+    assert_eq!(saved.display("n4"), Display::Historical);
+    assert_eq!(saved.display("n5"), Display::Current);
     reopened.delete_session(sid).unwrap();
     assert!(reopened
         .load_decision_history(sid)
