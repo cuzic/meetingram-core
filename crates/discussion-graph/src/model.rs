@@ -64,6 +64,68 @@ stored_enum!(PatchSource {
     Live => "live", Flush => "flush", Consolidate => "consolidate", Review => "review",
 });
 
+stored_enum!(ChangeState {
+    Pending => "pending", Approved => "approved", Rejected => "rejected", Revoked => "revoked",
+});
+
+/// A human-authored change in one session. An absent replacement denotes withdrawal.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DecisionChange {
+    pub id: u64,
+    pub previous: String,
+    pub replacement: Option<String>,
+    pub evidence: String,
+    pub state: ChangeState,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DecisionChangeAction {
+    Approve { same_subject: bool },
+    Reject,
+    Revoke,
+    Reopen,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DecisionDisplay {
+    Unchanged,
+    Current,
+    Pending,
+    Historical,
+}
+
+/// The graph and its change records at the same committed revision.
+pub struct DecisionHistory {
+    pub graph: Graph,
+    pub changes: Vec<DecisionChange>,
+}
+
+impl DecisionHistory {
+    pub fn display(&self, nid: &str) -> DecisionDisplay {
+        if self
+            .changes
+            .iter()
+            .any(|change| change.state == ChangeState::Approved && change.previous == nid)
+        {
+            DecisionDisplay::Historical
+        } else if self.changes.iter().any(|change| {
+            change.state == ChangeState::Pending
+                && (change.previous == nid || change.replacement.as_deref() == Some(nid))
+                && !self.changes.iter().any(|approved| {
+                    approved.state == ChangeState::Approved && approved.previous == change.previous
+                })
+        }) {
+            DecisionDisplay::Pending
+        } else if self.changes.iter().any(|change| {
+            change.state == ChangeState::Approved && change.replacement.as_deref() == Some(nid)
+        }) {
+            DecisionDisplay::Current
+        } else {
+            DecisionDisplay::Unchanged
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Utterance {
     pub uid: String,
