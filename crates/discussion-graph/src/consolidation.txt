@@ -5,3 +5,4 @@
 merge は同種のノード間だけで行い、統合済みのノードは再利用しないでください。set_status の decided と resolved は issue に、retracted は position と argument に限ります。推測で決定を作らないでください。
 自己ループや graph edges にある同じ (src, dst, kind) のエッジを作らないでください。同じ応答で既に追加または統合で付け替えたエッジも重複させないでください。
 各操作には 1 件以上の grounds が必要です。根拠に使えるのは入力に掲載された発話の uid だけです。act を付けるときは asserts、asks、challenges、agrees、retracts、rephrases のいずれかです。confidence は 0 から 1 までです。根拠を示せる操作がなければ {"ops":[]} を返してください。
+決定と宿題は merge できません。同じ内容の言い換えは既存ノードを再利用し、決定内容・担当・期限が変更された場合は根拠付きの別ノードにしてください。

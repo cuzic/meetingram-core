@@ -61,3 +61,13 @@ CREATE TABLE IF NOT EXISTS graph_consolidations (
     session_id TEXT NOT NULL PRIMARY KEY,
     rev INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS graph_decision_changes (
+    session_id TEXT NOT NULL,
+    id INTEGER NOT NULL,
+    previous TEXT NOT NULL,
+    replacement TEXT,
+    evidence TEXT NOT NULL,
+    state TEXT NOT NULL,
+    PRIMARY KEY (session_id, id)
+);

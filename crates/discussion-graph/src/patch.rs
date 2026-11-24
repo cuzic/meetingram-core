@@ -113,6 +113,7 @@ pub enum Rejection {
     MergeSameNode,
     MergeEndpoint,
     MergeKind,
+    MergeDecisionOrAction,
     MergeReviewedNode,
     MergeReviewedEdge,
     MergeRejectedTarget,
@@ -449,6 +450,9 @@ impl Patch<'_> {
         }
         if source.kind != target.kind {
             return Err(Rejection::MergeKind);
+        }
+        if matches!(source.kind, NodeKind::Decision | NodeKind::Action) {
+            return Err(Rejection::MergeDecisionOrAction);
         }
         if source.review != Review::Auto {
             return Err(Rejection::MergeReviewedNode);

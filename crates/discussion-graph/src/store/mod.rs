@@ -1,5 +1,6 @@
 //! SQLite storage using a connection independent of the recording store.
 
+mod decision_history;
 mod records;
 #[cfg(test)]
 mod tests;
@@ -34,6 +35,12 @@ pub enum StoreError {
         "review patches must use set_review; issue consolidation patches must use consolidate"
     )]
     InvalidPatchSource,
+    #[error("the listed graph revision is stale")]
+    StaleDecisionHistory,
+    #[error("the decision change has invalid endpoints or evidence")]
+    InvalidDecisionChange,
+    #[error("the decision change cannot be reviewed in its current state")]
+    InvalidChangeTransition,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -290,6 +297,11 @@ impl GraphStore {
         let sid = session_id.to_string();
         let tx = self.begin_write()?;
         let rev = revision(&tx, &sid)? + 1;
+        if let (ReviewTarget::Node(_), ReviewDecision::Reject) = (target, decision) {
+            if decision_history::is_active_endpoint(&tx, &sid, id)? {
+                return Err(StoreError::UnreviewableTarget);
+            }
+        }
         let changed = match target {
             ReviewTarget::Node(_) => tx.execute(
                 "UPDATE graph_nodes SET review = ?3, updated_rev = ?4
@@ -319,6 +331,7 @@ impl GraphStore {
         let sid = session_id.to_string();
         let tx = self.begin_write()?;
         for sql in [
+            "DELETE FROM graph_decision_changes WHERE session_id = ?1",
             "DELETE FROM graph_grounds WHERE session_id = ?1",
             "DELETE FROM graph_edges WHERE session_id = ?1",
             "DELETE FROM graph_nodes WHERE session_id = ?1",

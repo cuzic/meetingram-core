@@ -660,3 +660,141 @@ fn opening_an_older_database_creates_the_consolidation_completion_table() {
     let graph = GraphStore::open(&path).unwrap();
     assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
 }
+
+#[test]
+fn decision_history_preserves_revisions_and_requires_confirmed_subject() {
+    use crate::{
+        ChangeState, DecisionChangeAction as Action, DecisionDisplay as Display, Rejection,
+    };
+
+    let (dir, session, mut store) = stores();
+    let sid = create_session(&session);
+    let other = create_session(&session);
+    for text in ["Release Tuesday", "Release Thursday", "Release Friday"] {
+        append(&session, sid, text);
+    }
+    store.import_utterances(sid).unwrap();
+    let ops = parse_ops(r#"{"ops":[
+        {"op":"add_node","tmp":"a","kind":"decision","text":"Release Tuesday","confidence":1,"grounds":[{"uid":"u1"}]},
+        {"op":"add_node","tmp":"b","kind":"decision","text":"Release Thursday","confidence":1,"grounds":[{"uid":"u2"}]},
+        {"op":"add_node","tmp":"c","kind":"decision","text":"Release Friday","confidence":1,"grounds":[{"uid":"u3"}]},
+        {"op":"add_node","tmp":"d","kind":"action","text":"Test the build","confidence":1,"grounds":[{"uid":"u1"}]}
+    ]}"#).unwrap();
+    store
+        .apply_patch(sid, PatchSource::Live, None, &ops, &["u1", "u2", "u3"], &[])
+        .unwrap();
+    let merge = parse_ops(
+        r#"{"ops":[
+        {"op":"merge","from":"n1","into":"n2","grounds":[{"uid":"u2"}]}
+    ]}"#,
+    )
+    .unwrap();
+    for source in [PatchSource::Live, PatchSource::Consolidate] {
+        let result = store
+            .apply_patch(sid, source, None, &merge, &[], &["u2"])
+            .unwrap();
+        assert_eq!(
+            result.rejected.get(&Rejection::MergeDecisionOrAction),
+            Some(&1)
+        );
+        assert!(result.graph.nodes["n1"].is_live());
+        assert!(result.graph.nodes["n2"].is_live());
+    }
+
+    assert!(matches!(
+        store.add_decision_change(other, 0, "n1", Some("n2"), "u2"),
+        Err(StoreError::InvalidDecisionChange)
+    ));
+    assert!(matches!(
+        store.add_decision_change(sid, 3, "n1", Some("n4"), "u2"),
+        Err(StoreError::InvalidDecisionChange)
+    ));
+    let ab = store
+        .add_decision_change(sid, 3, "n1", Some("n2"), "u2")
+        .unwrap();
+    assert_eq!(
+        store
+            .add_decision_change(sid, 4, "n1", Some("n2"), "u2")
+            .unwrap(),
+        ab
+    );
+    let approval = Action::Approve { same_subject: true };
+    assert!(matches!(
+        store.review_decision_change(sid, 3, ab, approval),
+        Err(StoreError::StaleDecisionHistory)
+    ));
+    assert!(matches!(
+        store.review_decision_change(
+            sid,
+            4,
+            ab,
+            Action::Approve {
+                same_subject: false
+            }
+        ),
+        Err(StoreError::InvalidChangeTransition)
+    ));
+    assert!(store
+        .set_review(sid, ReviewTarget::Node("n1"), ReviewDecision::Reject)
+        .is_err());
+    assert_eq!(
+        store.load_decision_history(sid).unwrap().display("n2"),
+        Display::Pending
+    );
+    let rev = store.review_decision_change(sid, 4, ab, approval).unwrap();
+    let bc = store
+        .add_decision_change(sid, rev, "n2", Some("n3"), "u3")
+        .unwrap();
+    let rev = store.review_decision_change(sid, bc, bc, approval).unwrap();
+
+    assert!(store
+        .review_decision_change(sid, rev, ab, Action::Revoke)
+        .is_err());
+    let cycle = store
+        .add_decision_change(sid, rev, "n3", Some("n1"), "u3")
+        .unwrap();
+    assert!(store
+        .review_decision_change(sid, cycle, cycle, approval)
+        .is_err());
+    let conflict = store
+        .add_decision_change(sid, cycle, "n1", Some("n3"), "u3")
+        .unwrap();
+    assert!(store
+        .review_decision_change(sid, conflict, conflict, approval)
+        .is_err());
+    let rev = store
+        .review_decision_change(sid, conflict, cycle, Action::Reject)
+        .unwrap();
+    let rev = store
+        .review_decision_change(sid, rev, conflict, Action::Reject)
+        .unwrap();
+    let rev = store
+        .review_decision_change(sid, rev, bc, Action::Revoke)
+        .unwrap();
+    assert_eq!(
+        store.load_decision_history(sid).unwrap().display("n2"),
+        Display::Current
+    );
+
+    let withdrawal = store
+        .add_decision_change(sid, rev, "n2", None, "u3")
+        .unwrap();
+    let rev = store
+        .review_decision_change(sid, withdrawal, withdrawal, approval)
+        .unwrap();
+    assert!(store
+        .review_decision_change(sid, rev, ab, Action::Revoke)
+        .is_err());
+    drop(store);
+    let mut reopened = GraphStore::open(&dir.path().join("sessions.sqlite")).unwrap();
+    let saved = reopened.load_decision_history(sid).unwrap();
+    assert_eq!(saved.display("n1"), Display::Historical);
+    assert_eq!(saved.display("n2"), Display::Historical);
+    assert_eq!(saved.changes[2].state, ChangeState::Rejected);
+    reopened.delete_session(sid).unwrap();
+    assert!(reopened
+        .load_decision_history(sid)
+        .unwrap()
+        .changes
+        .is_empty());
+}

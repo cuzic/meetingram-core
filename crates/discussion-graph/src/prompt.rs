@@ -16,6 +16,7 @@ const EXTRACT: &str = concat!(
     include_str!("extraction-r11.txt"),
     include_str!("extraction-r12.txt"),
     include_str!("extraction-r13.txt"),
+    "決定と宿題は merge できません。同じ内容の言い換えは既存ノードを再利用し、決定内容・担当・期限が変更された場合は根拠付きの別ノードにしてください。\n",
     "増分では後から案が出るかは分かりません。明らかに事実・数値・可否の確認の問いのときだけ親を付けてください。付けた親が後で合わなくなったら整理の段 1 で外します。\n"
 );
 const BASELINE: &str = concat!(
