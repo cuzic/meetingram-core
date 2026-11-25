@@ -65,7 +65,7 @@ pub async fn run_macos_capture_session(
 
     let self_interval = collected.self_nominal_frame_interval_ns.max(1);
     let remote_interval = collected.remote_nominal_frame_interval_ns.max(1);
-    let total_duration_ns = latest_frame_end_ns(&collected, self_interval, remote_interval);
+    let timeline_end_ns = latest_frame_end_ns(&collected, self_interval, remote_interval);
 
     run_pipeline(
         manifest,
@@ -73,7 +73,7 @@ pub async fn run_macos_capture_session(
         &collected.remote_frames,
         self_interval,
         remote_interval,
-        total_duration_ns,
+        timeline_end_ns,
         session_dir,
         bitrate_bps,
         store,
