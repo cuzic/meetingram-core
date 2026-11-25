@@ -25,6 +25,10 @@ const FINALIZE_MAX_UPLOAD_PASSES: u32 = 10;
 /// (task #7) calls it with `pseudo_source`-generated frames; stage 2 (task #10)
 /// calls it with frames a Windows supervisor converted from `capture-windows`'s
 /// real WASAPI output.
+///
+/// `timeline_end_ns` is the end of the session on the same host clock as the
+/// frames' `host_time_ns`; both tracks are padded up to it. The recorded
+/// `total_duration_ms` is that end minus the earliest frame's `host_time_ns`.
 #[allow(clippy::too_many_arguments)]
 pub async fn run_pipeline(
     manifest: &SessionManifest,
@@ -32,7 +36,7 @@ pub async fn run_pipeline(
     remote_frames: &[CapturedFrame],
     self_frame_interval_ns: u64,
     remote_frame_interval_ns: u64,
-    total_duration_ns: u64,
+    timeline_end_ns: u64,
     session_dir: &Path,
     bitrate_bps: i32,
     store: &SessionStore,
@@ -45,7 +49,7 @@ pub async fn run_pipeline(
         remote_frames,
         self_frame_interval_ns,
         remote_frame_interval_ns,
-        total_duration_ns,
+        timeline_end_ns,
         session_dir,
         bitrate_bps,
         store,
@@ -62,7 +66,7 @@ pub(crate) async fn run_pipeline_with_remote(
     remote_frames: &[CapturedFrame],
     self_frame_interval_ns: u64,
     remote_frame_interval_ns: u64,
-    total_duration_ns: u64,
+    timeline_end_ns: u64,
     session_dir: &Path,
     bitrate_bps: i32,
     store: &SessionStore,
@@ -72,17 +76,31 @@ pub(crate) async fn run_pipeline_with_remote(
     let sample_rate = manifest.audio.sample_rate;
     let segment_duration_ms = manifest.audio.segment_duration_ms;
 
+    // Capture backends stamp frames with the host clock (QPC on Windows, mach time
+    // on macOS), which counts from boot, not from the start of this session. Both
+    // tracks start at the earliest frame of either track, so a track that starts
+    // late (or never gets a frame) is padded with silence from the same point
+    // instead of from boot, and the session length is end minus that start.
+    let timeline_start_ns = self_frames
+        .iter()
+        .chain(remote_frames)
+        .map(|f| f.host_time_ns)
+        .min()
+        .unwrap_or(0);
+
     let self_pcm = align_track(
         self_frames,
         sample_rate,
         self_frame_interval_ns,
-        total_duration_ns,
+        timeline_start_ns,
+        timeline_end_ns,
     );
     let remote_pcm = align_track(
         remote_frames,
         sample_rate,
         remote_frame_interval_ns,
-        total_duration_ns,
+        timeline_start_ns,
+        timeline_end_ns,
     );
 
     commit_and_upload_track(
@@ -116,7 +134,7 @@ pub(crate) async fn run_pipeline_with_remote(
         remote = try_register_remote_session(store, adapter, manifest).await;
     }
 
-    let total_duration_ms = total_duration_ns / 1_000_000;
+    let total_duration_ms = timeline_end_ns.saturating_sub(timeline_start_ns) / 1_000_000;
     match remote {
         Some(remote) => {
             end_session(
