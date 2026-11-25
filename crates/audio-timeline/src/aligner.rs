@@ -81,6 +81,17 @@ impl TimelineAligner {
         }
     }
 
+    /// Like [`new`](Self::new), but the output starts at `start_ns` on the host clock
+    /// instead of at the first packet. A first packet after `start_ns` is preceded by
+    /// silence, and [`finalize_up_to`](Self::finalize_up_to) pads from `start_ns` when
+    /// no packet arrived at all. Use it to give several sources a common start.
+    pub fn starting_at(nominal_rate_hz: u32, start_ns: u64) -> Self {
+        Self {
+            next_expected_ns: Some(start_ns),
+            ..Self::new(nominal_rate_hz)
+        }
+    }
+
     pub fn stats(&self) -> AlignerStats {
         self.stats
     }
@@ -178,6 +189,19 @@ mod tests {
             samples,
             discontinuity,
         }
+    }
+
+    #[test]
+    fn starting_at_pads_before_a_late_first_packet_and_when_nothing_arrives() {
+        let mut late = TimelineAligner::starting_at(1000, 1_000_000_000);
+        late.ingest(&packet(1_100_000_000, 20_000_000, vec![1.0; 20], false));
+        late.finalize_up_to(1_200_000_000);
+        assert_eq!(late.output().len(), 200);
+        assert!(late.output()[..100].iter().all(|&s| s == 0.0));
+
+        let mut empty = TimelineAligner::starting_at(1000, 1_000_000_000);
+        empty.finalize_up_to(1_200_000_000);
+        assert_eq!(empty.output().len(), 200);
     }
 
     #[test]

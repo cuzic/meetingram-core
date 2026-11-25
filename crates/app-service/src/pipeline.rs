@@ -76,16 +76,30 @@ pub(crate) async fn run_pipeline_with_remote(
     let sample_rate = manifest.audio.sample_rate;
     let segment_duration_ms = manifest.audio.segment_duration_ms;
 
+    // Capture backends stamp frames with the host clock (QPC on Windows, mach time
+    // on macOS), which counts from boot, not from the start of this session. Both
+    // tracks start at the earliest frame of either track, so a track that starts
+    // late (or never gets a frame) is padded with silence from the same point
+    // instead of from boot, and the session length is end minus that start.
+    let timeline_start_ns = self_frames
+        .iter()
+        .chain(remote_frames)
+        .map(|f| f.host_time_ns)
+        .min()
+        .unwrap_or(0);
+
     let self_pcm = align_track(
         self_frames,
         sample_rate,
         self_frame_interval_ns,
+        timeline_start_ns,
         timeline_end_ns,
     );
     let remote_pcm = align_track(
         remote_frames,
         sample_rate,
         remote_frame_interval_ns,
+        timeline_start_ns,
         timeline_end_ns,
     );
 
@@ -120,16 +134,6 @@ pub(crate) async fn run_pipeline_with_remote(
         remote = try_register_remote_session(store, adapter, manifest).await;
     }
 
-    // Capture backends stamp frames with the host clock (QPC on Windows, mach time
-    // on macOS), which counts from boot, not from the start of this session. The
-    // aligner needs that absolute end, but the session length is end minus the
-    // earliest frame.
-    let timeline_start_ns = self_frames
-        .iter()
-        .chain(remote_frames)
-        .map(|f| f.host_time_ns)
-        .min()
-        .unwrap_or(0);
     let total_duration_ms = timeline_end_ns.saturating_sub(timeline_start_ns) / 1_000_000;
     match remote {
         Some(remote) => {
