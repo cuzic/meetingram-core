@@ -363,7 +363,7 @@ impl<'a> Material<'a> {
             for target in targets {
                 for edge in incoming.get(target).into_iter().flatten() {
                     let node = &graph.nodes[&edge.src];
-                    if second_level && seen.contains(node.nid.as_str()) {
+                    if second_level && !seen.insert(node.nid.as_str()) {
                         continue;
                     }
                     level.push(Reason {
@@ -374,7 +374,9 @@ impl<'a> Material<'a> {
                     });
                 }
             }
-            seen.extend(level.iter().map(|reason| reason.node.nid.as_str()));
+            if !second_level {
+                seen.extend(level.iter().map(|reason| reason.node.nid.as_str()));
+            }
             reasons.extend(level);
         }
         reasons.sort_by_key(|reason| {
@@ -400,7 +402,8 @@ impl<'a> Material<'a> {
         decisions.dedup_by_key(|node| &node.nid);
         for edge in graph.live_edges() {
             if edge.kind == EdgeKind::Assigns
-                && decisions.iter().any(|node| node.nid == edge.dst)
+                && !decisions.is_empty()
+                && (edge.dst == issue.nid || decisions.iter().any(|node| node.nid == edge.dst))
                 && graph.nodes.get(&edge.src).is_some_and(|node| {
                     node.kind == NodeKind::Action && node.status != Status::Retracted
                 })
@@ -640,6 +643,13 @@ impl Checker<'_> {
         out
     }
 
+    fn has_text(value: &Value) -> bool {
+        value
+            .get("text")
+            .and_then(Value::as_str)
+            .is_some_and(|text| !text.trim().is_empty())
+    }
+
     /// Read one element. `None` when the text is missing or empty.
     fn element(&self, value: &Value, counts: &mut Counts) -> Option<CloudElement> {
         let text = value.get("text")?.as_str()?.trim();
@@ -702,8 +712,9 @@ pub fn validate_cloud(
             .get("on")
             .and_then(Value::as_str)
             .and_then(AssumptionOn::parse);
-        let element = on.and_then(|_| checker.element(item, &mut counts));
-        let (Some(on), Some(element)) = (on, element) else {
+        // The arrow and the text come first, then the quotas, then grounds and
+        // downgrades, so a dropped assumption adds one to `dropped` and nothing else.
+        let (Some(on), true) = (on, Checker::has_text(item)) else {
             counts.dropped += 1;
             continue;
         };
@@ -713,6 +724,10 @@ pub fn validate_cloud(
             continue;
         }
         *used += 1;
+        let Some(element) = checker.element(item, &mut counts) else {
+            counts.dropped += 1;
+            continue;
+        };
         let injection = match item.get("injection") {
             None | Some(Value::Null) => None,
             Some(value) => {

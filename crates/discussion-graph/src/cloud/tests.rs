@@ -634,3 +634,77 @@ fn errors_and_prompts_do_not_carry_meeting_text() {
     let error = validate_cloud("合成の本文だけ", &prompt).unwrap_err();
     assert!(!format!("{error} {error:?}").contains("合成"));
 }
+
+#[test]
+fn an_action_assigned_directly_to_the_issue_is_in_the_input_only_when_decided() {
+    let mut b = rich_graph();
+    b.node("act2", NodeKind::Action, "課題に直接付く宿題", 6)
+        .edge("act2", "i1", EdgeKind::Assigns)
+        .say("u8", "宿題の発言")
+        .ground("act2", "u8");
+    let prompt = build_conflict_cloud_default(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    assert!(prompt.user.contains("課題に直接付く宿題"));
+    assert!(prompt.user.contains("合成の宿題"));
+    assert!(prompt.allowed_nids.contains(&"act2".to_owned()));
+    assert!(prompt.allowed_uids.contains(&"u8".to_owned()));
+
+    // Not decided: no actions at all.
+    b.set_status("dec", Status::Retracted);
+    let prompt = build_conflict_cloud_default(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    assert!(!prompt.user.contains("課題に直接付く宿題"));
+}
+
+#[test]
+fn a_reason_on_both_levels_is_listed_once_at_the_first_level() {
+    let mut b = rich_graph();
+    // a1 supports p1 (level 1). a2 attaches to a1 (level 2) and also directly
+    // to p2, so it is level 1 and must not appear again at level 2.
+    b.edge("a2", "p2", EdgeKind::Supports)
+        // a4 attaches to two level-1 reasons and appears once at level 2.
+        .reason("a4", "a1", EdgeKind::Supports)
+        .edge("a4", "a2", EdgeKind::ObjectsTo);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let rows: Vec<_> = material
+        .reasons
+        .iter()
+        .map(|r| (r.node.nid.as_str(), r.on, r.second_level))
+        .collect();
+    assert_eq!(
+        rows,
+        [
+            ("a1", "p1", false),
+            ("a2", "p2", false),
+            ("a3", "a2", true),
+            ("a4", "a1", true)
+        ]
+    );
+    // Dropping the second level keeps the first-level rows.
+    let (user, _, nids) = material.render(CloudInputStage::NoSecondLevelReasons);
+    assert!(nids.contains("a1") && nids.contains("a2") && !nids.contains("a4"));
+    assert!(user.contains(r#""nid":"a2""#));
+}
+
+#[test]
+fn assumptions_dropped_by_the_quota_add_one_to_dropped_and_nothing_else() {
+    let prompt = small_prompt();
+    let stated = |text: &str| json!({"on": "ab", "text": text, "basis": "stated", "grounds": ["u99"], "nids": ["n99"]});
+    let text = response(json!({"assumptions": [stated("一"), stated("二"), stated("三")]}));
+    let result = validate_cloud(&text, &prompt).unwrap();
+    assert_eq!(result.diagram.assumptions.len(), 2);
+    assert_eq!(result.downgraded, 2);
+    // Two kept assumptions lose one ground and one node ID each; the third counts once.
+    assert_eq!(result.dropped, 2 * 2 + 1);
+}
+
+#[test]
+fn the_system_prompt_states_the_arrows_and_the_stated_rule() {
+    for arrow in [
+        "ab は「a を満たすには b が要る」",
+        "ac は「a を満たすには c が要る」",
+        "bd は「b を満たすには d が要る」",
+        "cd は「c を満たすには d2 が要る」",
+    ] {
+        assert!(CLOUD_SYSTEM.contains(arrow), "{arrow}");
+    }
+    assert!(CLOUD_SYSTEM.contains("grounds に入れて stated にする"));
+}
