@@ -722,14 +722,16 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
         "cd: c を満たすのに d2 が要る",
         "dd: d と d2 が両立しないと考える理由",
         "dd は対立そのものの前提なので、必ずちょうど 1 件書く",
-        "最もありそうな制約についての信念を inferred で書くか、「両立を妨げる制約は会議で述べられていない」とそのまま書き、打ち手は付けない",
-        "入力に根拠の無い「限られた…を取り合う」の型",
+        "まず utterances から、両立を妨げる制約を述べた発話",
+        "あれば、その制約を使い、stated にして uid を grounds に入れる",
+        "無ければ、最もありそうな制約を、偽でありうる信念として inferred で書く",
+        "「会議で述べられていない」のような会議についての記述にはしない",
         "入力に無い具体（回数・「一律」など）は作らない",
         "埋め草は書かない: 定義から真になる文、b と c の対立の言い直し、片方の案の欠点",
+        "根拠の無い「限られた…を取り合う」の型",
         "「献立は 1 つなので両方は作れない」（定義から真になる文）",
-        "dd の良い例（型の違うもの）",
-        "（設備を取り合う）",
-        "（人手が足りない）",
+        "（発話「どちらも家のコンロの同じ口でやるしかない」がある場合。stated で、その uid を grounds に入れる）",
+        "（制約を述べた発話が無い場合。inferred の信念）",
         "その矢印の理由が書けなければ、その矢印（dd を除く）の前提は出さない",
         "dd の悪い例",
         "dd の良い例",
@@ -823,8 +825,10 @@ fn a_first_level_reason_keeps_its_second_level_relation_until_that_level_is_drop
 
 #[test]
 fn the_system_prompt_does_not_tie_stated_to_how_b_and_c_were_chosen() {
+    // Sentinel against the round-2 regression (B/C inferred 92/132 in spike r3):
     // basis follows the utterances only; no rule may make b or c inferred
-    // because of the way they were picked.
+    // because of the way they were picked. The positive rule is pinned in
+    // `the_system_prompt_defines_what_each_assumption_may_say`.
     assert!(!CLOUD_SYSTEM.contains("そういう理由が無ければ"));
     assert!(!CLOUD_SYSTEM.contains("b・c は inferred"));
 }
@@ -836,4 +840,12 @@ fn a_reason_pointing_at_itself_adds_no_relation() {
     let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
     let (user, _, _) = material.render(CloudInputStage::Full);
     assert!(line_of(&user, "a1").get("also").is_none(), "{user}");
+}
+
+#[test]
+fn the_system_prompt_has_no_dd_that_describes_the_meeting() {
+    // A dd is a falsifiable belief; "not stated in the meeting" is a fact about
+    // the meeting (review M1), so it is neither offered nor allowed.
+    assert!(!CLOUD_SYSTEM.contains("会議で述べられていない」とそのまま"));
+    assert!(!CLOUD_SYSTEM.contains("打ち手は付けない"));
 }
