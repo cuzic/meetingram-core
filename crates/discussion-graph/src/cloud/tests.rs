@@ -721,9 +721,15 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
         "d が c を損なうという反論は cd に置く",
         "cd: c を満たすのに d2 が要る",
         "dd: d と d2 が両立しないと考える理由",
-        "dd は対立そのものの前提なので、必ず 1 件書く",
-        "定義から真になる文",
-        "会議で言われていない制約は inferred にし、入力に無い具体（回数・「一律」など）を作らない",
+        "dd は対立そのものの前提なので、必ずちょうど 1 件書く",
+        "最もありそうな制約についての信念を inferred で書くか、「両立を妨げる制約は会議で述べられていない」とそのまま書き、打ち手は付けない",
+        "入力に根拠の無い「限られた…を取り合う」の型",
+        "入力に無い具体（回数・「一律」など）は作らない",
+        "埋め草は書かない: 定義から真になる文、b と c の対立の言い直し、片方の案の欠点",
+        "「献立は 1 つなので両方は作れない」（定義から真になる文）",
+        "dd の良い例（型の違うもの）",
+        "（設備を取り合う）",
+        "（人手が足りない）",
         "その矢印の理由が書けなければ、その矢印（dd を除く）の前提は出さない",
         "dd の悪い例",
         "dd の良い例",
@@ -821,4 +827,13 @@ fn the_system_prompt_does_not_tie_stated_to_how_b_and_c_were_chosen() {
     // because of the way they were picked.
     assert!(!CLOUD_SYSTEM.contains("そういう理由が無ければ"));
     assert!(!CLOUD_SYSTEM.contains("b・c は inferred"));
+}
+
+#[test]
+fn a_reason_pointing_at_itself_adds_no_relation() {
+    let mut b = rich_graph();
+    b.edge("a1", "a1", EdgeKind::Supports);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    assert!(line_of(&user, "a1").get("also").is_none(), "{user}");
 }

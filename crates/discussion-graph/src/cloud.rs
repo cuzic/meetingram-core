@@ -361,7 +361,8 @@ impl<'a> Material<'a> {
             } else {
                 positions.iter().map(|node| node.nid.as_str()).collect()
             };
-            // A reason listed on two rows is still one target.
+            // A reason listed on two rows is still one target; this is what keeps a
+            // relation from being added twice.
             let mut once = BTreeSet::new();
             targets.retain(|target| once.insert(*target));
             let mut level: Vec<Reason<'a>> = Vec::new();
@@ -380,10 +381,7 @@ impl<'a> Material<'a> {
                             .chain(level.iter_mut())
                             .find(|reason| reason.node.nid == node.nid)
                         {
-                            let link = (edge.kind, on);
-                            if (row.relation, row.on) != link && !row.also.contains(&link) {
-                                row.also.push(link);
-                            }
+                            row.also.push((edge.kind, on));
                             continue;
                         }
                     }
