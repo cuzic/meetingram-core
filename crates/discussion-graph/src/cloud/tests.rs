@@ -778,3 +778,18 @@ fn a_reason_under_a_reason_listed_twice_does_not_repeat_its_relation() {
     let a2 = line_of(&user, "a2");
     assert!(a2.get("also").is_none(), "{a2}");
 }
+
+#[test]
+fn a_first_level_reason_keeps_its_second_level_relation_until_that_level_is_dropped() {
+    let mut b = rich_graph();
+    // a2 objects to a1 (second level) and also supports p2 (first level).
+    b.edge("a2", "p2", EdgeKind::Supports);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    let a2 = line_of(&user, "a2");
+    assert_eq!(a2["relation"], "supports");
+    assert_eq!(a2["on"], "p2");
+    assert_eq!(a2["also"], json!([{"relation": "objects_to", "on": "a1"}]));
+    let (user, _, _) = material.render(CloudInputStage::NoSecondLevelReasons);
+    assert!(line_of(&user, "a2").get("also").is_none());
+}
