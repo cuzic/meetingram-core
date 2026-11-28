@@ -732,13 +732,15 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
         "両案が同じ場所・枠・時間・人・お金を使う、と述べた発話は、dd の制約を述べている",
         "stated にできるときは、inferred の書き方より stated を優先する",
         "最もありそうな具体的な理由を、偽でありうる信念として inferred で書く",
-        "「実は両立できるかもしれない」という inferred の信念を書き、その打ち手に両立させる具体的なやり方を書く",
+        "理由が見つからないときも、両方はできない最もありそうな理由を inferred の信念として書く",
+        "両方を成り立たせるやり方は、その前提の打ち手に書く",
+        "「両立できるかもしれない」など、対立を否定する文は dd に書かない",
         "理由への反対（target が理由のもの）は、その理由が付く側の矢印に置く",
         "同じ矢印 2 件まで、全体 8 件までの中で使い、収まらなければ前提の理由になる反対から選ぶ",
         "理由にならない反対は使わない",
         "制約が残ったままの打ち手は書かない",
         "打ち手は、その前提が名指した制約そのものを取り除く（または別の手で満たす）変更にする",
-        "（理由が見つからず、両立できるかもしれない場合。inferred の信念で、打ち手に両立のやり方を書く）",
+        "（理由を述べた発話が無い場合。最もありそうな理由を inferred の信念で書き、両立のやり方は打ち手に書く）",
         "懸念や反対（「それだと鍋が吹きこぼれます」「ソースがだんだん焦げつきます」など）は、それが名指す要望・前提の根拠になる",
         "その矢印の理由が書けなければ、その矢印（dd を除く）の前提は出さない",
         "dd の悪い例",
@@ -866,6 +868,25 @@ fn the_system_prompt_has_no_dd_that_describes_the_meeting() {
         .collect();
     assert_eq!(mentions.len(), 1, "{mentions:?}");
     assert!(mentions[0].contains("記述にはしない"), "{mentions:?}");
+    // Denying the conflict is only ever named inside a ban (R5-M1, n9): every
+    // line that mentions it also forbids it, and no line grants permission.
+    for line in CLOUD_SYSTEM
+        .lines()
+        .filter(|l| l.contains("両立できるかもしれない"))
+    {
+        assert!(line.contains("書かない"), "{line}");
+        assert!(
+            !line.contains("書いてよい") && !line.contains("書いてもよい"),
+            "{line}"
+        );
+    }
+    assert!(!CLOUD_SYSTEM.contains("実は両立できる"));
+    for line in mentions {
+        assert!(
+            !line.contains("書いてよい") && !line.contains("書いてもよい"),
+            "{line}"
+        );
+    }
     // The positive rule: a reason is required, and a stated one wins.
     assert!(CLOUD_SYSTEM.contains("理由の無い文は書かない"));
     assert!(CLOUD_SYSTEM.contains("stated を優先する"));
