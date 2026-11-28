@@ -729,8 +729,12 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
         "dd の良い例",
         "a は到達したい状態であり、題材を決める行為そのものや、b が確かめたい中身ではない",
         "中身のない語にしない",
-        "賛成の理由のうち、相手の案でも満たせるものは b・c にしない。それは a の手がかりにし",
-        "そういう理由が無ければ b・c は inferred で書く",
+        "賛成の理由のうち、相手の案でも満たせるものは b・c にせず、a の手がかりにする",
+        "d への反論は c の、d2 への反論は b の手がかりにしてよい",
+        "basis は、入力の発話がその要素の中身を述べているかだけで決める",
+        "b・c をどう選んだかには関係しない",
+        "会議で言われた制約を前提にするときも同じ",
+        "d2 を支える事実の発話は、要望 c の grounds にならない",
         "b は d2 では満たせない要望、c は d では満たせない要望",
         "d・d2 そのもの、d・d2 の細かな改良、確認・見積もり直し・調査・先送りは打ち手にしない",
         "その前提の文が「偽になった」と言える変更だけ",
@@ -809,4 +813,12 @@ fn a_first_level_reason_keeps_its_second_level_relation_until_that_level_is_drop
     );
     let (user, _, _) = material.render(CloudInputStage::NoSecondLevelReasons);
     assert!(line_of(&user, "a2").get("also").is_none());
+}
+
+#[test]
+fn the_system_prompt_does_not_tie_stated_to_how_b_and_c_were_chosen() {
+    // basis follows the utterances only; no rule may make b or c inferred
+    // because of the way they were picked.
+    assert!(!CLOUD_SYSTEM.contains("そういう理由が無ければ"));
+    assert!(!CLOUD_SYSTEM.contains("b・c は inferred"));
 }
