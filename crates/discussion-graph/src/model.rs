@@ -60,6 +60,7 @@ stored_enum!(Act {
     Asserts => "asserts", Asks => "asks", Challenges => "challenges", Agrees => "agrees",
     Retracts => "retracts", Rephrases => "rephrases",
 });
+stored_enum!(AnalysisKind { Cloud => "cloud", Crt => "crt" });
 stored_enum!(PatchSource {
     Live => "live", Flush => "flush", Consolidate => "consolidate", Review => "review",
 });

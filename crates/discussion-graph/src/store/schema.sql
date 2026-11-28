@@ -61,3 +61,16 @@ CREATE TABLE IF NOT EXISTS graph_consolidations (
     session_id TEXT NOT NULL PRIMARY KEY,
     rev INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS graph_analyses (
+    session_id TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('cloud', 'crt')),
+    subject TEXT NOT NULL,
+    based_on_rev INTEGER NOT NULL,
+    body_json TEXT NOT NULL,
+    provider_model TEXT,
+    dropped INTEGER NOT NULL,
+    downgraded INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    PRIMARY KEY (session_id, kind, subject)
+);

@@ -1,5 +1,6 @@
 //! SQLite storage using a connection independent of the recording store.
 
+mod analyses;
 mod records;
 #[cfg(test)]
 mod tests;
@@ -10,6 +11,7 @@ use recorder_domain::{speaker_label, SessionId, TrackKind};
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
 use serde_json::json;
 
+pub use self::analyses::{NewAnalysis, StoredAnalysis};
 use self::records::{load_graph, read_utterances, revision, write_changes};
 use crate::{
     apply_patch_with_context, Graph, Op, PatchContext, PatchResult, PatchSource, Review, Utterance,
@@ -314,7 +316,7 @@ impl GraphStore {
         Ok(rev)
     }
 
-    /// Delete the graph, its import cursor, and its consolidation completion record.
+    /// Delete the graph, its import cursor, its consolidation completion record, and saved analyses.
     pub fn delete_session(&mut self, session_id: SessionId) -> Result<(), StoreError> {
         let sid = session_id.to_string();
         let tx = self.begin_write()?;
@@ -325,6 +327,7 @@ impl GraphStore {
             "DELETE FROM graph_utterances WHERE session_id = ?1",
             "DELETE FROM graph_patches WHERE session_id = ?1",
             "DELETE FROM graph_consolidations WHERE session_id = ?1",
+            "DELETE FROM graph_analyses WHERE session_id = ?1",
         ] {
             tx.execute(sql, [&sid])?;
         }
