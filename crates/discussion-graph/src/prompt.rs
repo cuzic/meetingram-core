@@ -254,11 +254,11 @@ fn context_nodes<'a>(graph: &'a Graph, recent_touched: &[BTreeSet<String>]) -> V
     context
 }
 
-fn chars(text: &str) -> usize {
+pub(crate) fn chars(text: &str) -> usize {
     text.chars().count()
 }
 
-fn prefix(text: &str, cap: usize) -> &str {
+pub(crate) fn prefix(text: &str, cap: usize) -> &str {
     text.char_indices()
         .nth(cap)
         .map_or(text, |(end, _)| &text[..end])

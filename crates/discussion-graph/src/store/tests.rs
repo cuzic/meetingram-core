@@ -9,7 +9,7 @@ use session_store::{SessionStore, TranscriptSegment};
 use tempfile::TempDir;
 
 use super::*;
-use crate::{parse_ops, Status};
+use crate::{parse_ops, AnalysisKind, Status};
 
 fn create_session(store: &SessionStore) -> SessionId {
     let session_id = SessionId::new();
@@ -659,4 +659,113 @@ fn opening_an_older_database_creates_the_consolidation_completion_table() {
 
     let graph = GraphStore::open(&path).unwrap();
     assert_eq!(graph.consolidation_completed(sid).unwrap(), None);
+}
+
+fn cloud_analysis<'a>(subject: &'a str, rev: u64, body: &'a str) -> NewAnalysis<'a> {
+    let mut analysis = NewAnalysis::new(AnalysisKind::Cloud, subject, rev, body);
+    analysis.provider_model = Some("synthetic-model");
+    analysis.dropped = 2;
+    analysis.downgraded = 1;
+    analysis
+}
+
+#[test]
+fn saving_an_analysis_with_the_same_key_replaces_it() {
+    let (_dir, session, mut graph) = stores();
+    let sid = create_session(&session);
+    assert!(graph
+        .analysis(sid, AnalysisKind::Cloud, "i1:p1:p2")
+        .unwrap()
+        .is_none());
+    graph
+        .save_analysis(sid, &cloud_analysis("i1:p1:p2", 3, r#"{"v":1}"#))
+        .unwrap();
+    graph
+        .save_analysis(sid, &cloud_analysis("i1:p1:p3", 3, r#"{"v":"other"}"#))
+        .unwrap();
+    graph
+        .save_analysis(
+            sid,
+            &NewAnalysis::new(AnalysisKind::Crt, "i1:p1:p2", 3, "{}"),
+        )
+        .unwrap();
+    graph
+        .save_analysis(sid, &cloud_analysis("i1:p1:p2", 5, r#"{"v":2}"#))
+        .unwrap();
+
+    let saved = graph
+        .analysis(sid, AnalysisKind::Cloud, "i1:p1:p2")
+        .unwrap()
+        .unwrap();
+    assert_eq!(saved.body_json, r#"{"v":2}"#);
+    assert_eq!(saved.based_on_rev, 5);
+    assert_eq!(saved.provider_model.as_deref(), Some("synthetic-model"));
+    assert_eq!((saved.dropped, saved.downgraded), (2, 1));
+    assert!(!saved.created_at.is_empty());
+    let cloud: Vec<_> = graph
+        .analyses(sid, AnalysisKind::Cloud)
+        .unwrap()
+        .into_iter()
+        .map(|analysis| analysis.subject)
+        .collect();
+    assert_eq!(cloud, ["i1:p1:p2", "i1:p1:p3"]);
+    assert_eq!(graph.analyses(sid, AnalysisKind::Crt).unwrap().len(), 1);
+}
+
+#[test]
+fn deleting_an_analysis_removes_only_that_row() {
+    let (_dir, session, mut graph) = stores();
+    let sid = create_session(&session);
+    for subject in ["i1:p1:p2", "i1:p1:p3"] {
+        graph
+            .save_analysis(sid, &cloud_analysis(subject, 1, "{}"))
+            .unwrap();
+    }
+    assert!(graph
+        .delete_analysis(sid, AnalysisKind::Cloud, "i1:p1:p2")
+        .unwrap());
+    assert!(!graph
+        .delete_analysis(sid, AnalysisKind::Cloud, "i1:p1:p2")
+        .unwrap());
+    assert_eq!(graph.analyses(sid, AnalysisKind::Cloud).unwrap().len(), 1);
+}
+
+#[test]
+fn delete_session_removes_its_analyses_and_keeps_other_sessions() {
+    let (_dir, session, mut graph) = stores();
+    let first = create_session(&session);
+    let second = create_session(&session);
+    for sid in [first, second] {
+        graph
+            .save_analysis(sid, &cloud_analysis("i1:p1:p2", 1, "{}"))
+            .unwrap();
+        graph
+            .save_analysis(sid, &NewAnalysis::new(AnalysisKind::Crt, "i1", 1, "{}"))
+            .unwrap();
+    }
+    graph.delete_session(first).unwrap();
+    for kind in [AnalysisKind::Cloud, AnalysisKind::Crt] {
+        assert!(graph.analyses(first, kind).unwrap().is_empty());
+        assert_eq!(graph.analyses(second, kind).unwrap().len(), 1);
+    }
+}
+
+#[test]
+fn opening_an_older_database_creates_the_analyses_table() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("sessions.sqlite");
+    let session = SessionStore::open(&path).unwrap();
+    let sid = create_session(&session);
+    let (old_schema, _) = include_str!("schema.sql")
+        .split_once("CREATE TABLE IF NOT EXISTS graph_analyses")
+        .unwrap();
+    let conn = Connection::open(&path).unwrap();
+    conn.execute_batch(old_schema).unwrap();
+    drop(conn);
+
+    let mut graph = GraphStore::open(&path).unwrap();
+    assert!(graph.analyses(sid, AnalysisKind::Cloud).unwrap().is_empty());
+    graph
+        .save_analysis(sid, &cloud_analysis("i1:p1:p2", 1, "{}"))
+        .unwrap();
 }
