@@ -532,6 +532,7 @@ fn assumption_rows_are_dropped_by_the_table_rules() {
     let text = response(json!({"assumptions": [
         item("xx", "不正な矢印"),
         item("ab", ""),
+        item("ab", " \u{3000}\n"),
         item("ab", "一"), item("ab", "二"), item("ab", "三は落ちる"),
         item("ac", "四"), item("ac", "五"),
         item("bd", "六"), item("bd", "七"),
@@ -547,7 +548,7 @@ fn assumption_rows_are_dropped_by_the_table_rules() {
         .collect();
     // The empty and malformed rows do not use up the quota.
     assert_eq!(kept, ["一", "二", "四", "五", "六", "七", "八", "九"]);
-    assert_eq!(result.dropped, 4);
+    assert_eq!(result.dropped, 5);
 }
 
 #[test]
@@ -707,4 +708,54 @@ fn the_system_prompt_states_the_arrows_and_the_stated_rule() {
         assert!(CLOUD_SYSTEM.contains(arrow), "{arrow}");
     }
     assert!(CLOUD_SYSTEM.contains("grounds に入れて stated にする"));
+}
+
+#[test]
+fn the_system_prompt_defines_what_each_assumption_may_say() {
+    // Each arrow has its own rule, dd names a concrete constraint, and the
+    // restatement is forbidden.
+    for needle in [
+        "ab: a を満たすのに b が要ると考える理由",
+        "bd: b を満たすのに d が要る",
+        "cd: c を満たすのに d2 が要る",
+        "dd: d と d2 が両立しないと考える理由",
+        "その矢印の理由が書けなければ、その矢印の前提は出さない",
+        "dd の悪い例",
+        "dd の良い例",
+        "b は d2 では満たせない要望、c は d では満たせない要望",
+        "stated にせず、inferred にする",
+    ] {
+        assert!(CLOUD_SYSTEM.contains(needle), "{needle}");
+    }
+}
+
+#[test]
+fn a_reason_attached_to_two_reasons_keeps_one_line_with_every_relation() {
+    let mut b = rich_graph();
+    // a4 attaches to two level-1 reasons: a1 (p1) and a2 (p2).
+    b.edge("a2", "p2", EdgeKind::Supports)
+        .reason("a4", "a1", EdgeKind::Supports)
+        .edge("a4", "a2", EdgeKind::ObjectsTo);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    let lines: Vec<_> = user
+        .lines()
+        .filter(|line| line.contains(r#""nid":"a4""#))
+        .collect();
+    assert_eq!(lines.len(), 1, "{user}");
+    let line: Value = serde_json::from_str(lines[0]).unwrap();
+    assert_eq!(line["relation"], "supports");
+    assert_eq!(line["on"], "a1");
+    assert_eq!(
+        line["also"],
+        json!([{"relation": "objects_to", "on": "a2"}])
+    );
+    // A single relation carries no `also`.
+    let a3: Value = serde_json::from_str(
+        user.lines()
+            .find(|line| line.contains(r#""nid":"a3""#))
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(a3.get("also").is_none());
 }

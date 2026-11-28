@@ -299,6 +299,8 @@ struct Reason<'a> {
     relation: EdgeKind,
     on: &'a str,
     second_level: bool,
+    /// Further relations of the same node at the second level, in target order.
+    also: Vec<(EdgeKind, &'a str)>,
 }
 
 struct Material<'a> {
@@ -363,14 +365,24 @@ impl<'a> Material<'a> {
             for target in targets {
                 for edge in incoming.get(target).into_iter().flatten() {
                     let node = &graph.nodes[&edge.src];
+                    let on = target_of(graph, target);
                     if second_level && !seen.insert(node.nid.as_str()) {
+                        // The node stays one line; its other relations ride on it.
+                        // A node already listed at the first level is not repeated.
+                        if let Some(first) = level
+                            .iter_mut()
+                            .find(|reason: &&mut Reason<'a>| reason.node.nid == node.nid)
+                        {
+                            first.also.push((edge.kind, on));
+                        }
                         continue;
                     }
                     level.push(Reason {
                         node,
                         relation: edge.kind,
-                        on: target_of(graph, target),
+                        on,
                         second_level,
+                        also: Vec::new(),
                     });
                 }
             }
@@ -492,7 +504,14 @@ impl<'a> Material<'a> {
             .iter()
             .filter(|reason| with_second || !reason.second_level)
         {
-            let extra = json!({ "relation": reason.relation, "on": reason.on });
+            let mut extra = json!({ "relation": reason.relation, "on": reason.on });
+            if !reason.also.is_empty() {
+                extra["also"] = reason
+                    .also
+                    .iter()
+                    .map(|(relation, on)| json!({ "relation": relation, "on": on }))
+                    .collect();
+            }
             user.push_str(&node_line(reason.node, extra));
             user.push('\n');
         }
