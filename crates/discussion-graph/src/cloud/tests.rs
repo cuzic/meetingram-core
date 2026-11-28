@@ -759,3 +759,22 @@ fn a_reason_attached_to_two_reasons_keeps_one_line_with_every_relation() {
     .unwrap();
     assert!(a3.get("also").is_none());
 }
+
+fn line_of(user: &str, nid: &str) -> Value {
+    let needle = format!(r#""nid":"{nid}""#);
+    let lines: Vec<_> = user.lines().filter(|l| l.contains(&needle)).collect();
+    assert_eq!(lines.len(), 1, "{nid}: {user}");
+    serde_json::from_str(lines[0]).unwrap()
+}
+
+#[test]
+fn a_reason_under_a_reason_listed_twice_does_not_repeat_its_relation() {
+    let mut b = rich_graph();
+    // a1 supports p1 and objects to p2: two first-level rows. a2 (objects to a1)
+    // is reached from both rows but has one relation.
+    b.edge("a1", "p2", EdgeKind::ObjectsTo);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    let a2 = line_of(&user, "a2");
+    assert!(a2.get("also").is_none(), "{a2}");
+}
