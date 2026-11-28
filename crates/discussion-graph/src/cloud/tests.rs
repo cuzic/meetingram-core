@@ -717,13 +717,27 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
     for needle in [
         "ab: a を満たすのに b が要ると考える理由",
         "bd: b を満たすのに d が要る",
+        "d2 が b を損なうという反論は bd に置く",
+        "d が c を損なうという反論は cd に置く",
         "cd: c を満たすのに d2 が要る",
         "dd: d と d2 が両立しないと考える理由",
-        "その矢印の理由が書けなければ、その矢印の前提は出さない",
+        "dd は対立そのものの前提なので、必ず 1 件書く",
+        "定義から真になる文",
+        "会議で言われていない制約は inferred にし、入力に無い具体（回数・「一律」など）を作らない",
+        "その矢印の理由が書けなければ、その矢印（dd を除く）の前提は出さない",
         "dd の悪い例",
         "dd の良い例",
+        "a は到達したい状態であり、題材を決める行為そのものや、b が確かめたい中身ではない",
+        "中身のない語にしない",
+        "賛成の理由のうち、相手の案でも満たせるものは b・c にしない。それは a の手がかりにし",
+        "そういう理由が無ければ b・c は inferred で書く",
         "b は d2 では満たせない要望、c は d では満たせない要望",
+        "d・d2 そのもの、d・d2 の細かな改良、確認・見積もり直し・調査・先送りは打ち手にしない",
+        "その前提の文が「偽になった」と言える変更だけ",
         "stated にせず、inferred にする",
+        "relation と target は、その理由が target のノードを支える（supports）か反対する（objects_to）か",
+        "出力の前提の on（矢印）とは別のもの",
+        "also は、同じ理由がほかのノードに付く関係の一覧",
     ] {
         assert!(CLOUD_SYSTEM.contains(needle), "{needle}");
     }
@@ -745,10 +759,10 @@ fn a_reason_attached_to_two_reasons_keeps_one_line_with_every_relation() {
     assert_eq!(lines.len(), 1, "{user}");
     let line: Value = serde_json::from_str(lines[0]).unwrap();
     assert_eq!(line["relation"], "supports");
-    assert_eq!(line["on"], "a1");
+    assert_eq!(line["target"], "a1");
     assert_eq!(
         line["also"],
-        json!([{"relation": "objects_to", "on": "a2"}])
+        json!([{"relation": "objects_to", "target": "a2"}])
     );
     // A single relation carries no `also`.
     let a3: Value = serde_json::from_str(
@@ -788,8 +802,11 @@ fn a_first_level_reason_keeps_its_second_level_relation_until_that_level_is_drop
     let (user, _, _) = material.render(CloudInputStage::Full);
     let a2 = line_of(&user, "a2");
     assert_eq!(a2["relation"], "supports");
-    assert_eq!(a2["on"], "p2");
-    assert_eq!(a2["also"], json!([{"relation": "objects_to", "on": "a1"}]));
+    assert_eq!(a2["target"], "p2");
+    assert_eq!(
+        a2["also"],
+        json!([{"relation": "objects_to", "target": "a1"}])
+    );
     let (user, _, _) = material.render(CloudInputStage::NoSecondLevelReasons);
     assert!(line_of(&user, "a2").get("also").is_none());
 }

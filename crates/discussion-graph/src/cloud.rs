@@ -511,13 +511,13 @@ impl<'a> Material<'a> {
             .iter()
             .filter(|reason| with_second || !reason.second_level)
         {
-            let mut extra = json!({ "relation": reason.relation, "on": reason.on });
+            let mut extra = json!({ "relation": reason.relation, "target": reason.on });
             // `also` of a first-level row holds second-level relations.
             if with_second && !reason.also.is_empty() {
                 extra["also"] = reason
                     .also
                     .iter()
-                    .map(|(relation, on)| json!({ "relation": relation, "on": on }))
+                    .map(|(relation, on)| json!({ "relation": relation, "target": on }))
                     .collect();
             }
             user.push_str(&node_line(reason.node, extra));
