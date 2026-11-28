@@ -299,6 +299,9 @@ struct Reason<'a> {
     relation: EdgeKind,
     on: &'a str,
     second_level: bool,
+    /// Further relations of the same node, in target order. On a first-level row
+    /// they are second-level relations, dropped with the second level.
+    also: Vec<(EdgeKind, &'a str)>,
 }
 
 struct Material<'a> {
@@ -349,9 +352,8 @@ impl<'a> Material<'a> {
 
         let incoming = reason_edges(graph);
         let mut reasons: Vec<Reason<'a>> = Vec::new();
-        let mut seen = BTreeSet::new();
         for second_level in [false, true] {
-            let targets: Vec<&str> = if second_level {
+            let mut targets: Vec<&str> = if second_level {
                 reasons
                     .iter()
                     .map(|reason| reason.node.nid.as_str())
@@ -359,23 +361,38 @@ impl<'a> Material<'a> {
             } else {
                 positions.iter().map(|node| node.nid.as_str()).collect()
             };
-            let mut level = Vec::new();
+            // A reason listed on two rows is still one target; this is what keeps a
+            // relation from being added twice.
+            let mut once = BTreeSet::new();
+            targets.retain(|target| once.insert(*target));
+            let mut level: Vec<Reason<'a>> = Vec::new();
             for target in targets {
                 for edge in incoming.get(target).into_iter().flatten() {
                     let node = &graph.nodes[&edge.src];
-                    if second_level && !seen.insert(node.nid.as_str()) {
-                        continue;
+                    let on = target_of(graph, target);
+                    if second_level {
+                        if node.nid == target {
+                            continue;
+                        }
+                        // The node stays one line, at the first level if it is
+                        // there; its other relations ride on that line.
+                        if let Some(row) = reasons
+                            .iter_mut()
+                            .chain(level.iter_mut())
+                            .find(|reason| reason.node.nid == node.nid)
+                        {
+                            row.also.push((edge.kind, on));
+                            continue;
+                        }
                     }
                     level.push(Reason {
                         node,
                         relation: edge.kind,
-                        on: target_of(graph, target),
+                        on,
                         second_level,
+                        also: Vec::new(),
                     });
                 }
-            }
-            if !second_level {
-                seen.extend(level.iter().map(|reason| reason.node.nid.as_str()));
             }
             reasons.extend(level);
         }
@@ -492,7 +509,15 @@ impl<'a> Material<'a> {
             .iter()
             .filter(|reason| with_second || !reason.second_level)
         {
-            let extra = json!({ "relation": reason.relation, "on": reason.on });
+            let mut extra = json!({ "relation": reason.relation, "target": reason.on });
+            // `also` of a first-level row holds second-level relations.
+            if with_second && !reason.also.is_empty() {
+                extra["also"] = reason
+                    .also
+                    .iter()
+                    .map(|(relation, on)| json!({ "relation": relation, "target": on }))
+                    .collect();
+            }
             user.push_str(&node_line(reason.node, extra));
             user.push('\n');
         }

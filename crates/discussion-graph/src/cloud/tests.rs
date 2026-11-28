@@ -532,6 +532,7 @@ fn assumption_rows_are_dropped_by_the_table_rules() {
     let text = response(json!({"assumptions": [
         item("xx", "不正な矢印"),
         item("ab", ""),
+        item("ab", " \u{3000}\n"),
         item("ab", "一"), item("ab", "二"), item("ab", "三は落ちる"),
         item("ac", "四"), item("ac", "五"),
         item("bd", "六"), item("bd", "七"),
@@ -547,7 +548,7 @@ fn assumption_rows_are_dropped_by_the_table_rules() {
         .collect();
     // The empty and malformed rows do not use up the quota.
     assert_eq!(kept, ["一", "二", "四", "五", "六", "七", "八", "九"]);
-    assert_eq!(result.dropped, 4);
+    assert_eq!(result.dropped, 5);
 }
 
 #[test]
@@ -707,4 +708,189 @@ fn the_system_prompt_states_the_arrows_and_the_stated_rule() {
         assert!(CLOUD_SYSTEM.contains(arrow), "{arrow}");
     }
     assert!(CLOUD_SYSTEM.contains("grounds に入れて stated にする"));
+}
+
+#[test]
+fn the_system_prompt_defines_what_each_assumption_may_say() {
+    // Each arrow has its own rule, dd names a concrete constraint, and the
+    // restatement is forbidden.
+    for needle in [
+        "ab: a を満たすのに b が要ると考える理由",
+        "bd: b を満たすのに d が要る",
+        "d2 が b を損なうという反論は bd に置く",
+        "d が c を損なうという反論は cd に置く",
+        "cd: c を満たすのに d2 が要る",
+        "dd: d と d2 が両立しないと考える理由",
+        "dd は対立そのものの前提なので、必ずちょうど 1 件書く",
+        "「会議で述べられていない」のような会議についての記述にはしない",
+        "入力に無い具体（回数・「一律」など）は作らない",
+        "埋め草は書かない: 定義から真になる文、b と c の対立の言い直し、片方の案の欠点",
+        "根拠の無い「限られた…を取り合う」の型",
+        "「献立は 1 つなので両方は作れない」（定義から真になる文）",
+        "（発話「どちらも家のコンロの同じ口でやるしかない」がある場合。stated で、その uid を grounds に入れる）",
+        "「両方はできない」「どちらか一つに絞る」だけで理由の無い文は書かない",
+        "両案が同じ場所・枠・時間・人・お金を使う、と述べた発話は、dd の制約を述べている",
+        "stated にできるときは、inferred の書き方より stated を優先する",
+        "最もありそうな具体的な理由を、偽でありうる信念として inferred で書く",
+        "理由が見つからないときも、両方はできない最もありそうな理由を inferred の信念として書く",
+        "両方を成り立たせるやり方は、その前提の打ち手に書く",
+        "「両立できるかもしれない」など、対立を否定する文は dd に書かない",
+        "理由への反対（target が理由のもの）は、その理由が付く側の矢印に置く",
+        "同じ矢印 2 件まで、全体 8 件までの中で使い、収まらなければ前提の理由になる反対から選ぶ",
+        "理由にならない反対は使わない",
+        "制約が残ったままの打ち手は書かない",
+        "打ち手は、その前提が名指した制約そのものを取り除く（または別の手で満たす）変更にする",
+        "（理由を述べた発話が無い場合。最もありそうな理由を inferred の信念で書き、両立のやり方は打ち手に書く）",
+        "懸念や反対（「それだと鍋が吹きこぼれます」「ソースがだんだん焦げつきます」など）は、それが名指す要望・前提の根拠になる",
+        "その矢印の理由が書けなければ、その矢印（dd を除く）の前提は出さない",
+        "dd の悪い例",
+        "dd の良い例",
+        "a は到達したい状態であり、題材を決める行為そのものや、b が確かめたい中身ではない",
+        "中身のない語にしない",
+        "賛成の理由のうち、相手の案でも満たせるものは b・c にせず、a の手がかりにする",
+        "d への反論は c の、d2 への反論は b の手がかりにしてよい",
+        "basis は、入力の発話がその要素の中身を述べているかだけで決める",
+        "b・c をどう選んだかには関係しない",
+        "会議で言われた制約を前提にするときも同じ",
+        "d2 の事実を述べただけの発話は要望 c の grounds にならない",
+        "案の提案者が述べた利点（「この方法なら洗い物が減ります」など）は、それが名指す要望（d2 の利点なら c）の根拠になる",
+        "長い発話の途中も見る",
+        "inferred にする前に、入力のすべての発話に、それを述べたものが無いか確かめる",
+        "d への反論は cd に、d2 への反論は bd に置く",
+        "ab・ac に、a を言い直しただけの文",
+        "b は d2 では満たせない要望、c は d では満たせない要望",
+        "d・d2 そのもの、d・d2 の細かな改良、確認・見積もり直し・調査・先送りは打ち手にしない",
+        "その前提の文が「偽になった」と言える変更だけ",
+        "stated にせず、inferred にする",
+        "relation と target は、その理由が target のノードを支える（supports）か反対する（objects_to）か",
+        "出力の前提の on（矢印）とは別のもの",
+        "also は、同じ理由がほかのノードに付く関係の一覧",
+    ] {
+        assert!(CLOUD_SYSTEM.contains(needle), "{needle}");
+    }
+}
+
+#[test]
+fn a_reason_attached_to_two_reasons_keeps_one_line_with_every_relation() {
+    let mut b = rich_graph();
+    // a4 attaches to two level-1 reasons: a1 (p1) and a2 (p2).
+    b.edge("a2", "p2", EdgeKind::Supports)
+        .reason("a4", "a1", EdgeKind::Supports)
+        .edge("a4", "a2", EdgeKind::ObjectsTo);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    let lines: Vec<_> = user
+        .lines()
+        .filter(|line| line.contains(r#""nid":"a4""#))
+        .collect();
+    assert_eq!(lines.len(), 1, "{user}");
+    let line: Value = serde_json::from_str(lines[0]).unwrap();
+    assert_eq!(line["relation"], "supports");
+    assert_eq!(line["target"], "a1");
+    assert_eq!(
+        line["also"],
+        json!([{"relation": "objects_to", "target": "a2"}])
+    );
+    // A single relation carries no `also`.
+    let a3: Value = serde_json::from_str(
+        user.lines()
+            .find(|line| line.contains(r#""nid":"a3""#))
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(a3.get("also").is_none());
+}
+
+fn line_of(user: &str, nid: &str) -> Value {
+    let needle = format!(r#""nid":"{nid}""#);
+    let lines: Vec<_> = user.lines().filter(|l| l.contains(&needle)).collect();
+    assert_eq!(lines.len(), 1, "{nid}: {user}");
+    serde_json::from_str(lines[0]).unwrap()
+}
+
+#[test]
+fn a_reason_under_a_reason_listed_twice_does_not_repeat_its_relation() {
+    let mut b = rich_graph();
+    // a1 supports p1 and objects to p2: two first-level rows. a2 (objects to a1)
+    // is reached from both rows but has one relation.
+    b.edge("a1", "p2", EdgeKind::ObjectsTo);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    let a2 = line_of(&user, "a2");
+    assert!(a2.get("also").is_none(), "{a2}");
+}
+
+#[test]
+fn a_first_level_reason_keeps_its_second_level_relation_until_that_level_is_dropped() {
+    let mut b = rich_graph();
+    // a2 objects to a1 (second level) and also supports p2 (first level).
+    b.edge("a2", "p2", EdgeKind::Supports);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    let a2 = line_of(&user, "a2");
+    assert_eq!(a2["relation"], "supports");
+    assert_eq!(a2["target"], "p2");
+    assert_eq!(
+        a2["also"],
+        json!([{"relation": "objects_to", "target": "a1"}])
+    );
+    let (user, _, _) = material.render(CloudInputStage::NoSecondLevelReasons);
+    assert!(line_of(&user, "a2").get("also").is_none());
+}
+
+#[test]
+fn the_system_prompt_does_not_tie_stated_to_how_b_and_c_were_chosen() {
+    // Sentinel against the round-2 regression (B/C inferred 92/132 in spike r3):
+    // basis follows the utterances only; no rule may make b or c inferred
+    // because of the way they were picked. The positive rule is pinned in
+    // `the_system_prompt_defines_what_each_assumption_may_say`.
+    assert!(!CLOUD_SYSTEM.contains("そういう理由が無ければ"));
+    assert!(!CLOUD_SYSTEM.contains("b・c は inferred"));
+}
+
+#[test]
+fn a_reason_pointing_at_itself_adds_no_relation() {
+    let mut b = rich_graph();
+    b.edge("a1", "a1", EdgeKind::Supports);
+    let material = Material::collect(&b.graph, "i1", ["p1", "p2"]).unwrap();
+    let (user, _, _) = material.render(CloudInputStage::Full);
+    assert!(line_of(&user, "a1").get("also").is_none(), "{user}");
+}
+
+#[test]
+fn the_system_prompt_has_no_dd_that_describes_the_meeting() {
+    // A dd is a falsifiable belief; "not stated in the meeting" is a fact about
+    // the meeting (review M1), so no sentence may offer it. The one line that
+    // mentions it is the ban, and no line may offer a note-free dd.
+    let mentions: Vec<_> = CLOUD_SYSTEM
+        .lines()
+        .filter(|line| line.contains("会議で述べられていない"))
+        .collect();
+    assert_eq!(mentions.len(), 1, "{mentions:?}");
+    assert!(mentions[0].contains("記述にはしない"), "{mentions:?}");
+    // Denying the conflict is only ever named inside a ban (R5-M1, n9): every
+    // line that mentions it also forbids it, and no line grants permission.
+    for line in CLOUD_SYSTEM
+        .lines()
+        .filter(|l| l.contains("両立できるかもしれない"))
+    {
+        assert!(line.contains("書かない"), "{line}");
+        assert!(
+            !line.contains("書いてよい") && !line.contains("書いてもよい"),
+            "{line}"
+        );
+    }
+    assert!(!CLOUD_SYSTEM.contains("実は両立できる"));
+    for line in mentions {
+        assert!(
+            !line.contains("書いてよい") && !line.contains("書いてもよい"),
+            "{line}"
+        );
+    }
+    // The positive rule: a reason is required, and a stated one wins.
+    assert!(CLOUD_SYSTEM.contains("理由の無い文は書かない"));
+    assert!(CLOUD_SYSTEM.contains("stated を優先する"));
+    for line in CLOUD_SYSTEM.lines().filter(|l| l.contains("dd")) {
+        assert!(!line.contains("打ち手は付けない"), "{line}");
+    }
 }
