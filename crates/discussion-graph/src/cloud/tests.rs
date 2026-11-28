@@ -722,16 +722,24 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
         "cd: c を満たすのに d2 が要る",
         "dd: d と d2 が両立しないと考える理由",
         "dd は対立そのものの前提なので、必ずちょうど 1 件書く",
-        "まず utterances から、両立を妨げる制約を述べた発話",
-        "あれば、その制約を使い、stated にして uid を grounds に入れる",
-        "無ければ、最もありそうな制約を、偽でありうる信念として inferred で書く",
         "「会議で述べられていない」のような会議についての記述にはしない",
         "入力に無い具体（回数・「一律」など）は作らない",
         "埋め草は書かない: 定義から真になる文、b と c の対立の言い直し、片方の案の欠点",
         "根拠の無い「限られた…を取り合う」の型",
         "「献立は 1 つなので両方は作れない」（定義から真になる文）",
         "（発話「どちらも家のコンロの同じ口でやるしかない」がある場合。stated で、その uid を grounds に入れる）",
-        "（制約を述べた発話が無い場合。inferred の信念）",
+        "「両方はできない」「どちらか一つに絞る」だけで理由の無い文は書かない",
+        "両案が同じ場所・枠・時間・人・お金を使う、と述べた発話は、dd の制約を述べている",
+        "stated にできるときは、inferred の書き方より stated を優先する",
+        "最もありそうな具体的な理由を、偽でありうる信念として inferred で書く",
+        "「実は両立できるかもしれない」という inferred の信念を書き、その打ち手に両立させる具体的なやり方を書く",
+        "理由への反対（target が理由のもの）は、その理由が付く側の矢印に置く",
+        "同じ矢印 2 件まで、全体 8 件までの中で使い、収まらなければ前提の理由になる反対から選ぶ",
+        "理由にならない反対は使わない",
+        "制約が残ったままの打ち手は書かない",
+        "打ち手は、その前提が名指した制約そのものを取り除く（または別の手で満たす）変更にする",
+        "（理由が見つからず、両立できるかもしれない場合。inferred の信念で、打ち手に両立のやり方を書く）",
+        "懸念や反対（「それだと鍋が吹きこぼれます」「ソースがだんだん焦げつきます」など）は、それが名指す要望・前提の根拠になる",
         "その矢印の理由が書けなければ、その矢印（dd を除く）の前提は出さない",
         "dd の悪い例",
         "dd の良い例",
@@ -743,13 +751,10 @@ fn the_system_prompt_defines_what_each_assumption_may_say() {
         "b・c をどう選んだかには関係しない",
         "会議で言われた制約を前提にするときも同じ",
         "d2 の事実を述べただけの発話は要望 c の grounds にならない",
-        "案の提案者が述べた利点は、それが名指す要望（d2 の利点なら c）の根拠になる",
-        "懸念や反対（「受け口は溢れます」「メモリがじわじわ増えます」など）は、それが名指す要望・前提の根拠になる",
+        "案の提案者が述べた利点（「この方法なら洗い物が減ります」など）は、それが名指す要望（d2 の利点なら c）の根拠になる",
         "長い発話の途中も見る",
         "inferred にする前に、入力のすべての発話に、それを述べたものが無いか確かめる",
-        "入力の反対の理由（objects_to）は、少なくとも 1 件の前提に使う",
         "d への反論は cd に、d2 への反論は bd に置く",
-        "「両方を組み合わせることはできない」という inferred の信念にし、打ち手に「両方を組み合わせる」やり方を具体的に書く",
         "ab・ac に、a を言い直しただけの文",
         "b は d2 では満たせない要望、c は d では満たせない要望",
         "d・d2 そのもの、d・d2 の細かな改良、確認・見積もり直し・調査・先送りは打ち手にしない",
@@ -853,7 +858,18 @@ fn a_reason_pointing_at_itself_adds_no_relation() {
 #[test]
 fn the_system_prompt_has_no_dd_that_describes_the_meeting() {
     // A dd is a falsifiable belief; "not stated in the meeting" is a fact about
-    // the meeting (review M1), so it is neither offered nor allowed.
-    assert!(!CLOUD_SYSTEM.contains("会議で述べられていない」とそのまま"));
-    assert!(!CLOUD_SYSTEM.contains("打ち手は付けない"));
+    // the meeting (review M1), so no sentence may offer it. The one line that
+    // mentions it is the ban, and no line may offer a note-free dd.
+    let mentions: Vec<_> = CLOUD_SYSTEM
+        .lines()
+        .filter(|line| line.contains("会議で述べられていない"))
+        .collect();
+    assert_eq!(mentions.len(), 1, "{mentions:?}");
+    assert!(mentions[0].contains("記述にはしない"), "{mentions:?}");
+    // The positive rule: a reason is required, and a stated one wins.
+    assert!(CLOUD_SYSTEM.contains("理由の無い文は書かない"));
+    assert!(CLOUD_SYSTEM.contains("stated を優先する"));
+    for line in CLOUD_SYSTEM.lines().filter(|l| l.contains("dd")) {
+        assert!(!line.contains("打ち手は付けない"), "{line}");
+    }
 }
